@@ -29,9 +29,9 @@ $addon_full_name = Read-Host "Enter $addon_full_name_label"
 $addon_short_name = Read-Host "Enter $addon_short_name_label (if any)"
 if ([string]::IsNullOrEmpty($addon_short_name)) { $addon_short_name = $addon_full_name }
 
-$replace_package="{{ADDON_NAME_PACKAGE}}"
-$replace_addon_name="{{ADDON_NAME}}"
-$replace_addon_name_full="{{ADDON_NAME_FULL}}"
+$replace_package="dev_tools"
+$replace_addon_name="Dev Tools"
+$replace_addon_name_full="Dev Tools"
 
 Write-Output "=============================================================="
 Write-Output "Addon Full Name: $addon_full_name"

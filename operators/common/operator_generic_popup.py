@@ -3,8 +3,8 @@ import bpy_types
 from typing import List
 
 class OperatorGenericPopup(bpy.types.Operator):
-    bl_idname = "wm.{{ADDON_NAME_PACKAGE}}_generic_popup"
-    bl_label = "{{ADDON_NAME}} Message"
+    bl_idname = "wm.dev_tools_generic_popup"
+    bl_label = "Dev Tools Message"
     bl_description = "Generic Popup Operator for displaying a custom message"
     bl_options = {'INTERNAL'}
 
@@ -43,7 +43,7 @@ def unregister() -> None:
     bpy.utils.unregister_class(OperatorGenericPopup)
 
 def create_generic_popup(message: str) -> None:
-    bpy.ops.wm.{{ADDON_NAME_PACKAGE}}_generic_popup('INVOKE_DEFAULT', message=message) # type: ignore
+    bpy.ops.wm.dev_tools_generic_popup('INVOKE_DEFAULT', message=message) # type: ignore
 
 # Sample Usage:
 class WEB_OT_SampleExecuteOperator(OperatorGenericPopup):

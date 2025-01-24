@@ -1,4 +1,4 @@
 {
-  "addon_name": "{{ADDON_NAME}}",
-  "addon_name_package": "{{ADDON_NAME_PACKAGE}}"
+  "addon_name": "Dev Tools",
+  "addon_name_package": "dev_tools"
 }

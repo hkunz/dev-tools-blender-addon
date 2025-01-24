@@ -4,13 +4,13 @@ import bpy_types
 from typing import List, Tuple
 from bpy.app.handlers import persistent
 
-from {{ADDON_NAME_PACKAGE}}.operators.operator_empty import OBJECT_OT_OperatorEmpty # type: ignore
-from {{ADDON_NAME_PACKAGE}}.operators.file.operator_file_vox_exporter import EXPORT_OT_file_vox # type: ignore
-from {{ADDON_NAME_PACKAGE}}.operators.cache.operator_clear_all_temp_cache import register as register_all_temp_cache_operator, unregister as unregister_all_temp_cache_operator # type: ignore
-from {{ADDON_NAME_PACKAGE}}.operators.cache.operator_clear_temp_cache import register as register_temp_cache_operator, unregister as unregister_temp_cache_operator # type: ignore
-from {{ADDON_NAME_PACKAGE}}.utils.utils import Utils # type: ignore
-from {{ADDON_NAME_PACKAGE}}.utils.object_utils import ObjectUtils # type: ignore
-from {{ADDON_NAME_PACKAGE}}.utils.icons_manager import IconsManager  # type: ignore
+from dev_tools.operators.operator_empty import OBJECT_OT_OperatorEmpty # type: ignore
+from dev_tools.operators.file.operator_file_vox_exporter import EXPORT_OT_file_vox # type: ignore
+from dev_tools.operators.cache.operator_clear_all_temp_cache import register as register_all_temp_cache_operator, unregister as unregister_all_temp_cache_operator # type: ignore
+from dev_tools.operators.cache.operator_clear_temp_cache import register as register_temp_cache_operator, unregister as unregister_temp_cache_operator # type: ignore
+from dev_tools.utils.utils import Utils # type: ignore
+from dev_tools.utils.object_utils import ObjectUtils # type: ignore
+from dev_tools.utils.icons_manager import IconsManager  # type: ignore
 
 IDNAME_ICONS = {
     "NodeSocketMaterial": "MATERIAL_DATA",
@@ -108,11 +108,11 @@ class MyPropertyGroup2(bpy.types.PropertyGroup):
 
 class OBJECT_PT_my_addon_panel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_my_addon_panel"
-    bl_label = f"{{ADDON_NAME}} {Utils.get_addon_version()}"
+    bl_label = f"Dev Tools {Utils.get_addon_version()}"
     #use these 3 lines if you want the addon to be under a tab within N-Panel
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = '{{ADDON_NAME}}'
+    bl_category = 'Dev Tools'
     #use these 3 lines if you want the addon to be a custom tab under Object Properties
     #bl_space_type = 'PROPERTIES'
     #bl_region_type = 'WINDOW'

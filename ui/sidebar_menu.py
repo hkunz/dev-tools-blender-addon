@@ -8,7 +8,8 @@ from dev_tools.operators.operator_empty import OBJECT_OT_OperatorEmpty # type: i
 from dev_tools.operators.file.operator_file_vox_exporter import EXPORT_OT_file_vox # type: ignore
 from dev_tools.operators.cache.operator_clear_all_temp_cache import register as register_all_temp_cache_operator, unregister as unregister_all_temp_cache_operator # type: ignore
 from dev_tools.operators.cache.operator_clear_temp_cache import register as register_temp_cache_operator, unregister as unregister_temp_cache_operator # type: ignore
-from dev_tools.operators.object.prepare_bake_operator import OBJECT_OT_PrepareBake
+from dev_tools.operators.object.prepare_bake_operator import OBJECT_OT_PrepareBake # type: ignore
+from dev_tools.operators.object.generate_bake_object_operator import OBJECT_OT_GenerateBakeObject # type: ignore
 from dev_tools.utils.utils import Utils # type: ignore
 from dev_tools.utils.object_utils import ObjectUtils # type: ignore
 from dev_tools.utils.icons_manager import IconsManager  # type: ignore
@@ -124,19 +125,17 @@ class OBJECT_PT_my_addon_panel(bpy.types.Panel):
         selected_mesh_objects = [obj for obj in context.selected_objects if obj.type == 'MESH']
         active_object = context.active_object if len(selected_mesh_objects) > 0 and context.active_object in selected_mesh_objects else None
         properties: MyPropertyGroup1 = context.scene.my_property_group_pointer
-        box = layout.box().column()
+        # box = layout.box().column()
 
         # sample props:
-        box.prop(properties, "my_enum_prop")
-        box.prop(properties, "my_float_prop")
-        box.prop(properties, "my_string_prop")
-        box.prop(properties, "my_file_input_prop")
-
-        box.label(text="Icon Label", icon=IconsManager.BUILTIN_ICON_MESH_DATA)
-
-        self.draw_sample_modifier_exposed_props(context, layout, "GeometryNodes")
+        # box.prop(properties, "my_enum_prop")
+        # box.prop(properties, "my_float_prop")
+        # box.prop(properties, "my_string_prop")
+        # box.prop(properties, "my_file_input_prop")
+        # box.label(text="Icon Label", icon=IconsManager.BUILTIN_ICON_MESH_DATA)
+        # self.draw_sample_modifier_exposed_props(context, layout, "GeometryNodes")
         self.draw_sample_expanded_options(context, layout)
-        self.draw_sample_color_picker(context, layout)
+        # self.draw_sample_color_picker(context, layout)
 
     def draw_sample_modifier_exposed_props(self, context, layout, md_name = "GeometryNodes"):
         # to test this function add a Geometry Nodes Modifier by the name "GeometryNodes" and add some inputs to it which will get exposed in the addon panel
@@ -162,9 +161,11 @@ class OBJECT_PT_my_addon_panel(bpy.types.Panel):
         if context.scene.expanded_options:
             col = layout.column()
             col.operator(OBJECT_OT_PrepareBake.bl_idname, text="Prepare Bake")
-            col.prop(data=context.scene.render,property="fps",text="Frame Rate") # https://blender.stackexchange.com/questions/317553/how-to-exposure-render-settings-to-addon-panel/317565#317565
+            col.operator(OBJECT_OT_GenerateBakeObject.bl_idname, text="Generate Bake Object")
+            
+            #col.prop(data=context.scene.render,property="fps",text="Frame Rate") # https://blender.stackexchange.com/questions/317553/how-to-exposure-render-settings-to-addon-panel/317565#317565
             #self.add_layout_gn_prop(layout, context.object.modifiers["Geometry Nodes"], "Socket_2") # https://blender.stackexchange.com/questions/317571/how-can-i-expose-geometry-nodes-properties-in-my-addon-panel/317586
-            col.operator(EXPORT_OT_file_vox.bl_idname, text="Export Button")
+            #col.operator(EXPORT_OT_file_vox.bl_idname, text="Export Button")
 
     def draw_sample_color_picker(self, context, layout):
         ob = context.object
@@ -200,6 +201,7 @@ def register() -> None:
     bpy.utils.register_class(MyPropertyGroup1)
     bpy.utils.register_class(MyPropertyGroup2)
     bpy.utils.register_class(OBJECT_OT_PrepareBake)
+    bpy.utils.register_class(OBJECT_OT_GenerateBakeObject)
     bpy.types.Material.my_slot_setting = bpy.props.PointerProperty(type=MyPropertyGroup2)
     bpy.types.Scene.my_property_group_pointer = bpy.props.PointerProperty(type=MyPropertyGroup1)
     bpy.types.Scene.expanded_options = bpy.props.BoolProperty(default=False)
@@ -214,6 +216,7 @@ def unregister() -> None:
     bpy.utils.unregister_class(MyPropertyGroup1)
     bpy.utils.unregister_class(MyPropertyGroup2)
     bpy.utils.unregister_class(OBJECT_OT_PrepareBake)
+    bpy.utils.unregister_class(OBJECT_OT_GenerateBakeObject)
     del bpy.types.Material.my_slot_setting
     del bpy.types.Scene.expanded_options
     del bpy.types.Scene.my_property_group_pointer

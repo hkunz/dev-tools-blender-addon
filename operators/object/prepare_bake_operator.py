@@ -3,8 +3,8 @@ import bpy
 
 class OBJECT_OT_PrepareBake(bpy.types.Operator):
     """Prepare Object for Baking"""
-    bl_idname = "object.prepare_bake"
-    bl_label = "Prepare Bake"
+    bl_idname = "object.devtools_prepare_bake"
+    bl_label = "DevTools: Prepare Bake"
     bl_options = {'REGISTER', 'UNDO'}
 
     def create_bake_uv_and_select(self, obj, bake_uv):
@@ -99,6 +99,7 @@ class OBJECT_OT_PrepareBake(bpy.types.Operator):
 * Save image in Image > Save Image\n \
 * Duplicate object and remove all uv maps exept 'bake' and rename it to 'UVMap'\n \
 * Remove all materials and create new material and connect Image Texture with baked image")
+        self.report({'INFO'}, " Object ready to bake")
 
     def set_bake_settings(self):
         bpy.context.scene.render.engine = 'CYCLES'

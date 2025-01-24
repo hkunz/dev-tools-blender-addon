@@ -8,6 +8,7 @@ from dev_tools.operators.operator_empty import OBJECT_OT_OperatorEmpty # type: i
 from dev_tools.operators.file.operator_file_vox_exporter import EXPORT_OT_file_vox # type: ignore
 from dev_tools.operators.cache.operator_clear_all_temp_cache import register as register_all_temp_cache_operator, unregister as unregister_all_temp_cache_operator # type: ignore
 from dev_tools.operators.cache.operator_clear_temp_cache import register as register_temp_cache_operator, unregister as unregister_temp_cache_operator # type: ignore
+from dev_tools.operators.object.prepare_bake_operator import OBJECT_OT_PrepareBake
 from dev_tools.utils.utils import Utils # type: ignore
 from dev_tools.utils.object_utils import ObjectUtils # type: ignore
 from dev_tools.utils.icons_manager import IconsManager  # type: ignore
@@ -160,6 +161,7 @@ class OBJECT_PT_my_addon_panel(bpy.types.Panel):
         row.label(text="Export")
         if context.scene.expanded_options:
             col = layout.column()
+            col.operator(OBJECT_OT_PrepareBake.bl_idname, text="Prepare Bake")
             col.prop(data=context.scene.render,property="fps",text="Frame Rate") # https://blender.stackexchange.com/questions/317553/how-to-exposure-render-settings-to-addon-panel/317565#317565
             #self.add_layout_gn_prop(layout, context.object.modifiers["Geometry Nodes"], "Socket_2") # https://blender.stackexchange.com/questions/317571/how-can-i-expose-geometry-nodes-properties-in-my-addon-panel/317586
             col.operator(EXPORT_OT_file_vox.bl_idname, text="Export Button")
@@ -197,6 +199,7 @@ def register() -> None:
     bpy.utils.register_class(OBJECT_PT_my_addon_panel)
     bpy.utils.register_class(MyPropertyGroup1)
     bpy.utils.register_class(MyPropertyGroup2)
+    bpy.utils.register_class(OBJECT_OT_PrepareBake)
     bpy.types.Material.my_slot_setting = bpy.props.PointerProperty(type=MyPropertyGroup2)
     bpy.types.Scene.my_property_group_pointer = bpy.props.PointerProperty(type=MyPropertyGroup1)
     bpy.types.Scene.expanded_options = bpy.props.BoolProperty(default=False)
@@ -210,6 +213,7 @@ def unregister() -> None:
     bpy.utils.unregister_class(OBJECT_PT_my_addon_panel)
     bpy.utils.unregister_class(MyPropertyGroup1)
     bpy.utils.unregister_class(MyPropertyGroup2)
+    bpy.utils.unregister_class(OBJECT_OT_PrepareBake)
     del bpy.types.Material.my_slot_setting
     del bpy.types.Scene.expanded_options
     del bpy.types.Scene.my_property_group_pointer

@@ -1,6 +1,15 @@
 import bpy
 import bmesh
 
+from dev_tools.utils.object_utils import ObjectUtils # type: ignore
+
+# Run operator OBJECT_OT_ArmatureCreateBonesFromEdgeSelection
+# Select Mesh and Armature as active and run operator
+# Now when you animate the mesh (i.e. cloth sim), the armature pose will follow vertices
+# Duplicate Mesh & Armature then select Armature go into Pose mode then Pose > Animation > Bake Action... tick "Visual Keying" & "Clear Constraints"
+# Now you can remove the animations of the mesh (i.e remove cloth sim)
+# Select Mesh and Armature > Ctrl + P > Armature Deform With Automatic Weights
+# Optionally add additional bones and assign vertices (vertex groups must be same name as bone) if you want to pin some vertices
 
 class OBJECT_OT_ArmatureAssignClosestVertexToBoneTails(bpy.types.Operator):
     """Assign Closest Vertex to Armature Bone Tails stored in vertex groups"""
@@ -65,17 +74,21 @@ class OBJECT_OT_ArmatureAssignClosestVertexToBoneTails(bpy.types.Operator):
 
     def execute(self, context):
         if len(context.selected_objects) != 2:
-            self.report({'ERROR'}, "Exactly 2 objects must be selected: one armature and one mesh.")
+            self.report({'WARNING'}, "Selected one Armature and one Mesh object")
             return {'CANCELLED'}
 
         armature_obj = context.view_layer.objects.active
         if armature_obj.type != 'ARMATURE':
-            self.report({'ERROR'}, "Active object must be an armature.")
+            self.report({'WARNING'}, "Active object must be an Armature.")
             return {'CANCELLED'}
 
         mesh_obj = next((obj for obj in context.selected_objects if obj != armature_obj and obj.type == 'MESH'), None)
         if not mesh_obj:
-            self.report({'ERROR'}, "The second selected object must be a mesh.")
+            self.report({'WARNING'}, "The second selected object must be a mesh.")
+            return {'CANCELLED'}
+
+        if not ObjectUtils.check_origin_at_world_origin(context.selected_objects):
+            self.report({'WARNING'}, "Objects must have origin at World Origin")
             return {'CANCELLED'}
 
         bpy.ops.object.mode_set(mode='EDIT')

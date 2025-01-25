@@ -2,16 +2,12 @@ import bpy
 import bmesh
 from collections import defaultdict, deque
 
+from dev_tools.utils.object_utils import ObjectUtils # type: ignore
 
 # Make sure Mesh and Armature both have their Origins at World Origin
 # Select Mesh Objects and go into Edit mode and select Edges where you want create and position bones
-# Run script which automatically executes operator OBJECT_OT_CreateArmatureFromEdges and creates Armature/Bones
-# Select Mesh and Armature as active and run operator OBJECT_OT_AssignClosestVertexToBoneTails
-# Now when you animate the mesh (i.e. cloth sim), the armature pose will follow vertices
-# Duplicate Mesh & Armature then select Armature go into Pose mode then Pose > Animation > Bake Action... tick "Visual Keying" & "Clear Constraints"
-# Now you can remove the animations of the mesh (i.e remove cloth sim)
-# Select Mesh and Armature > Ctrl + P > Armature Deform With Automatic Weights
-# Optionally add additional bones and assign vertices (vertex groups must be same name as bone) if you want to pin some vertices
+# Run operator which creates Armature/Bones exactly on selected edges
+# Run operator OBJECT_OT_ArmatureAssignClosestVertexToBoneTails
 
 class OBJECT_OT_ArmatureCreateBonesFromEdgeSelection(bpy.types.Operator):
     """
@@ -23,6 +19,7 @@ class OBJECT_OT_ArmatureCreateBonesFromEdgeSelection(bpy.types.Operator):
 
     def execute(self, context):
         obj = context.object
+        bpy.ops.mesh.select_mode(type='EDGE')
 
         if obj.mode != 'EDIT' or obj.type != 'MESH':
             self.report({'ERROR'}, "Object must be a mesh in edit mode.")
@@ -54,9 +51,8 @@ class OBJECT_OT_ArmatureCreateBonesFromEdgeSelection(bpy.types.Operator):
     def get_vertex_islands(self, obj):
         bm = bmesh.from_edit_mesh(obj.data)
         selected_verts = [v for v in bm.verts if v.select]
-
-        if not selected_verts:
-            self.report({'WARNING'}, "No vertices selected.")
+        if not ObjectUtils.get_selected_edges(obj):
+            self.report({'WARNING'}, "No selected edges detected")
             return []
 
         visited = set()

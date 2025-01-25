@@ -223,3 +223,22 @@ class ObjectUtils:
     def get_modifier_prop_name(modifier, prop_id): # modifier = context.object.modifiers[modifier_name]
         tree = modifier.node_group.interface.items_tree if bpy.app.version >= (4,0,0) else modifier.node_group.inputs
         return next(rna.name for rna in tree if rna.identifier == prop_id) # prop_id ex: "Socket_2"
+
+    @staticmethod
+    def check_origin_at_world_origin(objects, tolerance=0.0001):
+        success = True
+        for obj in objects:
+            obj_origin = obj.matrix_world.translation
+            if all(abs(coord) < tolerance for coord in obj_origin):
+                print(f"{obj.name} has its origin at the world origin.")
+            else:
+                print(f"{obj.name} does not have its origin at the world origin. Origin is at {obj_origin}.")
+                success = False
+        return success
+    
+    import bpy
+
+    def get_selected_edges(obj):
+        bpy.ops.mesh.select_mode(type='EDGE')
+        selected_edges = [edge for edge in obj.data.edges if edge.select]
+        return selected_edges

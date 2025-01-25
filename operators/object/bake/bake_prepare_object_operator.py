@@ -94,11 +94,10 @@ class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
         bpy.ops.mesh.select_all(action='SELECT')
         bpy.ops.uv.select_all(action='SELECT')
         bpy.ops.uv.pack_islands()
-        self.report({'INFO'}, " Packed UV Islands. Check results in UV Editor.\n \
+        self.report({'INFO'}, "Packed UV Islands. Check results in UV Editor.\n \
 * Make island size adjustments if needed then repeat UV > Pack Islands.\n \
-* Then click 'Bake' under 'Render Properties'.\n \
-* Save image in Image > Save Image\n \
-* Click 'Generate Bake Object'")
+* Configure baking properties in Render Properties > Bake\n \
+* Click 'Generate Bake Object' to bake and duplicate object (that will get setup with bake material)")
         self.report({'INFO'}, " Object ready to bake")
 
     def set_bake_settings(self):

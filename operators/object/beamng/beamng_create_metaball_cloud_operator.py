@@ -35,9 +35,9 @@ def create_capsule(radius):
     capsule = bpy.context.object
     capsule.scale = (radius, radius, radius)
 
-class OBJECT_OT_CreateMetaBallCloud(bpy.types.Operator):
+class OBJECT_OT_BeamngCreateMetaBallCloud(bpy.types.Operator):
     """Create a customizable MetaBall cloud with a capsule"""
-    bl_idname = "object.create_metalball_cloud"
+    bl_idname = "object.beamng_create_metalball_cloud"
     bl_label = "Create MetaBall Cloud"
     bl_options = {'REGISTER', 'UNDO'}
 

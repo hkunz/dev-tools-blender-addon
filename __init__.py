@@ -51,22 +51,22 @@ from dev_tools.translation.translations import register as register_translations
 from dev_tools.ui.sidebar_menu import register as register_devtools_panel, unregister as unregister_devtools_panel # type: ignore
 from dev_tools.operators.common.operator_generic_popup import register as register_generic_popup, unregister as unregister_generic_popup # type: ignore
 
-from dev_tools.operators.object.armature.armature_create_bones_random_vertices_operator import OBJECT_OT_CreateBonesRandomVertices # type: ignore
+from dev_tools.operators.object.armature.armature_create_bones_random_vertices_operator import OBJECT_OT_ArmatureCreateBonesRandomVertices # type: ignore
 from dev_tools.operators.object.armature.armature_create_bones_from_edge_selection_operator import OBJECT_OT_ArmatureCreateBonesFromEdgeSelection # type: ignore
 from dev_tools.operators.object.armature.armature_assign_closest_vertex_to_bone_tails_operator import OBJECT_OT_ArmatureAssignClosestVertexToBoneTails # type: ignore
 from dev_tools.operators.object.bake.bake_prepare_object_operator import OBJECT_OT_BakePrepareObject # type: ignore
 from dev_tools.operators.object.bake.bake_generate_object_operator import OBJECT_OT_BakeGenerateObject # type: ignore
 from dev_tools.operators.object.beamng.beamng_create_empties_base_operator import OBJECT_OT_BeamngCreateEmptiesBase # type: ignore
-from dev_tools.operators.object.beamng.beamng_create_metaball_cloud_operator import OBJECT_OT_CreateMetaBallCloud # type: ignore
+from dev_tools.operators.object.beamng.beamng_create_metaball_cloud_operator import OBJECT_OT_BeamngCreateMetaBallCloud # type: ignore
 
 DEVTOOLS_CLASSES = [
-    OBJECT_OT_CreateBonesRandomVertices,
+    OBJECT_OT_ArmatureCreateBonesRandomVertices,
     OBJECT_OT_ArmatureAssignClosestVertexToBoneTails,
     OBJECT_OT_ArmatureCreateBonesFromEdgeSelection,
     OBJECT_OT_BakePrepareObject,
     OBJECT_OT_BakeGenerateObject,
     OBJECT_OT_BeamngCreateEmptiesBase,
-    OBJECT_OT_CreateMetaBallCloud
+    OBJECT_OT_BeamngCreateMetaBallCloud
 ]
 
 def add_executable_permission(exe: Union[str, Path]) -> Path: #https://blender.stackexchange.com/questions/310144/mac-executable-binary-within-DevTools addon-zip-loses-execute-permission-when-DevTools addon-zip

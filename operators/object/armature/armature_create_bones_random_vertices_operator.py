@@ -1,7 +1,7 @@
 import bpy
 import random
 
-class OBJECT_OT_CreateBonesRandomVertices(bpy.types.Operator):
+class OBJECT_OT_ArmatureCreateBonesRandomVertices(bpy.types.Operator):
     """Create bones pointing to random vertices of the selected mesh object"""
     bl_idname = "object.devtools_armature_create_bones_random_vertices"
     bl_label = "DevTools: Create Bones Pointing to Random Vertices"
@@ -23,7 +23,7 @@ class OBJECT_OT_CreateBonesRandomVertices(bpy.types.Operator):
     seed: bpy.props.IntProperty(
         name="Random Seed",
         description="Seed for random number generation",
-        default=1,
+        default=42,
         min=0
     )  # type: ignore
 
@@ -33,8 +33,7 @@ class OBJECT_OT_CreateBonesRandomVertices(bpy.types.Operator):
         if not mesh_object or mesh_object.type != 'MESH':
             self.report({'ERROR'}, "A valid mesh object must be selected.")
             return {'CANCELLED'}
-        
-        bpy.ops.object.mode_set(mode='OBJECT')
+
         mesh = mesh_object.data
         mesh_vertices = [v.co for v in mesh.vertices]
 
@@ -50,8 +49,14 @@ class OBJECT_OT_CreateBonesRandomVertices(bpy.types.Operator):
         bpy.ops.object.mode_set(mode='EDIT')
         edit_bones = armature.data.edit_bones
 
+        if len(edit_bones) > 0:
+            default_bone = edit_bones[0]
+            edit_bones.remove(default_bone)
+
+        random.shuffle(mesh_vertices)
+
         for i in range(self.num_bones):
-            random_vertex = random.choice(mesh_vertices)
+            random_vertex = mesh_vertices[i]
             bone_name = f"Bone_{i+1}"
             bone = edit_bones.new(bone_name)
             bone.head = (0, 0, 0)
@@ -62,10 +67,10 @@ class OBJECT_OT_CreateBonesRandomVertices(bpy.types.Operator):
         mesh_object.select_set(True)
         context.view_layer.objects.active = armature
         bpy.ops.object.parent_set(type='ARMATURE_NAME')
-        
+
         self.report({'INFO'}, f"Created armature '{self.armature_name}' with {self.num_bones} bones pointing to random vertices.")
         return {'FINISHED'}
 
     @classmethod
     def poll(cls, context):
-        return context.object and context.object.type == 'MESH'
+        return True #return context.object and context.object.type == 'MESH'

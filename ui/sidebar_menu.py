@@ -4,13 +4,13 @@ import bpy_types
 from typing import List, Tuple
 from bpy.app.handlers import persistent
 
-from dev_tools.operators.object.armature.armature_create_bones_random_vertices_operator import OBJECT_OT_CreateBonesRandomVertices # type: ignore
+from dev_tools.operators.object.armature.armature_create_bones_random_vertices_operator import OBJECT_OT_ArmatureCreateBonesRandomVertices # type: ignore
 from dev_tools.operators.object.armature.armature_create_bones_from_edge_selection_operator import OBJECT_OT_ArmatureCreateBonesFromEdgeSelection # type: ignore
 from dev_tools.operators.object.armature.armature_assign_closest_vertex_to_bone_tails_operator import OBJECT_OT_ArmatureAssignClosestVertexToBoneTails # type: ignore
 from dev_tools.operators.object.bake.bake_prepare_object_operator import OBJECT_OT_BakePrepareObject # type: ignore
 from dev_tools.operators.object.bake.bake_generate_object_operator import OBJECT_OT_BakeGenerateObject # type: ignore
 from dev_tools.operators.object.beamng.beamng_create_empties_base_operator import OBJECT_OT_BeamngCreateEmptiesBase # type: ignore
-from dev_tools.operators.object.beamng.beamng_create_metaball_cloud_operator import OBJECT_OT_CreateMetaBallCloud # type: ignore
+from dev_tools.operators.object.beamng.beamng_create_metaball_cloud_operator import OBJECT_OT_BeamngCreateMetaBallCloud # type: ignore
 from dev_tools.utils.utils import Utils # type: ignore
 from dev_tools.utils.object_utils import ObjectUtils # type: ignore
 from dev_tools.utils.icons_manager import IconsManager  # type: ignore
@@ -165,7 +165,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
         if context.scene.expanded_armature_options:
             col = layout.column()
             row = col.row()
-            col.operator(OBJECT_OT_CreateBonesRandomVertices.bl_idname, text="Create Bones Random Vertices")
+            col.operator(OBJECT_OT_ArmatureCreateBonesRandomVertices.bl_idname, text="Create Bones Random Vertices")
             col.operator(OBJECT_OT_ArmatureCreateBonesFromEdgeSelection.bl_idname, text="Create Edge Bones")
             col.operator(OBJECT_OT_ArmatureAssignClosestVertexToBoneTails.bl_idname, text="Assign Vertex to Bone Tails")
 
@@ -182,7 +182,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             col = layout.column()
             row = col.row()
             col.operator(OBJECT_OT_BeamngCreateEmptiesBase.bl_idname, text="Create BeamNG Empties")
-            col.operator(OBJECT_OT_CreateMetaBallCloud.bl_idname, text="Create MetaBall Cloud")
+            col.operator(OBJECT_OT_BeamngCreateMetaBallCloud.bl_idname, text="Create MetaBall Cloud")
 
     def draw_expanded_bake_options(self, context, layout):
         ebox = layout.box()

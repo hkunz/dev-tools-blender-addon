@@ -72,3 +72,7 @@ class OBJECT_OT_BakeGenerateObject(bpy.types.Operator):
         self.report({'INFO'}, "Baked Object Ready")
 
         return {'FINISHED'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.object and context.object.type == 'MESH'

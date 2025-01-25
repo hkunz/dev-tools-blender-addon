@@ -110,8 +110,8 @@ class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
     def execute(self, context):
         obj = context.active_object
 
-        if obj not in context.selected_objects or len(context.selected_objects) > 1:
-            self.report({'WARNING'}, "Please select one active object")
+        if obj not in context.selected_objects or len(context.selected_objects) > 1 or obj.type != 'MESH':
+            self.report({'WARNING'}, "Please select one active mesh object")
             return {'CANCELLED'}
 
         properties = context.scene.my_property_group_pointer
@@ -135,3 +135,7 @@ class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
         self.set_bake_settings()
 
         return {'FINISHED'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.object and context.object.type == 'MESH'

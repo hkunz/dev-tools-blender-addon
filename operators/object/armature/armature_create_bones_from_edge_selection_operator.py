@@ -13,13 +13,12 @@ class OBJECT_OT_ArmatureCreateBonesFromEdgeSelection(bpy.types.Operator):
     """
     Create an armature with bones based on selected edges and vertices.
     """
-    bl_idname = "object.armature_create_bones_from_edge_selection"
-    bl_label = "Create Armature Bones from Edge Selection"
+    bl_idname = "object.devtools_armature_create_bones_from_edge_selection"
+    bl_label = "DevTools: Create Armature Bones from Edge Selection"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
         obj = context.object
-        bpy.ops.mesh.select_mode(type='EDGE')
 
         if obj.mode != 'EDIT' or obj.type != 'MESH':
             self.report({'ERROR'}, "Object must be a mesh in edit mode.")
@@ -27,6 +26,7 @@ class OBJECT_OT_ArmatureCreateBonesFromEdgeSelection(bpy.types.Operator):
 
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_mode(type='EDGE')
 
         islands = self.get_vertex_islands(obj)
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -131,3 +131,7 @@ class OBJECT_OT_ArmatureCreateBonesFromEdgeSelection(bpy.types.Operator):
                     bone.use_connect = True
 
                 bones[vertex] = bone
+
+    @classmethod
+    def poll(cls, context):
+        return context.object and context.object.type == 'MESH'

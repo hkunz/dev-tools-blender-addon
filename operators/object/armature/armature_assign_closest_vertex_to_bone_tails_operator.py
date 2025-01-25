@@ -13,8 +13,8 @@ from dev_tools.utils.object_utils import ObjectUtils # type: ignore
 
 class OBJECT_OT_ArmatureAssignClosestVertexToBoneTails(bpy.types.Operator):
     """Assign Closest Vertex to Armature Bone Tails stored in vertex groups"""
-    bl_idname = "object.armature_assign_closest_vertex_to_bone_tails"
-    bl_label = "Assign Closest Vertex to Armature Bone Tails"
+    bl_idname = "object.devtools_armature_assign_closest_vertex_to_bone_tails"
+    bl_label = "DevTools: Assign Closest Vertex to Armature Bone Tails"
 
     @staticmethod
     def find_closest_vertex_to_bone(mesh_obj, position):
@@ -109,3 +109,7 @@ class OBJECT_OT_ArmatureAssignClosestVertexToBoneTails(bpy.types.Operator):
         context.view_layer.objects.active = armature_obj
         
         return {'FINISHED'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.object and context.object.type == 'MESH'

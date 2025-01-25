@@ -4,6 +4,7 @@ import bpy_types
 from typing import List, Tuple
 from bpy.app.handlers import persistent
 
+from dev_tools.operators.object.armature.armature_create_bones_random_vertices_operator import OBJECT_OT_CreateBonesRandomVertices # type: ignore
 from dev_tools.operators.object.armature.armature_create_bones_from_edge_selection_operator import OBJECT_OT_ArmatureCreateBonesFromEdgeSelection # type: ignore
 from dev_tools.operators.object.armature.armature_assign_closest_vertex_to_bone_tails_operator import OBJECT_OT_ArmatureAssignClosestVertexToBoneTails # type: ignore
 from dev_tools.operators.object.bake.bake_prepare_object_operator import OBJECT_OT_BakePrepareObject # type: ignore
@@ -161,6 +162,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
         if context.scene.expanded_armature_options:
             col = layout.column()
             row = col.row()
+            col.operator(OBJECT_OT_CreateBonesRandomVertices.bl_idname, text="Create Bones Random Vertices")
             col.operator(OBJECT_OT_ArmatureCreateBonesFromEdgeSelection.bl_idname, text="Create Edge Bones")
             col.operator(OBJECT_OT_ArmatureAssignClosestVertexToBoneTails.bl_idname, text="Assign Vertex to Bone Tails")
 

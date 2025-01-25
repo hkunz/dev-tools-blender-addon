@@ -4,10 +4,6 @@ import bpy_types
 from typing import List, Tuple
 from bpy.app.handlers import persistent
 
-from dev_tools.operators.operator_empty import OBJECT_OT_OperatorEmpty # type: ignore
-from dev_tools.operators.file.operator_file_vox_exporter import EXPORT_OT_file_vox # type: ignore
-from dev_tools.operators.cache.operator_clear_all_temp_cache import register as register_all_temp_cache_operator, unregister as unregister_all_temp_cache_operator # type: ignore
-from dev_tools.operators.cache.operator_clear_temp_cache import register as register_temp_cache_operator, unregister as unregister_temp_cache_operator # type: ignore
 from dev_tools.operators.object.prepare_bake_operator import OBJECT_OT_PrepareBake # type: ignore
 from dev_tools.operators.object.generate_bake_object_operator import OBJECT_OT_GenerateBakeObject # type: ignore
 from dev_tools.utils.utils import Utils # type: ignore
@@ -108,8 +104,8 @@ class MyPropertyGroup2(bpy.types.PropertyGroup):
         update = my_sample_update_rgb_nodes
     ) # type: ignore
 
-class OBJECT_PT_my_addon_panel(bpy.types.Panel):
-    bl_idname = "OBJECT_PT_my_addon_panel"
+class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_devtools_addon_panel"
     bl_label = f"Dev Tools {Utils.get_addon_version()}"
     #use these 3 lines if you want the addon to be under a tab within N-Panel
     bl_space_type = 'VIEW_3D'
@@ -197,31 +193,19 @@ class OBJECT_PT_my_addon_panel(bpy.types.Panel):
         return True
 
 def register() -> None:
-    bpy.utils.register_class(OBJECT_PT_my_addon_panel)
+    bpy.utils.register_class(OBJECT_PT_devtools_addon_panel)
     bpy.utils.register_class(MyPropertyGroup1)
     bpy.utils.register_class(MyPropertyGroup2)
-    bpy.utils.register_class(OBJECT_OT_PrepareBake)
-    bpy.utils.register_class(OBJECT_OT_GenerateBakeObject)
     bpy.types.Material.my_slot_setting = bpy.props.PointerProperty(type=MyPropertyGroup2)
     bpy.types.Scene.my_property_group_pointer = bpy.props.PointerProperty(type=MyPropertyGroup1)
     bpy.types.Scene.expanded_options = bpy.props.BoolProperty(default=False)
-    bpy.utils.register_class(OBJECT_OT_OperatorEmpty)
-    bpy.utils.register_class(EXPORT_OT_file_vox) # sample file export operator resulting in open dialog
-    register_temp_cache_operator()
-    register_all_temp_cache_operator()
     bpy.app.handlers.depsgraph_update_post.append(on_depsgraph_update)
 
 def unregister() -> None:
-    bpy.utils.unregister_class(OBJECT_PT_my_addon_panel)
+    bpy.utils.unregister_class(OBJECT_PT_devtools_addon_panel)
     bpy.utils.unregister_class(MyPropertyGroup1)
     bpy.utils.unregister_class(MyPropertyGroup2)
-    bpy.utils.unregister_class(OBJECT_OT_PrepareBake)
-    bpy.utils.unregister_class(OBJECT_OT_GenerateBakeObject)
     del bpy.types.Material.my_slot_setting
     del bpy.types.Scene.expanded_options
     del bpy.types.Scene.my_property_group_pointer
-    bpy.utils.unregister_class(OBJECT_OT_OperatorEmpty)
-    bpy.utils.unregister_class(EXPORT_OT_file_vox)
-    unregister_temp_cache_operator()
-    unregister_all_temp_cache_operator()
     bpy.app.handlers.depsgraph_update_post.clear()

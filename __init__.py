@@ -48,10 +48,18 @@ from dev_tools.utils.file_utils import FileUtils # type: ignore
 from dev_tools.utils.temp_file_manager import TempFileManager # type: ignore
 from dev_tools.utils.icons_manager import IconsManager # type: ignore
 from dev_tools.translation.translations import register as register_translations, unregister as unregister_translations # type: ignore
-from dev_tools.ui.sidebar_menu import register as register_sidebar_menu, unregister as unregister_sidebar_menu # type: ignore
+from dev_tools.ui.sidebar_menu import OBJECT_PT_devtools_addon_panel, register as register_devtools_panel, unregister as unregister_devtools_panel # type: ignore
 from dev_tools.operators.common.operator_generic_popup import register as register_generic_popup, unregister as unregister_generic_popup # type: ignore
 
-def add_executable_permission(exe: Union[str, Path]) -> Path: #https://blender.stackexchange.com/questions/310144/mac-executable-binary-within-addon-zip-loses-execute-permission-when-addon-zip
+from dev_tools.operators.object.prepare_bake_operator import OBJECT_OT_PrepareBake # type: ignore
+from dev_tools.operators.object.generate_bake_object_operator import OBJECT_OT_GenerateBakeObject # type: ignore
+
+DEVTOOLS_CLASSES = [
+    OBJECT_OT_PrepareBake,
+    OBJECT_OT_GenerateBakeObject
+]
+
+def add_executable_permission(exe: Union[str, Path]) -> Path: #https://blender.stackexchange.com/questions/310144/mac-executable-binary-within-DevTools addon-zip-loses-execute-permission-when-DevTools addon-zip
     app = Path(f"{exe}")
     print("Using voxconvert:", app, f"({FileUtils.get_file_size(app)})")
     app.chmod(app.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
@@ -59,28 +67,36 @@ def add_executable_permission(exe: Union[str, Path]) -> Path: #https://blender.s
 
 @persistent
 def on_application_load(a, b):
-    print("Application load post handler ==============>", a, b)
-    #check_addon_compatibility() # check compatibility of addon and its settings if opened in another blender version
+    print("DevTools application load post handler ==============>", a, b)
+    #check_DevTools addon_compatibility() # check compatibility of DevTools addon and its settings if opened in another blender version
 
 def register() -> None:
-    print("Addon Registration Begin ==============>")
+    print("DevTools addon Registration Begin ==============>")
     #add_executable_permission(FileUtils.get_executable_filepath())
+
+    for cls in DEVTOOLS_CLASSES:
+        bpy.utils.register_class(cls)
+
+    register_devtools_panel()
     register_preferences()
     register_translations()
-    register_sidebar_menu()
     register_generic_popup()
     TempFileManager().init()
     IconsManager().init()
     bpy.app.handlers.load_post.append(on_application_load)
-    print("Addon Registration Complete <==========\n")
+    print("DevTools addon Registration Complete <==========\n")
 
 def unregister() -> None:
-    print("Addon Unregistration Begin ============>")
+    print("DevTools addon Unregistration Begin ============>")
+    unregister_devtools_panel()
     unregister_preferences()
     unregister_translations()
-    unregister_sidebar_menu()
     unregister_generic_popup()
     TempFileManager().cleanup()
     IconsManager().cleanup()
+
+    for cls in reversed(DEVTOOLS_CLASSES):
+        bpy.utils.unregister_class(cls)
+
     bpy.app.handlers.load_post.clear()
-    print("Addon Unregistration Complete <========\n")
+    print("DevTools addon Unregistration Complete <========\n")

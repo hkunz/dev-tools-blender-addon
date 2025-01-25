@@ -9,6 +9,7 @@ from dev_tools.operators.object.armature.armature_create_bones_from_edge_selecti
 from dev_tools.operators.object.armature.armature_assign_closest_vertex_to_bone_tails_operator import OBJECT_OT_ArmatureAssignClosestVertexToBoneTails # type: ignore
 from dev_tools.operators.object.bake.bake_prepare_object_operator import OBJECT_OT_BakePrepareObject # type: ignore
 from dev_tools.operators.object.bake.bake_generate_object_operator import OBJECT_OT_BakeGenerateObject # type: ignore
+from dev_tools.operators.object.beamng.beamng_create_empties_base_operator import OBJECT_OT_BeamngCreateEmptiesBase # type: ignore
 from dev_tools.utils.utils import Utils # type: ignore
 from dev_tools.utils.object_utils import ObjectUtils # type: ignore
 from dev_tools.utils.icons_manager import IconsManager  # type: ignore
@@ -136,6 +137,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
         # self.draw_sample_modifier_exposed_props(context, layout, "GeometryNodes")
         self.draw_expanded_armature_options(context, layout)
         self.draw_expanded_bake_options(context, layout)
+        self.draw_expanded_beamng_options(context, layout)
         # self.draw_sample_color_picker(context, layout)
 
     def draw_sample_modifier_exposed_props(self, context, layout, md_name = "GeometryNodes"):
@@ -165,6 +167,20 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             col.operator(OBJECT_OT_CreateBonesRandomVertices.bl_idname, text="Create Bones Random Vertices")
             col.operator(OBJECT_OT_ArmatureCreateBonesFromEdgeSelection.bl_idname, text="Create Edge Bones")
             col.operator(OBJECT_OT_ArmatureAssignClosestVertexToBoneTails.bl_idname, text="Assign Vertex to Bone Tails")
+
+    def draw_expanded_beamng_options(self, context, layout):
+        ebox = layout.box()
+        row = ebox.box().row()
+        row.prop(
+            context.scene, "expanded_beamng_options",
+            icon=IconsManager.BUILTIN_ICON_DOWN if context.scene.expanded_beamng_options else IconsManager.BUILTIN_ICON_RIGHT,
+            icon_only=True, emboss=False
+        )
+        row.label(text="BeamNG Options")
+        if context.scene.expanded_beamng_options:
+            col = layout.column()
+            row = col.row()
+            col.operator(OBJECT_OT_BeamngCreateEmptiesBase.bl_idname, text="Create BeamNG Empties")
 
     def draw_expanded_bake_options(self, context, layout):
         ebox = layout.box()
@@ -224,6 +240,7 @@ def register() -> None:
     bpy.types.Scene.my_property_group_pointer = bpy.props.PointerProperty(type=MyPropertyGroup1)
     bpy.types.Scene.expanded_armature_options = bpy.props.BoolProperty(default=False)
     bpy.types.Scene.expanded_bake_options = bpy.props.BoolProperty(default=False)
+    bpy.types.Scene.expanded_beamng_options = bpy.props.BoolProperty(default=False)
     bpy.app.handlers.depsgraph_update_post.append(on_depsgraph_update)
 
 def unregister() -> None:
@@ -233,5 +250,6 @@ def unregister() -> None:
     del bpy.types.Material.my_slot_setting
     del bpy.types.Scene.expanded_armature_options
     del bpy.types.Scene.expanded_bake_options
+    del bpy.types.Scene.expanded_beamng_options
     del bpy.types.Scene.my_property_group_pointer
     bpy.app.handlers.depsgraph_update_post.clear()

@@ -10,6 +10,7 @@ from dev_tools.operators.object.armature.armature_assign_closest_vertex_to_bone_
 from dev_tools.operators.object.bake.bake_prepare_object_operator import OBJECT_OT_BakePrepareObject # type: ignore
 from dev_tools.operators.object.bake.bake_generate_object_operator import OBJECT_OT_BakeGenerateObject # type: ignore
 from dev_tools.operators.object.beamng.beamng_create_empties_base_operator import OBJECT_OT_BeamngCreateEmptiesBase # type: ignore
+from dev_tools.operators.object.beamng.beamng_create_metaball_cloud_operator import OBJECT_OT_CreateMetaBallCloud # type: ignore
 from dev_tools.utils.utils import Utils # type: ignore
 from dev_tools.utils.object_utils import ObjectUtils # type: ignore
 from dev_tools.utils.icons_manager import IconsManager  # type: ignore
@@ -181,6 +182,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             col = layout.column()
             row = col.row()
             col.operator(OBJECT_OT_BeamngCreateEmptiesBase.bl_idname, text="Create BeamNG Empties")
+            col.operator(OBJECT_OT_CreateMetaBallCloud.bl_idname, text="Create MetaBall Cloud")
 
     def draw_expanded_bake_options(self, context, layout):
         ebox = layout.box()

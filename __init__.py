@@ -57,7 +57,7 @@ from dev_tools.operators.object.armature.armature_assign_closest_vertex_to_bone_
 from dev_tools.operators.object.bake.bake_prepare_object_operator import OBJECT_OT_BakePrepareObject # type: ignore
 from dev_tools.operators.object.bake.bake_generate_object_operator import OBJECT_OT_BakeGenerateObject # type: ignore
 from dev_tools.operators.object.beamng.beamng_create_empties_base_operator import OBJECT_OT_BeamngCreateEmptiesBase # type: ignore
-
+from dev_tools.operators.object.beamng.beamng_create_metaball_cloud_operator import OBJECT_OT_CreateMetaBallCloud # type: ignore
 
 DEVTOOLS_CLASSES = [
     OBJECT_OT_CreateBonesRandomVertices,
@@ -65,7 +65,8 @@ DEVTOOLS_CLASSES = [
     OBJECT_OT_ArmatureCreateBonesFromEdgeSelection,
     OBJECT_OT_BakePrepareObject,
     OBJECT_OT_BakeGenerateObject,
-    OBJECT_OT_BeamngCreateEmptiesBase
+    OBJECT_OT_BeamngCreateEmptiesBase,
+    OBJECT_OT_CreateMetaBallCloud
 ]
 
 def add_executable_permission(exe: Union[str, Path]) -> Path: #https://blender.stackexchange.com/questions/310144/mac-executable-binary-within-DevTools addon-zip-loses-execute-permission-when-DevTools addon-zip

@@ -4,8 +4,8 @@ import bpy_types
 from typing import List, Tuple
 from bpy.app.handlers import persistent
 
-from dev_tools.operators.object.prepare_bake_operator import OBJECT_OT_PrepareBake # type: ignore
-from dev_tools.operators.object.generate_bake_object_operator import OBJECT_OT_GenerateBakeObject # type: ignore
+from dev_tools.operators.object.bake.bake_prepare_object_operator import OBJECT_OT_BakePrepareObject # type: ignore
+from dev_tools.operators.object.bake.bake_generate_object_operator import OBJECT_OT_BakeGenerateObject # type: ignore
 from dev_tools.utils.utils import Utils # type: ignore
 from dev_tools.utils.object_utils import ObjectUtils # type: ignore
 from dev_tools.utils.icons_manager import IconsManager  # type: ignore
@@ -159,7 +159,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
         if context.scene.expanded_armature_options:
             col = layout.column()
             row = col.row()
-            col.operator(OBJECT_OT_PrepareBake.bl_idname, text="Armature Test")
+            col.operator(OBJECT_OT_BakeGenerateObject.bl_idname, text="Armature Test")
 
     def draw_expanded_bake_options(self, context, layout):
         ebox = layout.box()
@@ -175,8 +175,8 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             row = col.row()
             properties: MyPropertyGroup1 = context.scene.my_property_group_pointer
             col.prop(properties, "bake_image_resolution", text="")
-            col.operator(OBJECT_OT_PrepareBake.bl_idname, text="Prepare Bake")
-            col.operator(OBJECT_OT_GenerateBakeObject.bl_idname, text="Generate Bake Object")
+            col.operator(OBJECT_OT_BakePrepareObject.bl_idname, text="Prepare Bake")
+            col.operator(OBJECT_OT_BakeGenerateObject.bl_idname, text="Generate Bake Object")
             
             #col.prop(data=context.scene.render,property="fps",text="Frame Rate") # https://blender.stackexchange.com/questions/317553/how-to-exposure-render-settings-to-addon-panel/317565#317565
             #self.add_layout_gn_prop(layout, context.object.modifiers["Geometry Nodes"], "Socket_2") # https://blender.stackexchange.com/questions/317571/how-can-i-expose-geometry-nodes-properties-in-my-addon-panel/317586

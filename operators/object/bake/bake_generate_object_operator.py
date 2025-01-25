@@ -1,8 +1,8 @@
 import bpy
 
-class OBJECT_OT_GenerateBakeObject(bpy.types.Operator):
-    """Duplicate object, clean up materials and UV maps, and create a new material with BakeImage"""
-    bl_idname = "object.devtools_generate_baked_object"
+class OBJECT_OT_BakeGenerateObject(bpy.types.Operator):
+    """Bake then Duplicate object, clean up materials and UV maps, and create a new material with BakeImage"""
+    bl_idname = "object.devtools_bake_generate_object"
     bl_label = "DevTools: Generate Baked Object"
 
     def execute(self, context):

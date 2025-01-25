@@ -51,12 +51,12 @@ from dev_tools.translation.translations import register as register_translations
 from dev_tools.ui.sidebar_menu import register as register_devtools_panel, unregister as unregister_devtools_panel # type: ignore
 from dev_tools.operators.common.operator_generic_popup import register as register_generic_popup, unregister as unregister_generic_popup # type: ignore
 
-from dev_tools.operators.object.prepare_bake_operator import OBJECT_OT_PrepareBake # type: ignore
-from dev_tools.operators.object.generate_bake_object_operator import OBJECT_OT_GenerateBakeObject # type: ignore
+from dev_tools.operators.object.bake.bake_prepare_object_operator import OBJECT_OT_BakePrepareObject # type: ignore
+from dev_tools.operators.object.bake.bake_generate_object_operator import OBJECT_OT_BakeGenerateObject # type: ignore
 
 DEVTOOLS_CLASSES = [
-    OBJECT_OT_PrepareBake,
-    OBJECT_OT_GenerateBakeObject
+    OBJECT_OT_BakePrepareObject,
+    OBJECT_OT_BakeGenerateObject
 ]
 
 def add_executable_permission(exe: Union[str, Path]) -> Path: #https://blender.stackexchange.com/questions/310144/mac-executable-binary-within-DevTools addon-zip-loses-execute-permission-when-DevTools addon-zip

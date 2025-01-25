@@ -2,9 +2,9 @@ import bpy
 
 from dev_tools.utils.utils import Utils # type: ignore
 
-class OBJECT_OT_PrepareBake(bpy.types.Operator):
+class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
     """Prepare Object for Baking"""
-    bl_idname = "object.devtools_prepare_bake"
+    bl_idname = "object.devtools_bake_prepare_object"
     bl_label = "DevTools: Prepare Bake"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -98,8 +98,7 @@ class OBJECT_OT_PrepareBake(bpy.types.Operator):
 * Make island size adjustments if needed then repeat UV > Pack Islands.\n \
 * Then click 'Bake' under 'Render Properties'.\n \
 * Save image in Image > Save Image\n \
-* Duplicate object and remove all uv maps exept 'bake' and rename it to 'UVMap'\n \
-* Remove all materials and create new material and connect Image Texture with baked image")
+* Click 'Generate Bake Object'")
         self.report({'INFO'}, " Object ready to bake")
 
     def set_bake_settings(self):

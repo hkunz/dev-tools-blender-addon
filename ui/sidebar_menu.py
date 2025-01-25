@@ -34,13 +34,14 @@ def on_depsgraph_update(scene, depsgraph=None):
     properties: MyPropertyGroup1 = context.scene.my_property_group_pointer # type: ignore
     check_object_selection_change(context, properties, obj)
 
-def my_sample_settings_callback(self: bpy.types.Scene, context: bpy_types.Context) -> List[Tuple[str, str, str]]:
-    SAMPLE_LIST: List[Tuple[str, str, str]] = [
-        ("NONE", "None", "Item Description"),
-        ("OPT1", "Option 1", "Item Description for Option 1"),
-        ("OPT2", "Option 2", "Item Description for Option 2"),
+def get_bake_image_resolutions(self: bpy.types.Scene, context: bpy_types.Context) -> List[Tuple[str, str, str]]:
+    dimensions: List[Tuple[str, str, str]] = [
+        ("ONE_K", "1024 x 1024", "1k Ideal for small textures or low-resolution objects."),
+        ("TWO_K", "2048 x 2048", "2k Standard resolution for most objects and characters."),
+        ("FOUR_K", "4096 x 4096", "4k High resolution for detailed textures or close-ups."),
+        ("EIGHT_K", "8192 x 8192", "8k Extremely high resolution for very detailed textures."),
     ]
-    return SAMPLE_LIST
+    return dimensions
 
 def my_sample_update_rgb_nodes(self, context):
     mat = self.id_data
@@ -56,11 +57,11 @@ def check_object_selection_change(context, properties, obj):
 
 class MyPropertyGroup1(bpy.types.PropertyGroup):
 
-    my_enum_prop: bpy.props.EnumProperty(
-        name="My Enum Prop",
-        description="My enum prop description",
-        items=my_sample_settings_callback,
-        #default="NONE", # cannot set a default when using dynamic EnumProperty
+    bake_image_resolution: bpy.props.EnumProperty(
+        name="Bake Image Resolution",
+        description="Bake Image Resolution",
+        items=get_bake_image_resolutions,
+        #default="FOUR_K", # cannot set a default when using dynamic EnumProperty
     ) # type: ignore https://blender.stackexchange.com/questions/311578/how-do-you-correctly-add-ui-elements-to-adhere-to-the-typing-spec/311770#311770
 
     my_bool_prop: bpy.props.BoolProperty(
@@ -121,16 +122,17 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
         selected_mesh_objects = [obj for obj in context.selected_objects if obj.type == 'MESH']
         active_object = context.active_object if len(selected_mesh_objects) > 0 and context.active_object in selected_mesh_objects else None
         properties: MyPropertyGroup1 = context.scene.my_property_group_pointer
-        # box = layout.box().column()
+        #box = layout.box().column()
 
         # sample props:
-        # box.prop(properties, "my_enum_prop")
+        #box.prop(properties, "bake_image_resolution")
         # box.prop(properties, "my_float_prop")
         # box.prop(properties, "my_string_prop")
         # box.prop(properties, "my_file_input_prop")
         # box.label(text="Icon Label", icon=IconsManager.BUILTIN_ICON_MESH_DATA)
         # self.draw_sample_modifier_exposed_props(context, layout, "GeometryNodes")
-        self.draw_sample_expanded_options(context, layout)
+        self.draw_expanded_armature_options(context, layout)
+        self.draw_expanded_bake_options(context, layout)
         # self.draw_sample_color_picker(context, layout)
 
     def draw_sample_modifier_exposed_props(self, context, layout, md_name = "GeometryNodes"):
@@ -145,17 +147,34 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                 if hasattr(rna, "in_out") and rna.in_out == "INPUT":
                     self.add_layout_gn_prop_pointer(layout, md, rna)
 
-    def draw_sample_expanded_options(self, context, layout):
+    def draw_expanded_armature_options(self, context, layout):
         ebox = layout.box()
         row = ebox.box().row()
         row.prop(
-            context.scene, "expanded_options",
-            icon=IconsManager.BUILTIN_ICON_DOWN if context.scene.expanded_options else IconsManager.BUILTIN_ICON_RIGHT,
+            context.scene, "expanded_armature_options",
+            icon=IconsManager.BUILTIN_ICON_DOWN if context.scene.expanded_bake_options else IconsManager.BUILTIN_ICON_RIGHT,
             icon_only=True, emboss=False
         )
-        row.label(text="Export")
-        if context.scene.expanded_options:
+        row.label(text="Armature Options")
+        if context.scene.expanded_armature_options:
             col = layout.column()
+            row = col.row()
+            col.operator(OBJECT_OT_PrepareBake.bl_idname, text="Armature Test")
+
+    def draw_expanded_bake_options(self, context, layout):
+        ebox = layout.box()
+        row = ebox.box().row()
+        row.prop(
+            context.scene, "expanded_bake_options",
+            icon=IconsManager.BUILTIN_ICON_DOWN if context.scene.expanded_bake_options else IconsManager.BUILTIN_ICON_RIGHT,
+            icon_only=True, emboss=False
+        )
+        row.label(text="Bake Options")
+        if context.scene.expanded_bake_options:
+            col = layout.column()
+            row = col.row()
+            properties: MyPropertyGroup1 = context.scene.my_property_group_pointer
+            col.prop(properties, "bake_image_resolution", text="")
             col.operator(OBJECT_OT_PrepareBake.bl_idname, text="Prepare Bake")
             col.operator(OBJECT_OT_GenerateBakeObject.bl_idname, text="Generate Bake Object")
             
@@ -198,7 +217,8 @@ def register() -> None:
     bpy.utils.register_class(MyPropertyGroup2)
     bpy.types.Material.my_slot_setting = bpy.props.PointerProperty(type=MyPropertyGroup2)
     bpy.types.Scene.my_property_group_pointer = bpy.props.PointerProperty(type=MyPropertyGroup1)
-    bpy.types.Scene.expanded_options = bpy.props.BoolProperty(default=False)
+    bpy.types.Scene.expanded_armature_options = bpy.props.BoolProperty(default=False)
+    bpy.types.Scene.expanded_bake_options = bpy.props.BoolProperty(default=False)
     bpy.app.handlers.depsgraph_update_post.append(on_depsgraph_update)
 
 def unregister() -> None:
@@ -206,6 +226,7 @@ def unregister() -> None:
     bpy.utils.unregister_class(MyPropertyGroup1)
     bpy.utils.unregister_class(MyPropertyGroup2)
     del bpy.types.Material.my_slot_setting
-    del bpy.types.Scene.expanded_options
+    del bpy.types.Scene.expanded_armature_options
+    del bpy.types.Scene.expanded_bake_options
     del bpy.types.Scene.my_property_group_pointer
     bpy.app.handlers.depsgraph_update_post.clear()

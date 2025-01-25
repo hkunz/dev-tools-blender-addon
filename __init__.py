@@ -48,7 +48,7 @@ from dev_tools.utils.file_utils import FileUtils # type: ignore
 from dev_tools.utils.temp_file_manager import TempFileManager # type: ignore
 from dev_tools.utils.icons_manager import IconsManager # type: ignore
 from dev_tools.translation.translations import register as register_translations, unregister as unregister_translations # type: ignore
-from dev_tools.ui.sidebar_menu import OBJECT_PT_devtools_addon_panel, register as register_devtools_panel, unregister as unregister_devtools_panel # type: ignore
+from dev_tools.ui.sidebar_menu import register as register_devtools_panel, unregister as unregister_devtools_panel # type: ignore
 from dev_tools.operators.common.operator_generic_popup import register as register_generic_popup, unregister as unregister_generic_popup # type: ignore
 
 from dev_tools.operators.object.prepare_bake_operator import OBJECT_OT_PrepareBake # type: ignore

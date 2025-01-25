@@ -1,5 +1,6 @@
 import bpy
 
+from dev_tools.utils.utils import Utils # type: ignore
 
 class OBJECT_OT_PrepareBake(bpy.types.Operator):
     """Prepare Object for Baking"""
@@ -111,9 +112,13 @@ class OBJECT_OT_PrepareBake(bpy.types.Operator):
     def execute(self, context):
         obj = context.active_object
 
-        if obj not in context.selected_objects:
-            self.report({'ERROR'}, "No active object selected")
+        if obj not in context.selected_objects or len(context.selected_objects) > 1:
+            self.report({'WARNING'}, "Please select one active object")
             return {'CANCELLED'}
+
+        properties = context.scene.my_property_group_pointer
+        bake_resolution = int(Utils.get_bake_dimension(properties.bake_image_resolution))
+        self.report({'INFO'}, f"Selected Bake Resolution: {bake_resolution}")
 
         if not self.check_materials(obj):
             return {'CANCELLED'}
@@ -125,7 +130,8 @@ class OBJECT_OT_PrepareBake(bpy.types.Operator):
         success = self.create_bake_uv_and_select(obj, bake_uv)
         if not success:
             return {'CANCELLED'}
-        image = self.create_bake_texture_and_image(bake_texture, bake_image, 4096, 4096)
+
+        image = self.create_bake_texture_and_image(bake_texture, bake_image, bake_resolution, bake_resolution)
         self.add_bake_image_texture_node_to_materials_and_select(obj, bake_texture, image)
         self.pack_uv_islands()
         self.set_bake_settings()

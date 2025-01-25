@@ -6,21 +6,20 @@ class OBJECT_OT_GenerateBakeObject(bpy.types.Operator):
     bl_label = "DevTools: Generate Baked Object"
 
     def execute(self, context):
-        # Ensure only one object is selected
-        if len(bpy.context.selected_objects) != 1:
-            self.report({'WARNING'}, "Please select only one object.")
+        obj = context.active_object
+
+        if obj not in context.selected_objects or len(context.selected_objects) > 1:
+            self.report({'WARNING'}, "Please select one active object")
             return {'CANCELLED'}
-        
-        obj = bpy.context.active_object
-        bpy.ops.object.bake(type='DIFFUSE')
         
         # Ensure object has a UV map named "bake"
         if "bake" not in obj.data.uv_layers:
-            self.report({'ERROR'}, "The object does not have a 'bake' UV map.")
+            self.report({'WARNING'}, "Object no 'bake' UV map. Click 'Prepare Bake'")
             return {'CANCELLED'}
         
-        print(f"Found 'bake' UV map: bake")
-        
+        print(f"Found 'bake' UV map. Start baking ...")
+        bpy.ops.object.bake(type='DIFFUSE')
+
         # Duplicate the object
         duplicated_obj = obj.copy()
         duplicated_obj.data = obj.data.copy()  # Copy the mesh data to the new object

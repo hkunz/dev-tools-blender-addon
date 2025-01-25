@@ -58,3 +58,12 @@ class Utils:
         def wrapper(*args, **kwargs):
             raise NotImplementedError(f"{func.__name__} must be overridden in subclass.")
         return wrapper
+
+    @staticmethod
+    def get_bake_dimension(enum):
+        if enum=="ONE_K": return "1024"
+        elif enum=="TWO_K": return "2048"
+        elif enum=="FOUR_K": return "4098"
+        elif enum=="EIGHT_K": return "8192"
+        print(f"Warning enum {enum} undefined! Using 2048 as fallback")
+        return "2048"

@@ -67,3 +67,16 @@ class Utils:
         elif enum=="EIGHT_K": return "8192"
         print(f"Warning enum {enum} undefined! Using 2048 as fallback")
         return "2048"
+    
+    @staticmethod
+    def create_collection_at_top(collection_name):
+        col = bpy.data.collections.get(collection_name)
+        if not col:
+            col = bpy.data.collections.new(collection_name)
+        scene_collections = bpy.context.scene.collection.children[:]
+        for c in scene_collections:
+            bpy.context.scene.collection.children.unlink(c)
+        bpy.context.scene.collection.children.link(col)
+        for c in scene_collections:
+            bpy.context.scene.collection.children.link(c)
+        return col

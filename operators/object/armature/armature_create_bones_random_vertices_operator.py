@@ -73,4 +73,4 @@ class OBJECT_OT_ArmatureCreateBonesRandomVertices(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return True #return context.object and context.object.type == 'MESH'
+        return True #return context.object and context.object.type == 'MESH' # https://blender.stackexchange.com/q/330288/184387

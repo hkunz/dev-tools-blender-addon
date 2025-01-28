@@ -11,36 +11,41 @@ class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
     def create_bake_uv_and_select(self, obj, bake_uv):
         uvs = obj.data.uv_layers
         if not uvs:
-            self.report({'WARNING'}, "No UV Maps to bake")
+            self.report({'WARNING'}, f"No UV Maps to bake in object '{obj.name}'")
             return False
         
         if bake_uv not in uvs:
             uvs.new(name=bake_uv)
-            self.report({'INFO'}, "Created 'bake' UV map")
+            print(f"{obj.name}: Created 'bake' UV map")
         else:
-            self.report({'INFO'}, "'bake' UV map already exists")
-        
+            print(f"{obj.name}: 'bake' UV map already exists")
+
         bake_uv_map = uvs[bake_uv]
         bake_uv_map.active = True
         uvs.active = bake_uv_map
-        self.report({'INFO'}, f"Selected '{bake_uv_map.name}' UV map")
+        print(f"{obj.name}: Selected '{bake_uv_map.name}' UV map")
         return True
 
-    def create_bake_texture_and_image(self, bake_texture_name, bake_image_name, width, height):
-        if bake_image_name in bpy.data.images:
-            bake_image = bpy.data.images[bake_image_name]
+    def delete_bake_image(self, bake_image_name):
+        bake_image = bpy.data.images.get(bake_image_name)
+        if bake_image:
             bpy.data.images.remove(bake_image)
-            self.report({'INFO'}, f"Deleted existing image: {bake_image_name}")
+            print(f"Deleted existing image: {bake_image_name}")
+            bake_image = None
 
-        bake_image = bpy.data.images.new(name=bake_image_name, width=width, height=height)
-        self.report({'INFO'}, f"Created new image: {bake_image_name}")
+    def create_bake_texture_and_image(self, bake_texture_name, bake_image_name, width, height):
+        bake_image = bpy.data.images.get(bake_image_name)
+
+        if not bake_image:
+            bake_image = bpy.data.images.new(name=bake_image_name, width=width, height=height)
+            print(f"Created new image: {bake_image_name}")
 
         if bake_texture_name in bpy.data.textures:
             bake_texture = bpy.data.textures[bake_texture_name]
-            self.report({'INFO'}, f"Reusing existing texture: {bake_texture_name}")
+            print(f"Reusing existing texture: {bake_texture_name}")
         else:
             bake_texture = bpy.data.textures.new(name=bake_texture_name, type='IMAGE')
-            self.report({'INFO'}, f"Created new texture: {bake_texture_name}")
+            print(f"Created new texture: {bake_texture_name}")
 
         bake_texture.image = bake_image
         return bake_image
@@ -48,7 +53,7 @@ class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
     def check_materials(self, obj):
         empty_slots = False
         if len(obj.data.materials) == 0:
-            self.report({'WARNING'}, "No materials assigned to this object.")
+            self.report({'WARNING'}, f"No materials assigned to object '{obj.name}'")
             return False
         
         for slot in obj.material_slots:
@@ -57,9 +62,9 @@ class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
                 break
 
         if empty_slots:
-            self.report({'WARNING'}, "There is at least one empty material slot.")
+            self.report({'WARNING'}, f"There is at least one empty material slot in object '{obj.name}'")
         else:
-            self.report({'INFO'}, f"This object has {len(obj.data.materials)} material(s) assigned and all slots are filled.")
+            print(f"{obj.name}: {len(obj.data.materials)} material(s) assigned and all slots are filled.")
         return not empty_slots
 
     def add_bake_image_texture_node_to_materials_and_select(self, obj, bake_texture_node_name, bake_image):
@@ -81,9 +86,9 @@ class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
                 texture_node.name = bake_texture_node_name
                 texture_node.location = (-300, 300)
                 existing_node = texture_node
-                self.report({'INFO'}, f"Applied 'BakeTexture' to the material: {material.name}")
+                print(f"{obj.name}: Applied 'BakeTexture' to the material: {material.name}")
             else:
-                self.report({'INFO'}, f"'BakeTexture' node already exists in material: {material.name}")
+                print(f"{obj.name}: 'BakeTexture' node already exists in material: {material.name}. Ignore.")
 
             existing_node.select = True
             existing_node.image = bake_image
@@ -94,11 +99,6 @@ class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
         bpy.ops.mesh.select_all(action='SELECT')
         bpy.ops.uv.select_all(action='SELECT')
         bpy.ops.uv.pack_islands()
-        self.report({'INFO'}, "Packed UV Islands. Check results in UV Editor.\n \
-* Make island size adjustments if needed then repeat UV > Pack Islands.\n \
-* Configure baking properties in Render Properties > Bake\n \
-* Click 'Generate Bake Object' to bake and duplicate object (that will get setup with bake material)")
-        self.report({'INFO'}, " Object ready to bake")
 
     def set_bake_settings(self):
         bpy.context.scene.render.engine = 'CYCLES'
@@ -110,29 +110,41 @@ class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
     def execute(self, context):
         obj = context.active_object
 
-        if obj not in context.selected_objects or len(context.selected_objects) > 1 or obj.type != 'MESH':
-            self.report({'WARNING'}, "Please select one active mesh object")
+        if obj not in context.selected_objects:
+            self.report({'WARNING'}, "No active mesh object selected")
             return {'CANCELLED'}
 
         properties = context.scene.my_property_group_pointer
         bake_resolution = int(Utils.get_bake_dimension(properties.bake_image_resolution))
-        self.report({'INFO'}, f"Selected Bake Resolution: {bake_resolution}")
+        print(f"Selected Bake Resolution: {bake_resolution}")
 
-        if not self.check_materials(obj):
-            return {'CANCELLED'}
-        
         bake_uv = "bake"
         bake_image = "BakeImage"
         bake_texture = "BakeTexture"
 
-        success = self.create_bake_uv_and_select(obj, bake_uv)
-        if not success:
-            return {'CANCELLED'}
+        self.delete_bake_image(bake_image)
 
-        image = self.create_bake_texture_and_image(bake_texture, bake_image, bake_resolution, bake_resolution)
-        self.add_bake_image_texture_node_to_materials_and_select(obj, bake_texture, image)
-        self.pack_uv_islands()
-        self.set_bake_settings()
+        for obj in context.selected_objects:
+            if obj.type != 'MESH':
+                self.report({'WARNING'}, f"{obj.name}: All selected objects must be of type 'MESH'")
+                return {'CANCELLED'}
+            if not self.check_materials(obj):
+                return {'CANCELLED'}
+
+            success = self.create_bake_uv_and_select(obj, bake_uv)
+            if not success:
+                return {'CANCELLED'}
+
+            image = self.create_bake_texture_and_image(bake_texture, bake_image, bake_resolution, bake_resolution)
+            self.add_bake_image_texture_node_to_materials_and_select(obj, bake_texture, image)
+            self.pack_uv_islands()
+            self.set_bake_settings()
+
+        print("Packed UV Islands. Check results in UV Editor.\n \
+* Make island size adjustments if needed then repeat UV > Pack Islands.\n \
+* Configure baking properties in Render Properties > Bake\n \
+* Click 'Generate Bake Object' to bake and duplicate object (that will get setup with bake material)")
+        self.report({'INFO'}, f"Objects ready to bake: {[obj.name for obj in context.selected_objects]}")
 
         return {'FINISHED'}
 

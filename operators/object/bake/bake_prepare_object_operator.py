@@ -16,14 +16,13 @@ class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
         
         if bake_uv not in uvs:
             uvs.new(name=bake_uv)
-            print(f"{obj.name}: Created 'bake' UV map")
         else:
             print(f"{obj.name}: 'bake' UV map already exists")
 
         bake_uv_map = uvs[bake_uv]
         bake_uv_map.active = True
         uvs.active = bake_uv_map
-        print(f"{obj.name}: Selected '{bake_uv_map.name}' UV map")
+        print(f"{obj.name}: UV map '{bake_uv_map.name}' ready and selected")
         return True
 
     def delete_bake_image(self, bake_image_name):

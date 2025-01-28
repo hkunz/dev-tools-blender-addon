@@ -83,7 +83,7 @@ class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
             if existing_node is None:
                 texture_node = material.node_tree.nodes.new(type='ShaderNodeTexImage')
                 texture_node.name = bake_texture_node_name
-                texture_node.location = (-300, 300)
+                texture_node.location = (1000, 500)
                 existing_node = texture_node
                 print(f"{obj.name}: Applied 'BakeTexture' to the material: {material.name}")
             else:

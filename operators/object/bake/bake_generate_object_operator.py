@@ -51,6 +51,7 @@ class OBJECT_OT_BakeGenerateObject(bpy.types.Operator):
 
         texture_node = new_material.node_tree.nodes.new(type='ShaderNodeTexImage')
         texture_node.image = bpy.data.images.get("BakeImage")
+        texture_node.location = (-350, 300)
         
         print(f"Assigned image texture 'BakeImage' to material.")
 
@@ -95,7 +96,8 @@ class OBJECT_OT_BakeGenerateObject(bpy.types.Operator):
 
         for obj in context.selected_objects:
             duplicated_obj = self.duplicate_object(obj, mat)
-            baked_objects.append(duplicated_obj)  # Keep track of duplicated objects
+            baked_objects.append(duplicated_obj)
+            self.clear_old_uv_maps(duplicated_obj)
 
         self.select_baked_objects(context, baked_objects)
 

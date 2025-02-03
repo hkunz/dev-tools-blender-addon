@@ -112,4 +112,4 @@ class OBJECT_OT_ArmatureAssignClosestVertexToBoneTails(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.object and context.object.type == 'MESH'
+        return True # context.object and context.object.type == 'MESH'

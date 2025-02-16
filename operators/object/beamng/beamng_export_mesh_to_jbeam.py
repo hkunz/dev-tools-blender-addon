@@ -60,6 +60,7 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         beams = self.get_beams(mesh, vertex_map)
         triangles = self.get_triangles(mesh, vertex_map)
         quads = self.get_quads(mesh, vertex_map)
+        ngons = self.get_ngons(mesh, vertex_map)
         ref_nodes = self.find_reference_nodes(obj)
 
         ref_nodes_data = [
@@ -75,6 +76,7 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         json_output += f'    "beams": {format_list(beams)},\n'
         json_output += f'    "triangles": {format_list(triangles)},\n'
         json_output += f'    "quads": {format_list(quads)},\n'
+        json_output += f'    "ngons": {format_list(ngons)},\n'
         json_output += f'    "refNodes": {format_list(ref_nodes_data)}\n'
         json_output += "}"
 
@@ -119,7 +121,12 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         return [[vertex_map[v1], vertex_map[v2]] for v1, v2 in (edge.vertices for edge in mesh.edges)]
 
     def get_triangles(self, mesh, vertex_map):
-        return [[vertex_map[v1], vertex_map[v2], vertex_map[v3]] for v1, v2, v3 in (tri.vertices for tri in mesh.loop_triangles)]
+        triangles = []
+        for poly in mesh.polygons:
+            if len(poly.vertices) == 3:
+                v1, v2, v3 = poly.vertices
+                triangles.append([vertex_map[v1], vertex_map[v2], vertex_map[v3]])
+        return triangles
 
     def get_quads(self, mesh, vertex_map):
         quads = []
@@ -128,6 +135,13 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
                 v1, v2, v3, v4 = poly.vertices
                 quads.append([vertex_map[v1], vertex_map[v2], vertex_map[v3], vertex_map[v4]])
         return quads
+
+    def get_ngons(self, mesh, vertex_map):
+        ngons = []
+        for poly in mesh.polygons:
+            if len(poly.vertices) > 4:
+                ngons.append([vertex_map[v] for v in poly.vertices])
+        return ngons
 
     def find_reference_nodes(self, obj):
         ref_nodes = {"ref": None, "back": None, "left": None, "up": None, "leftCorner": None, "rightCorner": None}

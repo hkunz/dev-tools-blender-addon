@@ -151,6 +151,7 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         if currently_fixed:
             nodes.append({"fixed": "false"})
 
+        nodes.insert(0, ["ref", 0, 0, 0])
         return nodes, vertex_map
 
     def get_beams(self, mesh, vertex_map):

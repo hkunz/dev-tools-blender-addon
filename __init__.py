@@ -59,6 +59,7 @@ from dev_tools.operators.object.bake.bake_generate_object_operator import OBJECT
 from dev_tools.operators.object.beamng.beamng_create_empties_base_operator import OBJECT_OT_BeamngCreateEmptiesBase # type: ignore
 from dev_tools.operators.object.beamng.beamng_create_metaball_cloud_operator import OBJECT_OT_BeamngCreateMetaBallCloud # type: ignore
 from dev_tools.operators.object.beamng.beamng_parent_to_start01_empty_operator import OBJECT_OT_BeamngClearChildrenStart01Empty, OBJECT_OT_BeamngParentToStart01Empty # type: ignore
+from dev_tools.operators.object.beamng.beamng_export_mesh_to_jbeam import OBJECT_OT_BeamngCreateRefnodesVertexGroups, EXPORT_OT_BeamngExportMeshToJbeam # type: ignore
 
 DEVTOOLS_CLASSES = [
     OBJECT_OT_ArmatureCreateBonesRandomVertices,
@@ -69,7 +70,9 @@ DEVTOOLS_CLASSES = [
     OBJECT_OT_BeamngCreateEmptiesBase,
     OBJECT_OT_BeamngCreateMetaBallCloud,
     OBJECT_OT_BeamngParentToStart01Empty,
-    OBJECT_OT_BeamngClearChildrenStart01Empty
+    OBJECT_OT_BeamngClearChildrenStart01Empty,
+    OBJECT_OT_BeamngCreateRefnodesVertexGroups,
+    EXPORT_OT_BeamngExportMeshToJbeam
 ]
 
 def add_executable_permission(exe: Union[str, Path]) -> Path: #https://blender.stackexchange.com/questions/310144/mac-executable-binary-within-DevTools addon-zip-loses-execute-permission-when-DevTools addon-zip

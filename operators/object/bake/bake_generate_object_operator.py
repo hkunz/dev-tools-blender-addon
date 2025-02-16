@@ -4,7 +4,7 @@ class OBJECT_OT_BakeGenerateObject(bpy.types.Operator):
     """Bake then Duplicate object, clean up materials and UV maps, and create a new material with BakeImage"""
     bl_idname = "object.devtools_bake_generate_object"
     bl_label = "DevTools: Generate Baked Object"
-
+    bl_options = {'REGISTER', 'UNDO'}
 
     def duplicate_object(self, obj, mat):
         duplicated_obj = obj.copy()

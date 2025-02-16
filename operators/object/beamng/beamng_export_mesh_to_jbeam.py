@@ -1,5 +1,7 @@
 import bpy
 import bpy_types
+import os
+import json
 
 class OBJECT_OT_BeamngCreateRefnodesVertexGroups(bpy.types.Operator):
     """Create BeamNG refNodes vertex groups if they do not exist"""
@@ -38,8 +40,9 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
     filepath: bpy.props.StringProperty(subtype="FILE_PATH") # type: ignore
 
     def execute(self, context):
-        self.export_jbeam_format(self.filepath)
-        return {'FINISHED'}
+        bpy.ops.object.mode_set(mode='OBJECT')
+        success = self.export_jbeam_format(self.filepath)
+        return {'FINISHED'} if success else {'CANCELLED'} 
 
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
@@ -50,7 +53,7 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         obj = bpy.context.active_object
         if obj is None or obj.type != "MESH":
             self.report({'ERROR'}, "No valid mesh object selected!")
-            return
+            return False
 
         mesh = obj.data
         mesh.calc_loop_triangles()
@@ -65,25 +68,58 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
 
         ref_nodes_data = [
             ["ref:", "back:", "left:", "up:", "leftCorner:", "rightCorner:"],
-            [ref_nodes["ref"], ref_nodes["back"], ref_nodes["left"], ref_nodes["up"], ref_nodes["leftCorner"], ref_nodes["rightCorner"]],
+            ["ref"] + [ref_nodes[key] if ref_nodes[key] is not None else "" for key in ["back", "left", "up", "leftCorner", "rightCorner"]],
         ]
 
         def format_list(data):
             return '[\n    ' + ",\n    ".join(str(item).replace("'", '"') for item in data) + "\n]"
 
-        json_output = "{\n"
-        json_output += f'    "nodes": {format_list(nodes)},\n'
-        json_output += f'    "beams": {format_list(beams)},\n'
-        json_output += f'    "triangles": {format_list(triangles)},\n'
-        json_output += f'    "quads": {format_list(quads)},\n'
-        json_output += f'    "ngons": {format_list(ngons)},\n'
-        json_output += f'    "refNodes": {format_list(ref_nodes_data)}\n'
-        json_output += "}"
+        is_manual_data = True
 
-        with open(filepath, "w") as f:
-            f.write(json_output)
+        if os.path.exists(filepath):
+            with open(filepath, "r", encoding="utf-8") as f:
+                try:
+                    existing_data = json.load(f)
+                    is_manual_data = "manual_data_file" in existing_data
+                except json.JSONDecodeError:
+                    self.report({'ERROR'}, f"Error parsing {filepath}")
+                    return False
 
-        self.report({'INFO'}, f"{obj.name}: JBeam exported to {filepath}")
+        if is_manual_data:
+            # Generate manual data .json file
+            json_output = "{\n"
+            json_output += f'"manual_data_file": "you need to manually copy these nodes to the .jbeam file",\n'
+            json_output += f'"refNodes": {format_list(ref_nodes_data)},\n'
+            json_output += f'"nodes": {format_list(nodes)},\n'
+            json_output += f'"beams": {format_list(beams)},\n'
+            json_output += f'"triangles": {format_list(triangles)},\n'
+            json_output += f'"quads": {format_list(quads)},\n'
+            json_output += f'"ngons": {format_list(ngons)}\n'
+            json_output += "}"
+            with open(filepath, "w", encoding="utf-8") as f:
+                f.write(json_output)
+        else:
+            print("ASSUME JBEAM FILE AND REPLACE AUTOMATICALLY")
+            # Modify existing .jbeam file
+            #FIXME #TODO
+            existing_data["refNodes"] = ref_nodes_data
+            existing_data["nodes"] = json.loads(format_list(nodes))
+            existing_data["beams"] = beams
+            existing_data["triangles"] = triangles
+            existing_data["quads"] = quads
+            existing_data["ngons"] = ngons
+
+            with open(filepath, "w") as f:
+                json_output = json.dumps(existing_data, indent=4)
+
+
+
+        
+
+
+            self.report({'INFO'}, f"{obj.name}: JBeam exported to {filepath}")
+
+        return True
 
     def get_fixed_vertices(self, obj):
         fixed_group = obj.vertex_groups.get("fixed")

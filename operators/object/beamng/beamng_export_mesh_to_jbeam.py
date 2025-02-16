@@ -27,9 +27,7 @@ class OBJECT_OT_BeamngCreateRefnodesVertexGroups(bpy.types.Operator):
     @classmethod
     def poll(cls, context: bpy_types.Context) -> bool:
         active_object: bpy_types.Object = context.active_object
-        if not active_object or active_object.type != "MESH":
-            return False
-        return True
+        return active_object and active_object.type == "MESH"
 
 class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
     """Export mesh to JBeam JSON format"""
@@ -57,31 +55,47 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         mesh = obj.data
         mesh.calc_loop_triangles()
 
-        def get_fixed_vertices(obj):
-            fixed_group = obj.vertex_groups.get("fixed")
-            fixed_vertices = set()
-            if fixed_group:
-                for vert in obj.data.vertices:
-                    for g in vert.groups:
-                        if g.group == fixed_group.index:
-                            fixed_vertices.add(vert.index)
-            return fixed_vertices
+        fixed_vertices = self.get_fixed_vertices(obj)
+        nodes, vertex_map = self.get_nodes(mesh, fixed_vertices)
+        beams = self.get_beams(mesh, vertex_map)
+        triangles = self.get_triangles(mesh, vertex_map)
+        quads = self.get_quads(mesh, vertex_map)
+        ref_nodes = self.find_reference_nodes(obj)
 
-        def find_reference_nodes(obj):
-            ref_nodes = {"ref": None, "back": None, "left": None, "up": None, "leftCorner": None, "rightCorner": None}
-            for group_name in ref_nodes.keys():
-                group = obj.vertex_groups.get(group_name)
-                if group:
-                    for vert in obj.data.vertices:
-                        for g in vert.groups:
-                            if g.group == group.index:
-                                ref_nodes[group_name] = f"b{vert.index + 1}"
-                                break
-            return ref_nodes
+        ref_nodes_data = [
+            ["ref:", "back:", "left:", "up:", "leftCorner:", "rightCorner:"],
+            [ref_nodes["ref"], ref_nodes["back"], ref_nodes["left"], ref_nodes["up"], ref_nodes["leftCorner"], ref_nodes["rightCorner"]],
+        ]
 
-        nodes = [["id", "posX", "posY", "posZ"]]
+        def format_list(data):
+            return '[\n    ' + ",\n    ".join(str(item).replace("'", '"') for item in data) + "\n]"
+
+        json_output = "{\n"
+        json_output += f'    "nodes": {format_list(nodes)},\n'
+        json_output += f'    "beams": {format_list(beams)},\n'
+        json_output += f'    "triangles": {format_list(triangles)},\n'
+        json_output += f'    "quads": {format_list(quads)},\n'
+        json_output += f'    "refNodes": {format_list(ref_nodes_data)}\n'
+        json_output += "}"
+
+        with open(filepath, "w") as f:
+            f.write(json_output)
+
+        self.report({'INFO'}, f"{obj.name}: JBeam exported to {filepath}")
+
+    def get_fixed_vertices(self, obj):
+        fixed_group = obj.vertex_groups.get("fixed")
+        fixed_vertices = set()
+        if fixed_group:
+            for vert in obj.data.vertices:
+                for g in vert.groups:
+                    if g.group == fixed_group.index:
+                        fixed_vertices.add(vert.index)
+        return fixed_vertices
+
+    def get_nodes(self, mesh, fixed_vertices):
+        nodes = []
         vertex_map = {}
-        fixed_vertices = get_fixed_vertices(obj)
         currently_fixed = False
 
         for i, vert in enumerate(mesh.vertices):
@@ -99,44 +113,39 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         if currently_fixed:
             nodes.append({"fixed": "false"})
 
-        ref_nodes = find_reference_nodes(obj)
-        ref_nodes_data = [
-            ["ref:", "back:", "left:", "up:", "leftCorner:", "rightCorner:"],
-            [ref_nodes["ref"], ref_nodes["back"], ref_nodes["left"], ref_nodes["up"], ref_nodes["leftCorner"], ref_nodes["rightCorner"]],
-        ]
+        return nodes, vertex_map
 
-        beams = [["id1:", "id2:"]]
-        for edge in mesh.edges:
-            v1, v2 = edge.vertices
-            beams.append([vertex_map[v1], vertex_map[v2]])
+    def get_beams(self, mesh, vertex_map):
+        return [[vertex_map[v1], vertex_map[v2]] for v1, v2 in (edge.vertices for edge in mesh.edges)]
 
-        triangles = [["id1:", "id2:", "id3:"]]
-        for tri in mesh.loop_triangles:
-            v1, v2, v3 = tri.vertices
-            triangles.append([vertex_map[v1], vertex_map[v2], vertex_map[v3]])
+    def get_triangles(self, mesh, vertex_map):
+        return [[vertex_map[v1], vertex_map[v2], vertex_map[v3]] for v1, v2, v3 in (tri.vertices for tri in mesh.loop_triangles)]
 
-        def format_list(data):
-            return '[\n    ' + ",\n    ".join(str(item).replace("'", '"') for item in data) + "\n]"
+    def get_quads(self, mesh, vertex_map):
+        quads = []
+        for poly in mesh.polygons:
+            if len(poly.vertices) == 4:
+                v1, v2, v3, v4 = poly.vertices
+                quads.append([vertex_map[v1], vertex_map[v2], vertex_map[v3], vertex_map[v4]])
+        return quads
 
-        json_output = "{\n"
-        json_output += f'    "nodes": {format_list(nodes)},\n'
-        json_output += f'    "beams": {format_list(beams)},\n'
-        json_output += f'    "triangles": {format_list(triangles)},\n'
-        json_output += f'    "refNodes": {format_list(ref_nodes_data)}\n'
-        json_output += "}"
-
-        with open(filepath, "w") as f:
-            f.write(json_output)
-
-        self.report({'INFO'}, f"{obj.name}: JBeam exported to {filepath}")
+    def find_reference_nodes(self, obj):
+        ref_nodes = {"ref": None, "back": None, "left": None, "up": None, "leftCorner": None, "rightCorner": None}
+        for group_name in ref_nodes.keys():
+            group = obj.vertex_groups.get(group_name)
+            if group:
+                for vert in obj.data.vertices:
+                    for g in vert.groups:
+                        if g.group == group.index:
+                            ref_nodes[group_name] = f"b{vert.index + 1}"
+                            break
+        return ref_nodes
 
     @classmethod
     def poll(cls, context: bpy_types.Context) -> bool:
         active_object: bpy_types.Object = context.active_object
         if not active_object or active_object.type != "MESH":
             return False
-        
         required_groups = {"up", "left", "back", "leftCorner", "rightCorner"}
         existing_groups = {vg.name for vg in active_object.vertex_groups}
-    
-        return required_groups.issubset(existing_groups)  # Check if all groups are present
+        return required_groups.issubset(existing_groups)

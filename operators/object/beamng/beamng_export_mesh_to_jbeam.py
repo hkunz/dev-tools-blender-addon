@@ -8,10 +8,13 @@ import io
 class JBeamProcessor:
     def __init__(self, json_data):
         self.json_data = json_data
-        self.input_stream = io.StringIO(json_data)
         self.output_stream = io.StringIO()
+        self.modified_data = json_data
 
     def remove_node_contents(self, key):
+        self.output_stream = io.StringIO()
+        self.input_stream = io.StringIO(self.modified_data)
+
         depth = 0
         skipping = False
         key_buffer = []
@@ -55,10 +58,10 @@ class JBeamProcessor:
 
     def insert_node_contents(self, key, new_contents):
         self.remove_node_contents(key)
-        result = self.get_result()  # Get the modified output
-        result = result.replace(f'"{key}": []', f'"{key}": [\n{new_contents}\n]')
+        result = self.get_result()
+        result = result.replace(f'"{key}": []', f'"{key}": [\n\t{new_contents}\n]')
+        self.modified_data = result
         return result
-
 
     def get_result(self):
         return self.output_stream.getvalue()
@@ -211,11 +214,12 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
             quads_str = self.get_final_struct(existing_data, quads, "quads", [["id1:","id2:","id3:","id4:"]])
             
             processor = JBeamProcessor(existing_data_str)
+
+            # Modify "nodes", then "beams", and "triangles" successively:
             existing_data_str = processor.insert_node_contents("nodes", nodes_str)
-            processor = JBeamProcessor(existing_data_str)
             existing_data_str = processor.insert_node_contents("beams", beams_str)
-            processor = JBeamProcessor(existing_data_str)
             existing_data_str = processor.insert_node_contents("triangles", tris_str)
+
             #json_text = processor.insert_node_contents("beamsn", beams_str)
 
             with open(filepath, "w", encoding="utf-8") as f:

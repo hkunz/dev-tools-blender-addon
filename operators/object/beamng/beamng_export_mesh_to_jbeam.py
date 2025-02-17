@@ -6,12 +6,12 @@ import io
 
 
 class JBeamProcessor:
-    def __init__(self, json_data, key):
+    def __init__(self, json_data):
+        self.json_data = json_data
         self.input_stream = io.StringIO(json_data)
         self.output_stream = io.StringIO()
-        self.key = key
 
-    def remove_node_contents(self):
+    def remove_node_contents(self, key):
         depth = 0
         skipping = False
         key_buffer = []
@@ -33,7 +33,7 @@ class JBeamProcessor:
             if not inside_string and key_buffer:
                 key_str = ''.join(key_buffer)
                 key_buffer = []
-                if key_str[1:] == self.key:
+                if key_str[1:] == key:
                     skipping = True
                     self.output_stream.write('"' + ':' + ' ')
 
@@ -53,8 +53,16 @@ class JBeamProcessor:
             if not skipping:
                 self.output_stream.write(ch)
 
+    def insert_node_contents(self, key, new_contents):
+        self.remove_node_contents(key)
+        result = self.get_result()  # Get the modified output
+        result = result.replace(f'"{key}": []', f'"{key}": [\n{new_contents}\n]')
+        return result
+
+
     def get_result(self):
         return self.output_stream.getvalue()
+
 
 class OBJECT_OT_BeamngCreateRefnodesVertexGroups(bpy.types.Operator):
     """Create BeamNG refNodes vertex groups if they do not exist"""
@@ -130,8 +138,13 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
     def get_final_struct(self, json, items, jbeam_prop, prepend):
         starting_props = self.get_starting_props(json, jbeam_prop)
         ending_props = self.get_ending_props(json, jbeam_prop)
+        if starting_props == ending_props:
+            ending_props = []
         arr = prepend + starting_props + items + ending_props
-        return ',\n\t'.join(str(item).replace("[", "[").replace("]", "]").replace(",", ",").replace("}", "}") for item in arr)
+        return ',\n\t'.join(
+        str(item).replace("'", '"').replace("[", "[").replace("]", "]").replace(",", ",").replace("}", "}") 
+        for item in arr
+    )
 
     def export_jbeam_format(self, filepath):
         obj = bpy.context.active_object
@@ -197,9 +210,13 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
             tris_str = self.get_final_struct(existing_data, triangles, "triangles", [["id1:","id2:","id3:"]])
             quads_str = self.get_final_struct(existing_data, quads, "quads", [["id1:","id2:","id3:","id4:"]])
             
-            processor = JBeamProcessor(existing_data_str, "nodes")
-            processor.remove_node_contents()
-            existing_data_str = processor.get_result()
+            processor = JBeamProcessor(existing_data_str)
+            existing_data_str = processor.insert_node_contents("nodes", nodes_str)
+            processor = JBeamProcessor(existing_data_str)
+            existing_data_str = processor.insert_node_contents("beams", beams_str)
+            processor = JBeamProcessor(existing_data_str)
+            existing_data_str = processor.insert_node_contents("triangles", tris_str)
+            #json_text = processor.insert_node_contents("beamsn", beams_str)
 
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(existing_data_str)

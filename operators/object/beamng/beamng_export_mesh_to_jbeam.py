@@ -2,6 +2,59 @@ import bpy
 import bpy_types
 import os
 import json
+import io
+
+
+class JBeamProcessor:
+    def __init__(self, json_data, key):
+        self.input_stream = io.StringIO(json_data)
+        self.output_stream = io.StringIO()
+        self.key = key
+
+    def remove_node_contents(self):
+        depth = 0
+        skipping = False
+        key_buffer = []
+        inside_string = False
+
+        while True:
+            ch = self.input_stream.read(1)
+            if not ch:
+                break
+
+            if ch == '"':
+                inside_string = not inside_string
+
+            if inside_string and depth == 0:
+                key_buffer.append(ch)
+                if len(key_buffer) > 255:
+                    key_buffer = key_buffer[:255]
+
+            if not inside_string and key_buffer:
+                key_str = ''.join(key_buffer)
+                key_buffer = []
+                if key_str[1:] == self.key:
+                    skipping = True
+                    self.output_stream.write('"' + ':' + ' ')
+
+            if ch == '[' and not inside_string:
+                if skipping:
+                    depth += 1
+                    if depth == 1:
+                        self.output_stream.write('[')
+                    continue
+
+            if ch == ']' and not inside_string:
+                if depth > 0:
+                    depth -= 1
+                    if depth == 0:
+                        skipping = False
+
+            if not skipping:
+                self.output_stream.write(ch)
+
+    def get_result(self):
+        return self.output_stream.getvalue()
 
 class OBJECT_OT_BeamngCreateRefnodesVertexGroups(bpy.types.Operator):
     """Create BeamNG refNodes vertex groups if they do not exist"""
@@ -49,6 +102,37 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         context.window_manager.operators[-1].bl_label = "Save JBeam File"
         return {'RUNNING_MODAL'}
 
+    def get_starting_props(self, data, jbeam_prop): # jbeam_prop i.e. "nodes", "beams", "triangles", "quads", etc
+        if not jbeam_prop in data:
+            self.report({'ERROR'}, f"No jbeam prop named \"{jbeam_prop}\" found!")
+            return []
+        starting_props = []
+        for item in data[jbeam_prop][1:]:
+            if isinstance(item, dict):
+                starting_props.append(item)
+            elif isinstance(item, list):
+                break  # Stop when encountering the first node array
+        return starting_props
+
+    def get_ending_props(self, data, jbeam_prop):
+        if not jbeam_prop in data:
+            self.report({'ERROR'}, f"No jbeam prop named \"{jbeam_prop}\" found!")
+            return []
+        ending_props = []
+        for item in reversed(data[jbeam_prop]):
+            if isinstance(item, dict):
+                ending_props.append(item)
+            elif isinstance(item, list):
+                break  # Stop when encountering the first node array
+        ending_props.reverse()
+        return ending_props
+
+    def get_final_struct(self, json, items, jbeam_prop, prepend):
+        starting_props = self.get_starting_props(json, jbeam_prop)
+        ending_props = self.get_ending_props(json, jbeam_prop)
+        arr = prepend + starting_props + items + ending_props
+        return ',\n\t'.join(str(item).replace("[", "[").replace("]", "]").replace(",", ",").replace("}", "}") for item in arr)
+
     def export_jbeam_format(self, filepath):
         obj = bpy.context.active_object
         if obj is None or obj.type != "MESH":
@@ -74,6 +158,12 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         def format_list(data):
             return '[\n    ' + ",\n    ".join(str(item).replace("'", '"') for item in data) + "\n]"
 
+
+        def format_compact(nodes):
+            # This will generate the correct format for each node as a single line without string escaping
+            return "[" + ", ".join([json.dumps(node, separators=(",", ":")) for node in nodes]) + "]"
+
+
         is_manual_data = True
 
         if os.path.exists(filepath):
@@ -81,6 +171,8 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
                 try:
                     existing_data = json.load(f)
                     is_manual_data = "manual_data_file" in existing_data
+                    f.seek(0)
+                    existing_data_str = f.read()
                 except json.JSONDecodeError:
                     self.report({'ERROR'}, f"Error parsing {filepath}")
                     return False
@@ -99,20 +191,18 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(json_output)
         else:
-            print("ASSUME JBEAM FILE AND REPLACE AUTOMATICALLY")
-            # Modify existing .jbeam file
-            #FIXME #TODO
-            existing_data["refNodes"] = ref_nodes_data
-            existing_data["nodes"] = json.loads(format_list(nodes))
-            existing_data["beams"] = beams
-            existing_data["triangles"] = triangles
-            existing_data["quads"] = quads
-            existing_data["ngons"] = ngons
+            print(f"Replace nodes, beams, triangles, refNodes, etc in {filepath}")
+            nodes_str = self.get_final_struct(existing_data, nodes, "nodes", [["id", "posX", "posY", "posZ"]])
+            beams_str = self.get_final_struct(existing_data, beams, "beams", [["id1:", "id2:"]])
+            tris_str = self.get_final_struct(existing_data, triangles, "triangles", [["id1:","id2:","id3:"]])
+            quads_str = self.get_final_struct(existing_data, quads, "quads", [["id1:","id2:","id3:","id4:"]])
+            
+            processor = JBeamProcessor(existing_data_str, "nodes")
+            processor.remove_node_contents()
+            existing_data_str = processor.get_result()
 
-            with open(filepath, "w") as f:
-                json_output = json.dumps(existing_data, indent=4)
-
-
+            with open(filepath, "w", encoding="utf-8") as f:
+                f.write(existing_data_str)
 
         
 

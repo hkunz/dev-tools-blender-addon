@@ -133,28 +133,40 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         context.window_manager.operators[-1].bl_label = "Save JBeam File"
         return {'RUNNING_MODAL'}
 
-    def get_starting_props(self, data, jbeam_prop): # jbeam_prop i.e. "nodes", "beams", "triangles", "quads", etc
-        if not jbeam_prop in data:
+    def get_starting_props(self, data, jbeam_prop):  # jbeam_prop i.e. "nodes", "beams", "triangles", "quads", etc
+        partnames = [key for key in data if "partname" in key]
+        if not partnames:
+            self.report({'ERROR'}, "No partname-like property found!")
+            return []
+        last_partname = partnames[-1]
+        part_data = data[last_partname]
+        if jbeam_prop not in part_data:
             self.report({'ERROR'}, f"No jbeam prop named \"{jbeam_prop}\" found!")
             return []
         starting_props = []
-        for item in data[jbeam_prop][1:]:
+        for item in part_data[jbeam_prop][1:]:
             if isinstance(item, dict):
                 starting_props.append(item)
             elif isinstance(item, list):
-                break  # Stop when encountering the first node array
+                break
         return starting_props
 
-    def get_ending_props(self, data, jbeam_prop):
-        if not jbeam_prop in data:
+    def get_ending_props(self, data, jbeam_prop):  # jbeam_prop i.e. "nodes", "beams", "triangles", "quads", etc
+        partnames = [key for key in data if "partname" in key]
+        if not partnames:
+            self.report({'ERROR'}, "No partname-like property found!")
+            return []
+        last_partname = partnames[-1]
+        part_data = data[last_partname]
+        if jbeam_prop not in part_data:
             self.report({'ERROR'}, f"No jbeam prop named \"{jbeam_prop}\" found!")
             return []
         ending_props = []
-        for item in reversed(data[jbeam_prop]):
+        for item in reversed(part_data[jbeam_prop]):
             if isinstance(item, dict):
                 ending_props.append(item)
             elif isinstance(item, list):
-                break  # Stop when encountering the first node array
+                break
         ending_props.reverse()
         return ending_props
 

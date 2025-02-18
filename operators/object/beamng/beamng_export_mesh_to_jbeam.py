@@ -21,7 +21,7 @@ class JBeamProcessor:
         self.output_stream = io.StringIO()
         self.input_stream = io.StringIO(self.modified_data)
 
-        depth = 1
+        depth = 0
         skipping = False
         key_buffer = []
         inside_string = False
@@ -64,6 +64,7 @@ class JBeamProcessor:
 
         return self.output_stream.getvalue()
 
+
     def get_key_indent(self, key):
         current_pos = self.input_stream.tell()
         self.input_stream.seek(0)
@@ -84,7 +85,7 @@ class JBeamProcessor:
         indent = " " * spaces
         result = self.get_result()
         indented_contents = "\n".join(indent + line for line in new_contents.splitlines())
-        result = result.replace(f'"{key}": []', f'"{key}": [\n\t{indented_contents}\n{indent}]')
+        result = result.replace(f'"{key}": []', f'"{key}": [\n    {indented_contents}\n{indent}]')
         self.modified_data = result
         return result
 
@@ -181,7 +182,7 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         if starting_props == ending_props:
             ending_props = []
         arr = prepend + starting_props + items + ending_props
-        return ',\n\t'.join(
+        return ',\n    '.join(
         str(item).replace("'", '"').replace("[", "[").replace("]", "]").replace(",", ",").replace("}", "}") 
         for item in arr
     )

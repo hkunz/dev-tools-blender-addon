@@ -182,10 +182,12 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         if starting_props == ending_props:
             ending_props = []
         arr = prepend + starting_props + items + ending_props
-        return ',\n    '.join(
-        str(item).replace("'", '"').replace("[", "[").replace("]", "]").replace(",", ",").replace("}", "}") 
-        for item in arr
-    )
+        formatted_str = ',\n    '.join(
+            str(item).replace("'", '"')
+            for item in arr
+        )
+        formatted_str = formatted_str.replace('True', 'true').replace('False', 'false')
+        return formatted_str
 
     def export_jbeam_format(self, filepath):
         obj = bpy.context.active_object
@@ -222,7 +224,7 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
                 try:
                     raw_text = f.read()
                     clean_text = json_cleanup(raw_text)
-                    existing_data = json.load(io.StringIO(clean_text))  # Convert cleaned text to file-like object
+                    existing_data = json.load(io.StringIO(clean_text))  # Convert cleaned text to file-like object, changes true to True & false to False but jbeam needs small case bools
                     is_manual_data = "manual_data_file" in existing_data
                     f.seek(0)
                     existing_data_str = f.read()

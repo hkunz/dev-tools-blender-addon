@@ -1,9 +1,11 @@
 import bpy
 import bpy_types
 import os
-import json
 import io
+import json
+from pprint import pprint
 
+from dev_tools.utils.json_cleanup import json_cleanup # type: ignore
 
 class JBeamProcessor:
     def __init__(self, json_data):
@@ -114,9 +116,9 @@ class OBJECT_OT_BeamngCreateRefnodesVertexGroups(bpy.types.Operator):
         return active_object and active_object.type == "MESH"
 
 class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
-    """Export mesh to JBeam JSON format"""
+    """Export mesh to JBeam format"""
     bl_idname = "export.dev_tools_beamng_export_mesh_to_jbeam"
-    bl_label = "DevTools: Export Mesh to JBeam JSON Format"
+    bl_label = "DevTools: Export Mesh to JBeam Format"
     bl_options = {'REGISTER'}
 
     filepath: bpy.props.StringProperty(subtype="FILE_PATH") # type: ignore
@@ -190,12 +192,11 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         ]
 
         def format_list(data):
-            return '[\n    ' + ",\n    ".join(str(item).replace("'", '"') for item in data) + "\n]"
+            spaces = 12
+            indent = " " * spaces
+            return '[\n' + ',\n'.join(indent + str(item).replace("'", '"') for item in data) + '\n' + ' ' * (spaces - 4) + ']'
 
 
-        def format_compact(nodes):
-            # This will generate the correct format for each node as a single line without string escaping
-            return "[" + ", ".join([json.dumps(node, separators=(",", ":")) for node in nodes]) + "]"
 
 
         is_manual_data = True
@@ -203,7 +204,9 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         if os.path.exists(filepath):
             with open(filepath, "r", encoding="utf-8") as f:
                 try:
-                    existing_data = json.load(f)
+                    raw_text = f.read()
+                    clean_text = json_cleanup(raw_text)
+                    existing_data = json.load(io.StringIO(clean_text))  # Convert cleaned text to file-like object
                     is_manual_data = "manual_data_file" in existing_data
                     f.seek(0)
                     existing_data_str = f.read()
@@ -214,14 +217,18 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         if is_manual_data:
             # Generate manual data .json file
             json_output = "{\n"
-            json_output += f'"manual_data_file": "you need to manually copy these nodes to the .jbeam file",\n'
-            json_output += f'"refNodes": {format_list(ref_nodes_data)},\n'
-            json_output += f'"nodes": {format_list(nodes)},\n'
-            json_output += f'"beams": {format_list(beams)},\n'
-            json_output += f'"triangles": {format_list(triangles)},\n'
-            json_output += f'"quads": {format_list(quads)},\n'
-            json_output += f'"ngons": {format_list(ngons)}\n'
+            json_output += f'\t"manual_data_file": "you need to manually copy these nodes to the .jbeam file",\n'
+            json_output += f'\t"partname": {{\n'  # Start the parent object
+            json_output += f'\t\t"refNodes": {format_list(ref_nodes_data)},\n'
+            json_output += f'\t\t"nodes": {format_list(nodes)},\n'
+            json_output += f'\t\t"beams": {format_list(beams)},\n'
+            json_output += f'\t\t"triangles": {format_list(triangles)},\n'
+            json_output += f'\t\t"quads": {format_list(quads)},\n'
+            json_output += f'\t\t"ngons": {format_list(ngons)}\n'
+            json_output += "\t}\n"  # Close the parent object
             json_output += "}"
+              # Close the root object
+
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(json_output)
         else:
@@ -237,14 +244,10 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
             existing_data_str = processor.insert_node_contents("nodes", nodes_str)
             existing_data_str = processor.insert_node_contents("beams", beams_str)
             existing_data_str = processor.insert_node_contents("triangles", tris_str)
-
-            #json_text = processor.insert_node_contents("beamsn", beams_str)
+            existing_data_str = processor.insert_node_contents("quads", quads_str)
 
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(existing_data_str)
-
-        
-
 
             self.report({'INFO'}, f"{obj.name}: JBeam exported to {filepath}")
 

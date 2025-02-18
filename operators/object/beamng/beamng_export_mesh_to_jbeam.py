@@ -175,7 +175,7 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         ending_props.reverse()
         return ending_props
 
-    def get_final_struct(self, json, items, jbeam_prop, prepend):
+    def get_final_struct(self, json, items, jbeam_prop, prepend=[]):
         starting_props = self.get_starting_props(json, jbeam_prop)
         ending_props = self.get_ending_props(json, jbeam_prop)
         if starting_props == ending_props:
@@ -241,7 +241,7 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
             json_output += t2 + '"beams": ' + format_list(beams, '["id1:", "id2:"]') + ',\n'
             json_output += t2 + '"triangles": ' + format_list(triangles, '["id1:","id2:","id3:"]') + ',\n'
             json_output += t2 + '"quads": ' + format_list(quads, '["id1:","id2:","id3:","id4:"]') + ',\n'
-            json_output += t2 + '"ngons": ' + format_list(ngons) + ',\n'
+            json_output += t2 + '"ngons": ' + format_list(ngons, '["ngons:"]') + ',\n'
             json_output += t1 + "}\n"
             json_output += "}"
 
@@ -249,18 +249,22 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
                 f.write(json_output)
         else:
             print(f"Replace nodes, beams, triangles, refNodes, etc in {filepath}")
+            refnodes_str = self.get_final_struct(existing_data, ref_nodes_data, "refNodes")
             nodes_str = self.get_final_struct(existing_data, nodes, "nodes", [["id", "posX", "posY", "posZ"]])
             beams_str = self.get_final_struct(existing_data, beams, "beams", [["id1:", "id2:"]])
             tris_str = self.get_final_struct(existing_data, triangles, "triangles", [["id1:","id2:","id3:"]])
             quads_str = self.get_final_struct(existing_data, quads, "quads", [["id1:","id2:","id3:","id4:"]])
+            ngons_str = self.get_final_struct(existing_data, ngons, "ngons", [["ngons:"]])
             
             processor = JBeamProcessor(existing_data_str)
 
             # Modify "nodes", then "beams", and "triangles" successively:
+            existing_data_str = processor.insert_node_contents("refNodes", refnodes_str)
             existing_data_str = processor.insert_node_contents("nodes", nodes_str)
             existing_data_str = processor.insert_node_contents("beams", beams_str)
             existing_data_str = processor.insert_node_contents("triangles", tris_str)
             existing_data_str = processor.insert_node_contents("quads", quads_str)
+            existing_data_str = processor.insert_node_contents("ngons", ngons_str)
 
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(existing_data_str)

@@ -7,6 +7,9 @@ from pprint import pprint
 
 from dev_tools.utils.json_cleanup import json_cleanup # type: ignore
 
+import io
+import json
+
 class JBeamProcessor:
     def __init__(self, json_data):
         self.json_data = json_data
@@ -18,7 +21,7 @@ class JBeamProcessor:
         self.output_stream = io.StringIO()
         self.input_stream = io.StringIO(self.modified_data)
 
-        depth = 0
+        depth = 1
         skipping = False
         key_buffer = []
         inside_string = False
@@ -58,6 +61,8 @@ class JBeamProcessor:
 
             if not skipping:
                 self.output_stream.write(ch)
+
+        return self.output_stream.getvalue()
 
     def get_key_indent(self, key):
         current_pos = self.input_stream.tell()
@@ -134,7 +139,7 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
     def get_starting_props(self, data, jbeam_prop):  # jbeam_prop i.e. "nodes", "beams", "triangles", "quads", etc
-        partnames = [key for key in data if "partname" in key]
+        partnames = [key for key in data]
         if not partnames:
             self.report({'ERROR'}, "No partname-like property found!")
             return []
@@ -152,7 +157,7 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         return starting_props
 
     def get_ending_props(self, data, jbeam_prop):  # jbeam_prop i.e. "nodes", "beams", "triangles", "quads", etc
-        partnames = [key for key in data if "partname" in key]
+        partnames = [key for key in data]
         if not partnames:
             self.report({'ERROR'}, "No partname-like property found!")
             return []
@@ -203,13 +208,11 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
             ["ref"] + [ref_nodes[key] if ref_nodes[key] is not None else "" for key in ["back", "left", "up", "leftCorner", "rightCorner"]],
         ]
 
-        def format_list(data):
+        def format_list(data, prepend=""):
             spaces = 12
             indent = " " * spaces
-            return '[\n' + ',\n'.join(indent + str(item).replace("'", '"') for item in data) + '\n' + ' ' * (spaces - 4) + ']'
-
-
-
+            prepend = indent + prepend + '\n' if prepend else ""
+            return '[\n' + prepend + ',\n'.join(indent + str(item).replace("'", '"') for item in data) + '\n' + ' ' * (spaces - 4) + ']'
 
         is_manual_data = True
 
@@ -228,18 +231,19 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
 
         if is_manual_data:
             # Generate manual data .json file
+            t1 = " " * 4
+            t2 = " " * 8
             json_output = "{\n"
-            json_output += f'\t"manual_data_file": "you need to manually copy these nodes to the .jbeam file",\n'
-            json_output += f'\t"partname": {{\n'  # Start the parent object
-            json_output += f'\t\t"refNodes": {format_list(ref_nodes_data)},\n'
-            json_output += f'\t\t"nodes": {format_list(nodes)},\n'
-            json_output += f'\t\t"beams": {format_list(beams)},\n'
-            json_output += f'\t\t"triangles": {format_list(triangles)},\n'
-            json_output += f'\t\t"quads": {format_list(quads)},\n'
-            json_output += f'\t\t"ngons": {format_list(ngons)}\n'
-            json_output += "\t}\n"  # Close the parent object
+            json_output += f'{t1}"manual_data_file": {{"note":"you need to manually copy these nodes to the .jbeam file"}},\n'
+            json_output += f'{t1}"partname": {{\n'
+            json_output += t2 + '"refNodes": ' + format_list(ref_nodes_data) + ',\n'
+            json_output += t2 + '"nodes": ' + format_list(nodes, '["id", "posX", "posY", "posZ"]') + ',\n'
+            json_output += t2 + '"beams": ' + format_list(beams, '["id1:", "id2:"]') + ',\n'
+            json_output += t2 + '"triangles": ' + format_list(triangles, '["id1:","id2:","id3:"]') + ',\n'
+            json_output += t2 + '"quads": ' + format_list(quads, '["id1:","id2:","id3:","id4:"]') + ',\n'
+            json_output += t2 + '"ngons": ' + format_list(ngons) + ',\n'
+            json_output += t1 + "}\n"
             json_output += "}"
-              # Close the root object
 
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(json_output)
@@ -344,3 +348,31 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         required_groups = {"up", "left", "back", "leftCorner", "rightCorner"}
         existing_groups = {vg.name for vg in active_object.vertex_groups}
         return required_groups.issubset(existing_groups)
+
+
+# Test
+
+json_data = """
+{
+    "manual_datfa_file": "you need to manually copy these nodes to the .jbeam file",
+    "partname": {
+        "refNodes": [
+            ["ref:", "back:", "left:", "up:", "leftCorner:", "rightCorner:"],
+            ["ref", "", "", "", "", ""]
+        ],
+        "nodes": [
+            ["id", "posX", "posY", "posZ"],
+            {"asdf":"asdf"},
+            {"asdf":"asdf2"},
+            ["ref", 0, 0, 0],
+            ["b7", -1.0, -1.0, 1.0],
+            ["b8", -1.0, -1.0, -1.0],
+            {"asdf":"asdf"},
+            {"asdf":"asdf3"}
+        ]
+    }
+}
+"""
+#processor = JBeamProcessor(json_data)
+#result = processor.remove_node_contents("nodes")
+#print("Processed JSON:\n", result)

@@ -14,11 +14,11 @@ class OBJECT_OT_BeamngConvertJbeamToMesh(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def get_ref_nodes(self, jbeam_data):
-        """Extract reference nodes from the JBeam data."""
+        """Extract reference nodes from the JBeam data, trimming colons from keys."""
         for key, value in jbeam_data.items():
             if "refNodes" in value:
                 headers, values = value["refNodes"]
-                return dict(zip(headers[1:], values[1:]))  # Skip "ref:" and "ref"
+                return {h[:-1]: v for h, v in zip(headers[1:], values[1:])}  # Trim last char from keys
         return {}
 
     def extract_node_positions(self, json_data):
@@ -28,10 +28,7 @@ class OBJECT_OT_BeamngConvertJbeamToMesh(Operator):
         for obj_name, obj_data in json_data.items():
             if "nodes" in obj_data:
                 nodes = obj_data["nodes"]
-
-                # Debugging: Print first few entries to check format
                 print(f"Nodes for {obj_name}: {nodes[:5]}")  # Print first few lines
-
                 node_positions[obj_name] = {
                     entry[0]: mathutils.Vector((float(entry[1]), float(entry[2]), float(entry[3])))
                     for entry in nodes
@@ -39,10 +36,6 @@ class OBJECT_OT_BeamngConvertJbeamToMesh(Operator):
                 }
 
         return node_positions
-
-
-
-
 
     def load_jbeam(self, filepath):
         """Load and clean JBeam file."""
@@ -59,13 +52,69 @@ class OBJECT_OT_BeamngConvertJbeamToMesh(Operator):
             self.report({'ERROR'}, f"Error loading JBeam file: {e}")
             return None
 
+    def remove_custom_data_props(self, obj):
+        for key in list(obj.keys()):
+            del obj[key]
+        for key in list(obj.data.keys()):
+            del obj.data[key]
+
+    def get_vertex_indices(self, node_positions, obj_name=None, epsilon=0.0001):
+        if obj_name is None:
+            obj_name = next(iter(node_positions))  # Use the first key if no obj_name is given
+
+        obj = bpy.data.objects.get(obj_name)
+        if obj is None or not obj.type == 'MESH':
+            print(f"Object '{obj_name}' not found or not a mesh.")
+            return None
+
+        mesh = obj.data
+        verts_dic = {}
+
+        for node_id, node_pos in node_positions[obj_name].items():
+            node_vec = mathutils.Vector(node_pos)
+
+            # Find the closest vertex
+            min_dist = float('inf')
+            closest_vert_idx = -1
+            for v in mesh.vertices:
+                vert_vec = obj.matrix_world @ v.co  # Convert to world space
+                dist = (node_vec - vert_vec).length
+
+                if dist < min_dist and dist <= epsilon:
+                    min_dist = dist
+                    closest_vert_idx = v.index
+
+            if closest_vert_idx != -1:
+                verts_dic[node_id] = closest_vert_idx
+            else:
+                print(f"Warning: No vertex found within {epsilon} for node '{node_id}'.")
+
+        return verts_dic
+
+
+    def assign_ref_nodes_to_vertex_groups(self, obj, ref_nodes, verts_dic):
+        for group_name, node_id in ref_nodes.items():
+            # Try to get the vertex group, create if it doesn't exist
+            vg = obj.vertex_groups.get(group_name)
+            if vg is None:
+                print(f"Vertex group '{group_name}' not found, creating it.")
+                vg = obj.vertex_groups.new(name=group_name)
+
+            idx = verts_dic.get(node_id)
+            if idx is None:
+                print(f"Node ID '{node_id}' not found in verts_dic, skipping.")
+                continue
+
+            vg.add([idx], 1.0, 'REPLACE')
+            print(f"Assigned vertex {idx} to vertex group '{group_name}'.")
+
+
     def execute(self, context):
         obj = context.object
         if not obj or obj.type != 'MESH':
             self.report({'WARNING'}, "No mesh object selected!")
             return {'CANCELLED'}
 
-        # Get JBeam file path safely
         jbeam_path = obj.data.get('jbeam_file_path', None)
         if not jbeam_path:
             self.report({'WARNING'}, "Object is not a JBeam object or missing JBeam file path!")
@@ -73,34 +122,28 @@ class OBJECT_OT_BeamngConvertJbeamToMesh(Operator):
 
         json_data = self.load_jbeam(jbeam_path)
         if not json_data:
-            return {'CANCELLED'}  # Already reported error inside load_jbeam()
+            return {'CANCELLED'}
 
         ref_nodes = self.get_ref_nodes(json_data)
         node_positions = self.extract_node_positions(json_data)
 
-        # Debugging output
-        print("refNodes ==========")
-        pprint(ref_nodes)
+        first_key = next(iter(node_positions))
+        print(node_positions[first_key]["b29"]) # print(node_positions["faceball"]["b29"])
 
-        # Check if faceball exists before accessing
-        if "faceball" in node_positions and "b29" in node_positions["faceball"]:
-            print(node_positions["faceball"]["b29"])
+        self.remove_custom_data_props(obj)
 
-        # Remove custom properties
-        for key in list(obj.keys()):
-            del obj[key]
-        for key in list(obj.data.keys()):
-            del obj.data[key]
-
-        # Merge by distance (Updated from remove_doubles)
         bpy.context.view_layer.objects.active = obj
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.select_all(action='SELECT')
         bpy.ops.mesh.remove_doubles(threshold=0.0005)
         bpy.ops.object.mode_set(mode='OBJECT')
 
-        # Run additional operator
-        bpy.ops.object.devtools_beamng_create_refnodes_vertex_groups()
+        verts_dic = self.get_vertex_indices(node_positions)
+        #print("index2 ====", verts_dic["ref"])
+
+        # bpy.ops.object.devtools_beamng_create_refnodes_vertex_groups() # vertex groups not found maybe timing issue
+        # bpy.context.view_layer.update() 
+        self.assign_ref_nodes_to_vertex_groups(obj, ref_nodes, verts_dic)
 
         self.report({'INFO'}, f"Cleaned object and mesh data: {obj.name}")
         return {'FINISHED'}

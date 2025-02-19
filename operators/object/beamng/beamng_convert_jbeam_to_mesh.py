@@ -91,6 +91,20 @@ class OBJECT_OT_BeamngConvertJbeamToMesh(Operator):
 
         return verts_dic
 
+    def get_fixed_vertices(self, nodes):
+        """Extracts a list of node IDs that belong to the 'fixed' vertex group."""
+        fixed_nodes = []
+        is_fixed = False  # Track whether we are in a fixed section
+
+        for entry in nodes:
+            if isinstance(entry, dict):  # Check for {"fixed": true} or {"fixed": false}
+                if "fixed" in entry:
+                    is_fixed = entry["fixed"]
+            elif isinstance(entry, list) and len(entry) == 4:  # Node entries have 4 elements
+                if is_fixed:
+                    fixed_nodes.append(entry[0])  # Store node ID if inside a fixed section
+
+        return fixed_nodes
 
     def assign_ref_nodes_to_vertex_groups(self, obj, ref_nodes, verts_dic):
         for group_name, node_id in ref_nodes.items():
@@ -142,7 +156,26 @@ class OBJECT_OT_BeamngConvertJbeamToMesh(Operator):
         #print("index2 ====", verts_dic["ref"])
 
         # bpy.ops.object.devtools_beamng_create_refnodes_vertex_groups() # vertex groups not found maybe timing issue
-        # bpy.context.view_layer.update() 
+        # bpy.context.view_layer.update()
+
+        # **Extract "fixed" nodes and convert them to vertex indices**
+        fixed_nodes = []
+        for obj_name, obj_data in json_data.items():
+            if "nodes" in obj_data:
+                fixed_nodes.extend(self.get_fixed_vertices(obj_data["nodes"]))
+
+        print(f"Fixed nodes: {fixed_nodes}")
+
+        fixed_vertex_indices = [verts_dic[node] for node in fixed_nodes if node in verts_dic]
+
+        if fixed_vertex_indices:
+            vg_fixed = obj.vertex_groups.get("fixed")
+            if vg_fixed is None:
+                vg_fixed = obj.vertex_groups.new(name="fixed")
+
+            vg_fixed.add(fixed_vertex_indices, 1.0, 'REPLACE')
+            print(f"Assigned {len(fixed_vertex_indices)} vertices to the 'fixed' vertex group.")
+
         self.assign_ref_nodes_to_vertex_groups(obj, ref_nodes, verts_dic)
 
         self.report({'INFO'}, f"Cleaned object and mesh data: {obj.name}")

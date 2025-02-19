@@ -204,12 +204,11 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         try:
             node_names = json.loads(obj.data["node_names"])
             print(f"Object total verts: {num_vertices}, node names len: {len(node_names)}")
-            if num_vertices != len(node_names):
-                print("Object vertices and node names available is not the same, default to using vertex indices as node names")
+            if num_vertices > len(node_names):
+                print("Object vertices and node names available are not the same, default to using vertex indices as node names")
                 node_names = None
         except (KeyError, json.JSONDecodeError):
             node_names = None
-
 
         fixed_vertices = self.get_fixed_vertices(obj)
         nodes, vertex_map = self.get_nodes(mesh, fixed_vertices, node_names)
@@ -308,16 +307,16 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
             node_name = node_names.get(str(i), None) if node_names else f"b{i+1}"
             pos = (round(vert.co.x, 4), round(vert.co.y, 4), round(vert.co.z, 4))
             if i in fixed_vertices and not currently_fixed:
-                nodes.append({"fixed": "true"})
+                nodes.append({"fixed": True})
                 currently_fixed = True
             elif i not in fixed_vertices and currently_fixed:
-                nodes.append({"fixed": "false"})
+                nodes.append({"fixed": False})
                 currently_fixed = False
             nodes.append([node_name, *pos])
             vertex_map[i] = node_name
 
         if currently_fixed:
-            nodes.append({"fixed": "false"})
+            nodes.append({"fixed": False})
 
         nodes.insert(0, ["ref", 0, 0, 0])
         return nodes, vertex_map

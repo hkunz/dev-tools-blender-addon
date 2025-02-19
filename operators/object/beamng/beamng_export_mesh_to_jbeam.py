@@ -84,6 +84,8 @@ class JBeamProcessor:
         spaces = self.get_key_indent(key)
         indent = " " * spaces
         result = self.get_result()
+        if spaces < 0:
+            return result
         indented_contents = "\n".join(indent + line for line in new_contents.splitlines())
         result = result.replace(f'"{key}": []', f'"{key}": [\n    {indented_contents}\n{indent}]')
         self.modified_data = result
@@ -142,12 +144,12 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
     def get_starting_props(self, data, jbeam_prop):  # jbeam_prop i.e. "nodes", "beams", "triangles", "quads", etc
         partnames = [key for key in data]
         if not partnames:
-            self.report({'ERROR'}, "No partname-like property found!")
+            self.report({'WARNING'}, "No partname-like property found!")
             return []
         last_partname = partnames[-1]
         part_data = data[last_partname]
         if jbeam_prop not in part_data:
-            self.report({'ERROR'}, f"No jbeam prop named \"{jbeam_prop}\" found!")
+            self.report({'WARNING'}, f"No jbeam prop named \"{jbeam_prop}\" found!")
             return []
         starting_props = []
         for item in part_data[jbeam_prop][1:]:
@@ -256,8 +258,8 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
             nodes_str = self.get_final_struct(existing_data, nodes, "nodes", [["id", "posX", "posY", "posZ"]])
             beams_str = self.get_final_struct(existing_data, beams, "beams", [["id1:", "id2:"]])
             tris_str = self.get_final_struct(existing_data, triangles, "triangles", [["id1:","id2:","id3:"]])
-            quads_str = self.get_final_struct(existing_data, quads, "quads", [["id1:","id2:","id3:","id4:"]])
-            ngons_str = self.get_final_struct(existing_data, ngons, "ngons", [["ngons:"]])
+            if quads: quads_str = self.get_final_struct(existing_data, quads, "quads", [["id1:","id2:","id3:","id4:"]])
+            if ngons: ngons_str = self.get_final_struct(existing_data, ngons, "ngons", [["ngons:"]])
             
             processor = JBeamProcessor(existing_data_str)
 
@@ -266,8 +268,8 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
             existing_data_str = processor.insert_node_contents("nodes", nodes_str)
             existing_data_str = processor.insert_node_contents("beams", beams_str)
             existing_data_str = processor.insert_node_contents("triangles", tris_str)
-            existing_data_str = processor.insert_node_contents("quads", quads_str)
-            existing_data_str = processor.insert_node_contents("ngons", ngons_str)
+            if quads: existing_data_str = processor.insert_node_contents("quads", quads_str)
+            if ngons: existing_data_str = processor.insert_node_contents("ngons", ngons_str)
 
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(existing_data_str)

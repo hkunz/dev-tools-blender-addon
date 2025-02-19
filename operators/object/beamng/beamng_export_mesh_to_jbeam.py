@@ -198,15 +198,26 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
             return False
 
         mesh = obj.data
+        num_vertices = len(mesh.vertices)
         mesh.calc_loop_triangles()
+        node_names = None
+        try:
+            node_names = json.loads(obj.data["node_names"])
+            print(f"Object total verts: {num_vertices}, node names len: {len(node_names)}")
+            if num_vertices != len(node_names):
+                print("Object vertices and node names available is not the same, default to using vertex indices as node names")
+                node_names = None
+        except (KeyError, json.JSONDecodeError):
+            node_names = None
+
 
         fixed_vertices = self.get_fixed_vertices(obj)
-        nodes, vertex_map = self.get_nodes(mesh, fixed_vertices)
+        nodes, vertex_map = self.get_nodes(mesh, fixed_vertices, node_names)
         beams = self.get_beams(mesh, vertex_map)
         triangles = self.get_triangles(mesh, vertex_map)
         quads = self.get_quads(mesh, vertex_map)
         ngons = self.get_ngons(mesh, vertex_map)
-        ref_nodes = self.find_reference_nodes(obj)
+        ref_nodes = self.find_reference_nodes(obj, node_names)
 
         ref_nodes_data = [
             ["ref:", "back:", "left:", "up:", "leftCorner:", "rightCorner:"],
@@ -288,13 +299,13 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
                         fixed_vertices.add(vert.index)
         return fixed_vertices
 
-    def get_nodes(self, mesh, fixed_vertices):
+    def get_nodes(self, mesh, fixed_vertices, node_names):
         nodes = []
         vertex_map = {}
         currently_fixed = False
 
         for i, vert in enumerate(mesh.vertices):
-            node_name = f"b{i+1}"
+            node_name = node_names.get(str(i), None) if node_names else f"b{i+1}"
             pos = (round(vert.co.x, 4), round(vert.co.y, 4), round(vert.co.z, 4))
             if i in fixed_vertices and not currently_fixed:
                 nodes.append({"fixed": "true"})
@@ -337,7 +348,7 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
                 ngons.append([vertex_map[v] for v in poly.vertices])
         return ngons
 
-    def find_reference_nodes(self, obj):
+    def find_reference_nodes(self, obj, node_names):
         ref_nodes = {"ref": None, "back": None, "left": None, "up": None, "leftCorner": None, "rightCorner": None}
         for group_name in ref_nodes.keys():
             group = obj.vertex_groups.get(group_name)
@@ -345,7 +356,7 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
                 for vert in obj.data.vertices:
                     for g in vert.groups:
                         if g.group == group.index:
-                            ref_nodes[group_name] = f"b{vert.index + 1}"
+                            ref_nodes[group_name] = node_names.get(str(vert.index), None) if node_names else f"b{vert.index + 1}"
                             break
         return ref_nodes
 

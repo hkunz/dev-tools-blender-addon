@@ -177,6 +177,8 @@ class OBJECT_OT_BeamngConvertJbeamToMesh(Operator):
             print(f"Assigned {len(fixed_vertex_indices)} vertices to the 'fixed' vertex group.")
 
         self.assign_ref_nodes_to_vertex_groups(obj, ref_nodes, verts_dic)
+        reversed_verts_dic = {v: k for k, v in verts_dic.items()}
+        obj.data["node_names"] = json.dumps(reversed_verts_dic)
 
         self.report({'INFO'}, f"Cleaned object and mesh data: {obj.name}")
         return {'FINISHED'}

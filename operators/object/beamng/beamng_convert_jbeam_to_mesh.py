@@ -58,14 +58,9 @@ class OBJECT_OT_BeamngConvertJbeamToMesh(Operator):
         for key in list(obj.data.keys()):
             del obj.data[key]
 
-    def get_vertex_indices(self, node_positions, obj_name=None, epsilon=0.0001):
+    def get_vertex_indices(self, obj, node_positions, obj_name=None, epsilon=0.0005):
         if obj_name is None:
             obj_name = next(iter(node_positions))  # Use the first key if no obj_name is given
-
-        obj = bpy.data.objects.get(obj_name)
-        if obj is None or not obj.type == 'MESH':
-            print(f"Object '{obj_name}' not found or not a mesh.")
-            return None
 
         mesh = obj.data
         verts_dic = {}
@@ -152,7 +147,7 @@ class OBJECT_OT_BeamngConvertJbeamToMesh(Operator):
         bpy.ops.mesh.remove_doubles(threshold=0.0005)
         bpy.ops.object.mode_set(mode='OBJECT')
 
-        verts_dic = self.get_vertex_indices(node_positions)
+        verts_dic = self.get_vertex_indices(obj, node_positions)
         #print("index2 ====", verts_dic["ref"])
 
         # bpy.ops.object.devtools_beamng_create_refnodes_vertex_groups() # vertex groups not found maybe timing issue

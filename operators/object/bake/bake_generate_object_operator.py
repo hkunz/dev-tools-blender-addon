@@ -23,27 +23,24 @@ class OBJECT_OT_BakeGenerateObject(bpy.types.Operator):
         print(f"{duplicated_obj.name}: Removed all materials and added new material {mat.name}")
 
         return duplicated_obj
-        
 
     def clear_old_uv_maps(self, duplicated_obj):
         uv_layers = duplicated_obj.data.uv_layers
-
         print("Removing all UV maps except 'bake'...")
-        
-        uv_to_remove = [uv_layer for uv_layer in uv_layers if uv_layer.name != "bake"]
-        for uv_layer in uv_to_remove:
-            print(f"Removing UV map: {uv_layer.name}")
-            uv_layers.remove(uv_layer)
+        uv_to_remove = [uv_layer.name for uv_layer in uv_layers if uv_layer.name != "bake"]
 
-        bake_uv_layer = None
-        for uv_layer in uv_layers:
-            if uv_layer.name == "bake":
-                bake_uv_layer = uv_layer
-                break
+        for uv_name in uv_to_remove:
+            print(f"Removing UV map: {uv_name}")
+            uv_layers.remove(uv_layers[uv_name])
+
+        bake_uv_layer = uv_layers.get("bake")
 
         if bake_uv_layer:
             print(f"Renaming UV map 'bake' to 'UVMap'")
             bake_uv_layer.name = "UVMap"
+        else:
+            print("Warning: 'bake' UV map not found, no renaming done.")
+
 
     def create_new_material(self):
         new_material = bpy.data.materials.new(name="material_baked")

@@ -8,22 +8,26 @@ class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
     bl_label = "DevTools: Prepare Bake"
     bl_options = {'REGISTER', 'UNDO'}
 
+
     def create_bake_uv_and_select(self, obj, bake_uv):
         uvs = obj.data.uv_layers
         if not uvs:
             self.report({'WARNING'}, f"No UV Maps to bake in object '{obj.name}'")
             return False
-        
-        if bake_uv not in uvs:
-            uvs.new(name=bake_uv)
-        else:
-            print(f"{obj.name}: 'bake' UV map already exists")
 
-        bake_uv_map = uvs[bake_uv]
-        bake_uv_map.active = True
+        if bake_uv in uvs:
+            if uvs.active.name == bake_uv:
+                self.report({'ERROR'}, "Please select a UV map you want as a reference to bake on.")
+                return False
+            else:
+                print(f"{obj.name}: Removing existing 'bake' UV map...")
+                uvs.remove(uvs[bake_uv])
+
+        bake_uv_map = uvs.new(name=bake_uv)
         uvs.active = bake_uv_map
-        print(f"{obj.name}: UV map '{bake_uv_map.name}' ready and selected")
+        print(f"{obj.name}: UV map '{bake_uv_map.name}' created, ready and selected")
         return True
+
 
     def delete_bake_image(self, bake_image_name):
         bake_image = bpy.data.images.get(bake_image_name)
@@ -136,7 +140,9 @@ class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
 
             image = self.create_bake_texture_and_image(bake_texture, bake_image, bake_resolution, bake_resolution)
             self.add_bake_image_texture_node_to_materials_and_select(obj, bake_texture, image)
-            self.pack_uv_islands()
+            auto_bake = context.scene.my_property_group_pointer.auto_bake_pack_uv_islands
+            if auto_bake:
+                self.pack_uv_islands()
             self.set_bake_settings()
 
         print("Packed UV Islands. Check results in UV Editor.\n \

@@ -74,10 +74,10 @@ class MyPropertyGroup1(bpy.types.PropertyGroup):
         #default="FOUR_K", # cannot set a default when using dynamic EnumProperty
     ) # type: ignore https://blender.stackexchange.com/questions/311578/how-do-you-correctly-add-ui-elements-to-adhere-to-the-typing-spec/311770#311770
 
-    my_bool_prop: bpy.props.BoolProperty(
-        name="My Bool Prop",
-        description="My bool prop description",
-        default=False,
+    auto_bake_pack_uv_islands: bpy.props.BoolProperty(
+        name="Auto Bake Pack UV Islands",
+        description="Automatically pack UV Islands else if unticked use the same UV Map configuration as selected UV Map",
+        default=True,
         #update=on_bool_input_change,
     ) # type: ignore
 
@@ -213,6 +213,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             row = col.row()
             properties: MyPropertyGroup1 = context.scene.my_property_group_pointer
             col.prop(properties, "bake_image_resolution", text="")
+            col.prop(properties, "auto_bake_pack_uv_islands", text="Auto Pack UV Islands")
             col.operator(OBJECT_OT_BakePrepareObject.bl_idname, text="Prepare Bake")
             col.operator(OBJECT_OT_BakeGenerateObject.bl_idname, text="Generate Bake Object")
             

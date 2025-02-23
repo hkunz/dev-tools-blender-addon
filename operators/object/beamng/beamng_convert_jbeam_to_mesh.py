@@ -137,7 +137,7 @@ class OBJECT_OT_BeamngConvertJbeamToMesh(Operator):
         node_positions = self.extract_node_positions(json_data)
 
         first_key = next(iter(node_positions))
-        print(node_positions[first_key]["b29"]) # print(node_positions["faceball"]["b29"])
+        # print(node_positions[first_key]["b29"]) # print(node_positions["faceball"]["b29"])
 
         self.remove_custom_data_props(obj)
 

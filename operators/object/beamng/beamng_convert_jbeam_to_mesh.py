@@ -118,6 +118,33 @@ class OBJECT_OT_BeamngConvertJbeamToMesh(Operator):
             print(f"Assigned vertex {idx} to vertex group '{group_name}'.")
 
 
+    def assign_flex_groups_to_vertex_groups(self, obj, json_data, verts_dic):
+        group_vertices = {}
+        for part_name, part_data in json_data.items():
+            if "nodes" not in part_data:
+                continue
+            current_group = None
+            for node in part_data["nodes"]:
+                if isinstance(node, dict) and "group" in node:
+                    current_group = node["group"] or None
+                elif isinstance(node, list) and current_group:
+                    node_name = node[0]
+                    if node_name in verts_dic:
+                        if current_group not in group_vertices:
+                            group_vertices[current_group] = []
+                        group_vertices[current_group].append(verts_dic[node_name])
+
+        for group_name, vertex_indices in group_vertices.items():
+            if not group_name:
+                continue
+            vg = obj.vertex_groups.get(group_name)
+            if vg is None:
+                vg = obj.vertex_groups.new(name=group_name)
+            vg.add(vertex_indices, 1.0, 'REPLACE')
+            print(f"Assigned {len(vertex_indices)} vertices to the '{group_name}' vertex group.")
+
+
+
     def execute(self, context):
         obj = context.object
         if not obj or obj.type != 'MESH':
@@ -172,6 +199,8 @@ class OBJECT_OT_BeamngConvertJbeamToMesh(Operator):
             print(f"Assigned {len(fixed_vertex_indices)} vertices to the 'fixed' vertex group.")
 
         self.assign_ref_nodes_to_vertex_groups(obj, ref_nodes, verts_dic)
+        self.assign_flex_groups_to_vertex_groups(obj, json_data, verts_dic)
+
         reversed_verts_dic = {v: k for k, v in verts_dic.items()}
         obj.data["node_names"] = json.dumps(reversed_verts_dic)
 

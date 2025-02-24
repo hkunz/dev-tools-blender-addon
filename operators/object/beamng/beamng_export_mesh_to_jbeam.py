@@ -323,15 +323,17 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
             node_name = node_names.get(str(i), None) if node_names else f"b{i+1}"
             pos = (round(vert.co.x, 4), round(vert.co.y, 4), round(vert.co.z, 4))
 
-            found_group = None
+            assigned_groups = []
+            
+            # Allow multiple group assignments per vertex
             for group_name in flex_groups:
                 vgroup = obj.vertex_groups.get(group_name)
                 if vgroup and any(g.group == vgroup.index for g in vert.groups):
-                    found_group = group_name
-                    break
-            
-            if found_group:
-                grouped_vertices[found_group].append((i, node_name, pos))
+                    assigned_groups.append(group_name)
+
+            if assigned_groups:
+                for group_name in assigned_groups:
+                    grouped_vertices[group_name].append((i, node_name, pos))
             else:
                 ungrouped_vertices.append((i, node_name, pos))
 
@@ -340,6 +342,7 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         nodes.append(["ref", 0, 0, 0])
 
         def process_vertex_list(vertex_list):
+            """Handles switching fixed state and appending nodes."""
             nonlocal currently_fixed
             for i, node_name, pos in vertex_list:
                 if i in fixed_vertices and not currently_fixed:

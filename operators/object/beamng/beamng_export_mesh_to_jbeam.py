@@ -137,8 +137,11 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         return {'FINISHED'} if success else {'CANCELLED'} 
 
     def invoke(self, context, event):
+        if not context.active_object or not context.selected_objects:
+            self.report({'WARNING'}, "No objects selected!")
+            return {'CANCELLED'}
         context.window_manager.fileselect_add(self)
-        context.window_manager.operators[-1].bl_label = "Save JBeam File"
+        #context.window_manager.operators[-1].bl_label = "Save JBeam File"
         return {'RUNNING_MODAL'}
 
     def get_starting_props(self, data, jbeam_prop):  # jbeam_prop i.e. "nodes", "beams", "triangles", "quads", etc
@@ -211,7 +214,7 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
             node_names = None
 
         fixed_vertices = self.get_fixed_vertices(obj)
-        nodes, vertex_map = self.get_nodes(mesh, fixed_vertices, node_names)
+        nodes, vertex_map = self.get_nodes(obj, fixed_vertices, node_names)
         beams = self.get_beams(mesh, vertex_map)
         triangles = self.get_triangles(mesh, vertex_map)
         quads = self.get_quads(mesh, vertex_map)
@@ -242,6 +245,7 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
                     existing_data_str = f.read()
                 except json.JSONDecodeError:
                     self.report({'ERROR'}, f"Error parsing {filepath}")
+                    print(f"Error parsing {filepath}:, maybe check for missing commas or other json-type formatting in jbeam")
                     return False
 
         if is_manual_data:
@@ -298,28 +302,71 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
                         fixed_vertices.add(vert.index)
         return fixed_vertices
 
-    def get_nodes(self, mesh, fixed_vertices, node_names):
+    def get_all_flex_group_vertex_groups(self, obj):
+        matching_groups = [vg.name for vg in obj.vertex_groups if vg.name.startswith("group_")]
+        return matching_groups
+
+    def get_nodes(self, obj, fixed_vertices, node_names):
         nodes = []
         vertex_map = {}
+        mesh = obj.data
+        flex_groups = self.get_all_flex_group_vertex_groups(obj)
+        grouped_vertices = {}
+
+        for group_name in flex_groups:
+            grouped_vertices[group_name] = []
+
+        ungrouped_vertices = []
         currently_fixed = False
 
         for i, vert in enumerate(mesh.vertices):
             node_name = node_names.get(str(i), None) if node_names else f"b{i+1}"
             pos = (round(vert.co.x, 4), round(vert.co.y, 4), round(vert.co.z, 4))
-            if i in fixed_vertices and not currently_fixed:
-                nodes.append({"fixed": True})
-                currently_fixed = True
-            elif i not in fixed_vertices and currently_fixed:
-                nodes.append({"fixed": False})
-                currently_fixed = False
-            nodes.append([node_name, *pos])
+
+            found_group = None
+            for group_name in flex_groups:
+                vgroup = obj.vertex_groups.get(group_name)
+                if vgroup and any(g.group == vgroup.index for g in vert.groups):
+                    found_group = group_name
+                    break
+            
+            if found_group:
+                grouped_vertices[found_group].append((i, node_name, pos))
+            else:
+                ungrouped_vertices.append((i, node_name, pos))
+
             vertex_map[i] = node_name
 
-        if currently_fixed:
-            nodes.append({"fixed": False})
+        nodes.append(["ref", 0, 0, 0])
 
-        nodes.insert(0, ["ref", 0, 0, 0])
+        def process_vertex_list(vertex_list):
+            nonlocal currently_fixed
+            for i, node_name, pos in vertex_list:
+                if i in fixed_vertices and not currently_fixed:
+                    nodes.append({"fixed": True})
+                    currently_fixed = True
+                elif i not in fixed_vertices and currently_fixed:
+                    nodes.append({"fixed": False})
+                    currently_fixed = False
+                nodes.append([node_name, *pos])
+            if currently_fixed:
+                nodes.append({"fixed": False})
+                currently_fixed = False
+
+        group_count = len(grouped_vertices)
+        for index, (group_name, verts) in enumerate(grouped_vertices.items()):
+            if verts:
+                nodes.append({"group": group_name})
+                process_vertex_list(verts)
+                if index == group_count - 1:
+                    nodes.append({"group": ""})
+
+        process_vertex_list(ungrouped_vertices)
+
         return nodes, vertex_map
+
+
+
 
     def get_beams(self, mesh, vertex_map):
         return [[vertex_map[v1], vertex_map[v2]] for v1, v2 in (edge.vertices for edge in mesh.edges)]

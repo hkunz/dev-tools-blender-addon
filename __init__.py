@@ -61,6 +61,7 @@ from dev_tools.operators.object.beamng.beamng_create_metaball_cloud_operator imp
 from dev_tools.operators.object.beamng.beamng_parent_to_start01_empty_operator import OBJECT_OT_BeamngClearChildrenStart01Empty, OBJECT_OT_BeamngParentToStart01Empty # type: ignore
 from dev_tools.operators.object.beamng.beamng_export_mesh_to_jbeam import OBJECT_OT_BeamngCreateRefnodesVertexGroups, EXPORT_OT_BeamngExportMeshToJbeam # type: ignore
 from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_mesh_v1 import OBJECT_OT_BeamngConvertJbeamToMesh_v1 # type: ignore
+from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_mesh_v2 import OBJECT_OT_BeamngConvertJbeamToMesh_v2 # type: ignore
 
 DEVTOOLS_CLASSES = [
     OBJECT_OT_ArmatureCreateBonesRandomVertices,
@@ -74,7 +75,8 @@ DEVTOOLS_CLASSES = [
     OBJECT_OT_BeamngClearChildrenStart01Empty,
     OBJECT_OT_BeamngCreateRefnodesVertexGroups,
     EXPORT_OT_BeamngExportMeshToJbeam,
-    OBJECT_OT_BeamngConvertJbeamToMesh_v1
+    OBJECT_OT_BeamngConvertJbeamToMesh_v1,
+    OBJECT_OT_BeamngConvertJbeamToMesh_v2
 ]
 
 def add_executable_permission(exe: Union[str, Path]) -> Path: #https://blender.stackexchange.com/questions/310144/mac-executable-binary-within-DevTools addon-zip-loses-execute-permission-when-DevTools addon-zip

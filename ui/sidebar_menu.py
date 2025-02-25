@@ -15,6 +15,7 @@ from dev_tools.operators.object.beamng.beamng_parent_to_start01_empty_operator i
 from dev_tools.operators.object.beamng.beamng_parent_to_start01_empty_operator import OBJECT_OT_BeamngClearChildrenStart01Empty, OBJECT_OT_BeamngParentToStart01Empty # type: ignore
 from dev_tools.operators.object.beamng.beamng_export_mesh_to_jbeam import OBJECT_OT_BeamngCreateRefnodesVertexGroups, EXPORT_OT_BeamngExportMeshToJbeam # type: ignore
 from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_mesh_v1 import OBJECT_OT_BeamngConvertJbeamToMesh_v1 # type: ignore
+from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_mesh_v2 import OBJECT_OT_BeamngConvertJbeamToMesh_v2 # type: ignore
 
 from dev_tools.utils.utils import Utils # type: ignore
 from dev_tools.utils.object_utils import ObjectUtils # type: ignore
@@ -195,6 +196,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             row.separator()
             row.operator(EXPORT_OT_BeamngExportMeshToJbeam.bl_idname, text="Export JBeam")
             col.operator(OBJECT_OT_BeamngConvertJbeamToMesh_v1.bl_idname, text="Jbeam to Mesh (v1)")
+            col.operator(OBJECT_OT_BeamngConvertJbeamToMesh_v2.bl_idname, text="Jbeam to Mesh (v2)")
             col.separator()
             col.operator(OBJECT_OT_BeamngCreateMetaBallCloud.bl_idname, text="Create MetaBall Cloud")
 

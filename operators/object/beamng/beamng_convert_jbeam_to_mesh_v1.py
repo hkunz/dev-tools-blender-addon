@@ -7,10 +7,10 @@ from bpy.types import Operator
 
 from dev_tools.utils.json_cleanup import json_cleanup  # type: ignore
 
-class OBJECT_OT_BeamngConvertJbeamToMesh(Operator):
+class OBJECT_OT_BeamngConvertJbeamToMesh_v1(Operator):
     """Convert JBeam to mesh object by removing custom properties and merging by distance"""
-    bl_idname = "object.devtools_beamng_convert_jbeam_to_mesh"
-    bl_label = "DevTools: Convert JBeam to Mesh Object"
+    bl_idname = "object.devtools_beamng_convert_jbeam_to_mesh_v1"
+    bl_label = "DevTools: Convert JBeam to Mesh Object (v1)"
     bl_options = {'REGISTER', 'UNDO'}
 
     def get_ref_nodes(self, jbeam_data):

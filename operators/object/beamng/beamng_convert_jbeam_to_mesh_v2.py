@@ -115,11 +115,13 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
                 vg = obj.vertex_groups.new(name=group_name)
 
             node = verts_dic.get(node_id)
-            idx = node.index
-            if idx is None:
+            if node is None:
                 print(f"Node ID '{node_id}' not found in verts_dic, skipping.")
                 continue
-
+            idx = node.index
+            if idx < 0:
+                self.report({'ERROR'}, f"No vertex index assigned to {node.node_id}")
+                continue
             vg.add([idx], 1.0, 'REPLACE')
             print(f"Assigned vertex {idx} to vertex group '{group_name}'.")
 
@@ -139,6 +141,9 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
                         if current_group not in group_vertices:
                             group_vertices[current_group] = []
                         index = verts_dic[node_name].index
+                        if index < 0:
+                            self.report({'ERROR'}, f"No vertex index assigned to {node_name}")
+                            continue
                         group_vertices[current_group].append(index)
 
         for group_name, vertex_indices in group_vertices.items():
@@ -155,7 +160,7 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
         vg = obj.vertex_groups.get(vg_name)
         if vg is None:
             vg = obj.vertex_groups.new(name=vg_name)
-        fixed_indices = [node.index for node in verts_dic.values() if node.get_fixed()]
+        fixed_indices = [node.index for node in verts_dic.values() if node.get_fixed() and node.index != -1]
         if fixed_indices:
             vg.add(fixed_indices, 1.0, 'REPLACE')
 

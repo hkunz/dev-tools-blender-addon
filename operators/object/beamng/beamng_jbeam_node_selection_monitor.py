@@ -72,13 +72,10 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
             self.force_update_ui()
     
     def __del__(self):
-        print("DEL =============")
         if self._timer is not None:
-            print("DEL =============1")
             wm = bpy.context.window_manager
             wm.event_timer_remove(self._timer)
             self._timer = None
-            print("DEL =============2")
     
 class OBJECT_OT_BeamngAssignNodeId(bpy.types.Operator):
     """Assigns a new JBeam Node ID to the selected vertex"""
@@ -101,5 +98,5 @@ class OBJECT_OT_BeamngAssignNodeId(bpy.types.Operator):
             bm.verts[index][layer] = new_value
             bmesh.update_edit_mesh(mesh)
 
-        self.report({'INFO'}, f"Assigned JBeam Node ID: {context.scene.jbeam_node_id}")
+        self.report({'INFO'}, f"Assigned JBeam Node ID: {context.scene.active_node} to vertex {index}")
         return {'FINISHED'}

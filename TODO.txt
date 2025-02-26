@@ -11,3 +11,154 @@ v = bm.verts[0]
 layer = bm.verts.layers.string.get("jbeam_node_id")
 value = v[layer]
 v[layer] = f"<new-value>".encode("utf-8")
+
+
+
+
+import bpy
+import bmesh
+
+import bpy
+import bmesh
+
+class VertexMonitorOperator(bpy.types.Operator):
+    bl_idname = "wm.vertex_monitor"
+    bl_label = "Vertex Monitor"
+    bl_description = "Monitor selected vertices and update JBeam Node IDs"
+    
+    _timer = None
+    _last_selected_indices = set()
+    
+    def modal(self, context, event):
+        obj = context.object
+        if not obj or obj.type != 'MESH' or obj.mode != 'EDIT':
+            return {'PASS_THROUGH'}
+
+        if "jbeam_node_id" not in obj.data.attributes:
+            return {'PASS_THROUGH'}  # Ignore non-JBeam objects
+
+        if event.type == 'TIMER':
+            self.update_vertex_data(context)
+        return {'PASS_THROUGH'}
+    
+    def execute(self, context):
+        wm = context.window_manager
+        self._timer = wm.event_timer_add(0.1, window=context.window)
+        wm.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+    
+    def force_update_ui(self):
+        for area in bpy.context.screen.areas:
+            if area.type in {'PROPERTIES', 'VIEW_3D'}:
+                for region in area.regions:
+                    if region.type in {'WINDOW', 'UI'}:
+                        region.tag_redraw()
+    
+    def update_vertex_data(self, context):
+        obj = context.object
+        if obj is None or obj.type != 'MESH' or obj.mode != 'EDIT':
+            return
+        
+        bm = bmesh.from_edit_mesh(obj.data)
+        bm.verts.ensure_lookup_table()
+        selected_verts = [v.index for v in bm.verts if v.select]
+
+        if not selected_verts:
+            if self._last_selected_indices:  # Only update if we had a previous selection
+                self._last_selected_indices.clear()
+                context.scene.selected_vertex_index = -1
+                context.scene.jbeam_node_id = ""
+                
+                self.force_update_ui()
+                return
+                
+        
+        # Get active vertex if possible
+        active_vert = bm.select_history.active if isinstance(bm.select_history.active, bmesh.types.BMVert) else None
+        active_index = active_vert.index if active_vert else (selected_verts[-1] if selected_verts else -1)
+
+
+        # Only update UI if selection changed
+        if set(selected_verts) != self._last_selected_indices:
+            self._last_selected_indices = set(selected_verts)
+            context.scene.selected_vertex_index = active_index  # Display the active vertex
+            
+            # Get JBeam IDs for all selected vertices
+            layer = bm.verts.layers.string.get("jbeam_node_id")
+            if layer:
+                jbeam_ids = [bm.verts[v_idx][layer].decode("utf-8") for v_idx in selected_verts if bm.verts[v_idx][layer]]
+                context.scene.jbeam_node_id = ", ".join(jbeam_ids)
+            else:
+                context.scene.jbeam_node_id = ""
+            
+            self.force_update_ui()
+    
+
+class AssignJBeamIDOperator(bpy.types.Operator):
+    """Assigns a new JBeam Node ID to the selected vertex"""
+    bl_idname = "object.assign_jbeam_id"
+    bl_label = "Assign JBeam ID"
+
+    def execute(self, context):
+        obj = context.object
+        if obj is None or obj.type != 'MESH':
+            self.report({'WARNING'}, "No valid mesh object selected")
+            return {'CANCELLED'}
+
+        mesh = obj.data
+        index = context.scene.selected_vertex_index
+        new_value = context.scene.jbeam_node_id.encode("utf-8")
+
+        if obj.mode == 'EDIT':
+            bm = bmesh.from_edit_mesh(mesh)
+            layer = bm.verts.layers.string.get("jbeam_node_id")
+            bm.verts[index][layer] = new_value
+            bmesh.update_edit_mesh(mesh)
+
+        self.report({'INFO'}, f"Assigned JBeam Node ID: {context.scene.jbeam_node_id}")
+        return {'FINISHED'}
+
+class VertexJBeamEditorPanel(bpy.types.Panel):
+    bl_label = "Vertex JBeam Editor"
+    bl_idname = "VIEW3D_PT_vertex_jbeam_editor"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "Tool"
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+
+        layout.operator("wm.vertex_monitor", text="Start Selection Watcher")
+
+        obj = context.object
+        mesh = obj.data
+
+        if obj and obj.mode == 'EDIT' and obj.type == 'MESH' and "jbeam_node_id" in obj.data.attributes:
+            bm = bmesh.from_edit_mesh(mesh)
+            layer = bm.verts.layers.string.get("jbeam_node_id")
+            index = scene.selected_vertex_index
+            active_node_id = bm.verts[index][layer].decode("utf-8")
+            layout.label(text=f"Active Node: {active_node_id} ({index})")
+            layout.prop(scene, "jbeam_node_id", text="JBeam Node ID")
+            layout.operator("object.assign_jbeam_id", text="Assign JBeam ID")
+
+
+def register():
+    bpy.utils.register_class(VertexMonitorOperator)
+    bpy.utils.register_class(VertexJBeamEditorPanel)
+    bpy.utils.register_class(AssignJBeamIDOperator)
+    bpy.types.Scene.selected_vertex_index = bpy.props.IntProperty(name="Vertex Index", default=-1)
+    bpy.types.Scene.jbeam_node_id = bpy.props.StringProperty(name="JBeam Node ID")
+
+def unregister():
+    bpy.utils.unregister_class(VertexMonitorOperator)
+    bpy.utils.unregister_class(VertexJBeamEditorPanel)
+    bpy.utils.unregister_class(AssignJBeamIDOperator)
+    del bpy.types.Scene.selected_vertex_index
+    del bpy.types.Scene.jbeam_node_id
+
+if __name__ == "__main__":
+    register()
+
+

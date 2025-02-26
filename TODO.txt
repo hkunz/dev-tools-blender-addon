@@ -159,5 +159,183 @@ if __name__ == "__main__":
     register()
 
 
+==========================================================================
+
+import bpy
+import bmesh
+import json
+
+class JBeamProperty(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty(name="Property Name")
+    value: bpy.props.StringProperty(name="Value")
+
+class AddJBeamPropertyOperator(bpy.types.Operator):
+    """Add a new JBeam property"""
+    bl_idname = "object.add_jbeam_property"
+    bl_label = "Add JBeam Property"
+
+    def execute(self, context):
+        context.scene.jbeam_properties.add()
+        return {'FINISHED'}
+
+class RemoveJBeamPropertyOperator(bpy.types.Operator):
+    """Remove a JBeam property"""
+    bl_idname = "object.remove_jbeam_property"
+    bl_label = "Remove JBeam Property"
+
+    index: bpy.props.IntProperty()
+
+    def execute(self, context):
+        context.scene.jbeam_properties.remove(self.index)
+        return {'FINISHED'}
+
+class LoadJBeamPropertiesOperator(bpy.types.Operator):
+    """Load properties from selected vertex"""
+    bl_idname = "object.load_jbeam_properties"
+    bl_label = "Load Properties"
+
+    def execute(self, context):
+        obj = bpy.context.object
+
+        # Check if we have a valid object
+        if not obj or obj.type != 'MESH' or obj.mode != 'EDIT':
+            print("[DEBUG] No valid mesh selected or not in edit mode.")
+            self.report({'WARNING'}, "No mesh selected or not in edit mode.")
+            return {'CANCELLED'}
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        bm.verts.ensure_lookup_table()
+
+        index = bpy.context.scene.get("active_vertex_idx", -1)
+        print(f"[DEBUG] Active vertex index: {index}")
+
+        if index < 0 or index >= len(bm.verts):
+            print("[DEBUG] Invalid vertex index.")
+            self.report({'WARNING'}, "Invalid vertex index.")
+            return {'CANCELLED'}
+
+        vert = bm.verts[index]
+
+        # Get JSON property layer
+        layer = bm.verts.layers.string.get("jbeam_node_props")
+        print(f"[DEBUG] Found jbeam_node_props layer: {layer}")
+
+        if not layer:
+            print("[DEBUG] No jbeam_node_props attribute found.")
+            self.report({'WARNING'}, "No jbeam_node_props attribute found.")
+            return {'CANCELLED'}
+
+        # Load JSON data
+        raw_data = vert[layer].decode("utf-8") if vert[layer] else "{}"
+        print(f"[DEBUG] Extracted JSON data: {raw_data}")
+
+        try:
+            prop_dict = json.loads(raw_data)
+        except json.JSONDecodeError:
+            print("[DEBUG] Invalid JSON format.")
+            self.report({'ERROR'}, "Invalid JSON format in vertex data.")
+            return {'CANCELLED'}
+
+        print(f"[DEBUG] Parsed properties: {prop_dict}")
+
+        # Clear existing properties in UI
+        context.scene.jbeam_properties.clear()
+
+        # Populate UI with extracted properties
+        for name, value in prop_dict.items():
+            prop = context.scene.jbeam_properties.add()
+            prop.name = name
+            prop.value = str(value)  # Ensure it's a string
+            print(f"[DEBUG] Added property to UI: {name} = {value}")
+
+        bpy.context.area.tag_redraw()
+        self.report({'INFO'}, f"Loaded {len(prop_dict)} properties.")
+        return {'FINISHED'}
+
+class SaveJBeamPropertiesOperator(bpy.types.Operator):
+    """Save properties to all selected vertices"""
+    bl_idname = "object.save_jbeam_properties"
+    bl_label = "Save Properties"
+
+    def execute(self, context):
+        obj = bpy.context.object
+
+        if not obj or obj.type != 'MESH' or obj.mode != 'EDIT':
+            self.report({'WARNING'}, "No mesh selected or not in edit mode.")
+            return {'CANCELLED'}
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        bm.verts.ensure_lookup_table()
+
+        # Get selected vertices
+        selected_verts = [v for v in bm.verts if v.select]
+        if not selected_verts:
+            self.report({'WARNING'}, "No vertices selected.")
+            return {'CANCELLED'}
+
+        # Get or create JSON property layer
+        layer = bm.verts.layers.string.get("jbeam_node_props")
+        if not layer:
+            layer = bm.verts.layers.string.new("jbeam_node_props")
+
+        # Convert UI properties to JSON
+        prop_dict = {prop.name: prop.value for prop in context.scene.jbeam_properties}
+        json_data = json.dumps(prop_dict)
+
+        # Assign JSON to all selected vertices
+        for vert in selected_verts:
+            vert[layer] = json_data.encode("utf-8")
+
+        bmesh.update_edit_mesh(obj.data)
+
+        self.report({'INFO'}, f"Properties saved for {len(selected_verts)} vertices.")
+        return {'FINISHED'}
 
 
+class JBeamPropertiesPanel(bpy.types.Panel):
+    """Panel for JBeam Properties"""
+    bl_label = "JBeam Properties"
+    bl_idname = "VIEW3D_PT_jbeam_properties"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "Tool"
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+
+        row = layout.row()
+        row.operator("object.load_jbeam_properties", text="Load Properties")
+
+        for i, prop in enumerate(scene.jbeam_properties):
+            row = layout.row()
+            row.prop(prop, "name", text="")
+            row.prop(prop, "value", text="")
+            remove_op = row.operator("object.remove_jbeam_property", text="X")
+            remove_op.index = i
+
+        layout.operator("object.add_jbeam_property", text="Add Property")
+        layout.operator("object.save_jbeam_properties", text="Save Properties")
+
+def register():
+    bpy.utils.register_class(JBeamProperty)
+    bpy.utils.register_class(AddJBeamPropertyOperator)
+    bpy.utils.register_class(RemoveJBeamPropertyOperator)
+    bpy.utils.register_class(LoadJBeamPropertiesOperator)
+    bpy.utils.register_class(SaveJBeamPropertiesOperator)
+    bpy.utils.register_class(JBeamPropertiesPanel)
+    bpy.types.Scene.jbeam_properties = bpy.props.CollectionProperty(type=JBeamProperty)
+    bpy.types.Scene.active_vertex_idx = bpy.props.IntProperty(default=-1)
+
+def unregister():
+    bpy.utils.unregister_class(JBeamProperty)
+    bpy.utils.unregister_class(AddJBeamPropertyOperator)
+    bpy.utils.unregister_class(RemoveJBeamPropertyOperator)
+    bpy.utils.unregister_class(LoadJBeamPropertiesOperator)
+    bpy.utils.unregister_class(SaveJBeamPropertiesOperator)
+    bpy.utils.unregister_class(JBeamPropertiesPanel)
+    del bpy.types.Scene.jbeam_properties
+    del bpy.types.Scene.active_vertex_idx
+
+if __name__ == "__main__":
+    register()

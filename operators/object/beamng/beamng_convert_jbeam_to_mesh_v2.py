@@ -8,18 +8,19 @@ from bpy.types import Operator
 from dev_tools.utils.json_cleanup import json_cleanup  # type: ignore
 
 class Node:
-    def __init__(self, node_id, index, position, group, props):
+    def __init__(self, node_id, index, position, group=None, props=None):
         self.node_id = node_id
         self.index = index
         self.position = position
-        self.group = group
-        self.props = props
+        self.group = [group] if isinstance(group, str) else (group if group else [])
+        self.props = props if props else {}
 
     def get_fixed(self):
         return self.props.get("fixed", False)
 
     def __repr__(self):
-        return f"Node(id={self.node_id}, index={self.index}, pos={self.position}, group={self.group}, props={self.props})"
+        return (f"Node(id={self.node_id}, index={self.index}, pos={self.position}, "f"group={self.group}, props={self.props})")
+
 
 class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
     """Convert JBeam to mesh object by removing custom properties and merging by distance"""
@@ -59,7 +60,7 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
     def parse_nodes(self, json_nodes):
         nodes = []
         current_props = {}
-        current_group = ""
+        current_group = None
 
         for entry in json_nodes:
             if isinstance(entry, dict):  
@@ -68,25 +69,20 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
                 current_props.update(entry)
             elif isinstance(entry, list) and len(entry) >= 4:
                 node_id, x, y, z = entry[:4]  
-                
+
                 if isinstance(x, str) or isinstance(y, str) or isinstance(z, str):
                     continue  # Skip header row
-                
+
                 position = mathutils.Vector((x, y, z))
                 node_props = current_props.copy()  
-
-                nodes.append(Node(node_id, -1, position, current_group, node_props))
+                node_group = [current_group] if isinstance(current_group, str) else current_group
+                nodes.append(Node(node_id, -1, position, node_group, node_props))
 
         return nodes
 
-    def get_vertex_indices(self, obj, json_data, part_name=None, epsilon=0.0005):
+    def get_vertex_indices(self, obj, part_data, epsilon=0.0005):
         verts_dic = {}
-
-        if part_name is None:
-            for part_name, obj_data in json_data.items():
-                break
-
-        json_nodes = json_data[part_name].get("nodes", [])
+        json_nodes = part_data.get("nodes", [])
         nodes = self.parse_nodes(json_nodes)  
 
         for node in nodes:
@@ -125,26 +121,29 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
             vg.add([idx], 1.0, 'REPLACE')
             print(f"Assigned vertex {idx} to vertex group '{group_name}'.")
 
-
-    def assign_flex_groups_to_vertex_groups(self, obj, json_data, verts_dic):
+    def assign_flex_groups_to_vertex_groups(self, obj, json_part_data, verts_dic):       
+        current_group = None
         group_vertices = {}
-        for part_name, part_data in json_data.items():
-            if "nodes" not in part_data:
-                continue
-            current_group = None
-            for node in part_data["nodes"]:
-                if isinstance(node, dict) and "group" in node:
-                    current_group = node["group"] or None
-                elif isinstance(node, list) and current_group:
-                    node_name = node[0]
-                    if node_name in verts_dic:
-                        if current_group not in group_vertices:
-                            group_vertices[current_group] = []
-                        index = verts_dic[node_name].index
-                        if index < 0:
-                            self.report({'ERROR'}, f"No vertex index assigned to {node_name}")
+        for node in json_part_data["nodes"]:
+            if isinstance(node, dict) and "group" in node:
+                current_group = node["group"] or None  # Could be a list or None
+            elif isinstance(node, list) and current_group:
+                node_name = node[0]
+                if node_name in verts_dic:
+                    index = verts_dic[node_name].index
+                    if index < 0:
+                        self.report({'ERROR'}, f"No vertex index assigned to {node_name}")
+                        continue
+                    
+                    # Ensure `current_group` is always a list
+                    groups = [current_group] if isinstance(current_group, str) else current_group
+                    
+                    for group in groups:
+                        if not group:
                             continue
-                        group_vertices[current_group].append(index)
+                        if group not in group_vertices:
+                            group_vertices[group] = []
+                        group_vertices[group].append(index)
 
         for group_name, vertex_indices in group_vertices.items():
             if not group_name:
@@ -164,34 +163,49 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
         if fixed_indices:
             vg.add(fixed_indices, 1.0, 'REPLACE')
 
-
     def store_node_props_in_vertex_attributes(self, obj, verts_dic):
         mesh = obj.data
 
+        # Remove old jbeam attributes
         attributes_to_remove = [attr.name for attr in mesh.attributes if attr.name.startswith("jbeam_")]
         for attr in attributes_to_remove:
-            mesh.attributes.remove( mesh.attributes[attr])
+            mesh.attributes.remove(mesh.attributes[attr])
 
-        node_data = {}
-
+        # Create new attributes if missing
         if "jbeam_node_id" not in mesh.attributes:
             mesh.attributes.new(name="jbeam_node_id", type="STRING", domain="POINT")
+        if "jbeam_node_group" not in mesh.attributes:
+            mesh.attributes.new(name="jbeam_node_group", type="STRING", domain="POINT")
         if "jbeam_node_props" not in mesh.attributes:
             mesh.attributes.new(name="jbeam_node_props", type="STRING", domain="POINT")
 
         attr_id = mesh.attributes["jbeam_node_id"]
+        attr_group = mesh.attributes["jbeam_node_group"]
         attr_props = mesh.attributes["jbeam_node_props"]
 
+        node_data = {}
+
         for node_id, vert_props in verts_dic.items():
-            flat_data = {}
-            if hasattr(vert_props, "props") and isinstance(vert_props.props, dict):
-                flat_data.update(vert_props.props)
+            if not hasattr(vert_props, "index") or vert_props.index < 0:
+                self.report({'ERROR'}, f"Invalid vertex index for node {node_id}")
+                continue
 
             idx = vert_props.index
-            node_data[idx] = flat_data
-            attr_id.data[idx].value = vert_props.node_id.encode("utf-8")
-            attr_props.data[idx].value = json.dumps(flat_data).encode("utf-8")
+            flat_data = {}
 
+            if hasattr(vert_props, "props") and isinstance(vert_props.props, dict):
+                flat_data.update({k: v for k, v in vert_props.props.items() if k != "group"})
+
+
+            group_str = ",".join(vert_props.group) if isinstance(vert_props.group, list) else str(vert_props.group)
+
+            node_data[idx] = flat_data
+
+            attr_id.data[idx].value = str(vert_props.node_id).encode("utf-8")  
+            attr_group.data[idx].value = group_str.encode("utf-8")
+            attr_props.data[idx].value = json.dumps(flat_data).encode("utf-8")  
+
+        # Store in object data as JSON
         obj.data["node_data"] = json.dumps(node_data, indent=2)
         print("Stored node data in obj.data['node_data'] and per-vertex attributes")
 
@@ -220,11 +234,15 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
         bpy.ops.mesh.remove_doubles(threshold=0.0005)
         bpy.ops.object.mode_set(mode='OBJECT')
 
-        verts_dic = self.get_vertex_indices(obj, json_data)
+        for part_name, part_data in json_data.items():
+            if "nodes" in part_data: # TODO currently only handles 1 part for selected obj, the first partname in the list
+                break
+
+        verts_dic = self.get_vertex_indices(obj, part_data)
  
         self.assign_fixed_nodes_to_vertex_groups(obj, verts_dic)
         self.assign_ref_nodes_to_vertex_groups(obj, ref_nodes, verts_dic)
-        self.assign_flex_groups_to_vertex_groups(obj, json_data, verts_dic)
+        self.assign_flex_groups_to_vertex_groups(obj, part_data, verts_dic)
 
         reversed_verts_dic = {node.index: node.node_id for node_id, node in verts_dic.items()}
         obj.data["node_names"] = json.dumps(reversed_verts_dic)

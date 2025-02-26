@@ -62,6 +62,7 @@ from dev_tools.operators.object.beamng.beamng_parent_to_start01_empty_operator i
 from dev_tools.operators.object.beamng.beamng_export_mesh_to_jbeam import OBJECT_OT_BeamngCreateRefnodesVertexGroups, EXPORT_OT_BeamngExportMeshToJbeam # type: ignore
 from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_mesh_v1 import OBJECT_OT_BeamngConvertJbeamToMesh_v1 # type: ignore
 from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_mesh_v2 import OBJECT_OT_BeamngConvertJbeamToMesh_v2 # type: ignore
+from dev_tools.operators.object.beamng.beamng_jbeam_node_selection_monitor import OBJECT_OT_BeamngJbeamNodeSelectionMonitor, OBJECT_OT_BeamngAssignNodeId # type: ignore
 
 DEVTOOLS_CLASSES = [
     OBJECT_OT_ArmatureCreateBonesRandomVertices,
@@ -76,7 +77,9 @@ DEVTOOLS_CLASSES = [
     OBJECT_OT_BeamngCreateRefnodesVertexGroups,
     EXPORT_OT_BeamngExportMeshToJbeam,
     OBJECT_OT_BeamngConvertJbeamToMesh_v1,
-    OBJECT_OT_BeamngConvertJbeamToMesh_v2
+    OBJECT_OT_BeamngConvertJbeamToMesh_v2,
+    OBJECT_OT_BeamngJbeamNodeSelectionMonitor,
+    OBJECT_OT_BeamngAssignNodeId
 ]
 
 def add_executable_permission(exe: Union[str, Path]) -> Path: #https://blender.stackexchange.com/questions/310144/mac-executable-binary-within-DevTools addon-zip-loses-execute-permission-when-DevTools addon-zip
@@ -89,6 +92,7 @@ def add_executable_permission(exe: Union[str, Path]) -> Path: #https://blender.s
 def on_application_load(a, b):
     print("DevTools application load post handler ==============>", a, b)
     #check_DevTools addon_compatibility() # check compatibility of DevTools addon and its settings if opened in another blender version
+    bpy.ops.wm.devtools_beamng_jbeam_node_selection_monitor()
 
 def register() -> None:
     print("DevTools addon Registration Begin ==============>")
@@ -104,6 +108,7 @@ def register() -> None:
     TempFileManager().init()
     IconsManager().init()
     bpy.app.handlers.load_post.append(on_application_load)
+    
     print("DevTools addon Registration Complete <==========\n")
 
 def unregister() -> None:

@@ -1,5 +1,6 @@
 import bpy
 import bpy_types
+import bmesh
 
 from typing import List, Tuple
 from bpy.app.handlers import persistent
@@ -16,6 +17,7 @@ from dev_tools.operators.object.beamng.beamng_parent_to_start01_empty_operator i
 from dev_tools.operators.object.beamng.beamng_export_mesh_to_jbeam import OBJECT_OT_BeamngCreateRefnodesVertexGroups, EXPORT_OT_BeamngExportMeshToJbeam # type: ignore
 from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_mesh_v1 import OBJECT_OT_BeamngConvertJbeamToMesh_v1 # type: ignore
 from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_mesh_v2 import OBJECT_OT_BeamngConvertJbeamToMesh_v2 # type: ignore
+from dev_tools.operators.object.beamng.beamng_jbeam_node_selection_monitor import OBJECT_OT_BeamngAssignNodeId # type: ignore
 
 from dev_tools.utils.utils import Utils # type: ignore
 from dev_tools.utils.object_utils import ObjectUtils # type: ignore
@@ -144,7 +146,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
         # self.draw_sample_modifier_exposed_props(context, layout, "GeometryNodes")
         self.draw_expanded_armature_options(context, layout)
         self.draw_expanded_bake_options(context, layout)
-        self.draw_expanded_beamng_options(context, layout)
+        self.draw_expanded_beamng_options(context, layout, active_object)
         # self.draw_sample_color_picker(context, layout)
 
     def draw_sample_modifier_exposed_props(self, context, layout, md_name = "GeometryNodes"):
@@ -174,7 +176,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             col.operator(OBJECT_OT_ArmatureCreateBonesFromEdgeSelection.bl_idname, text="Create Edge Bones")
             col.operator(OBJECT_OT_ArmatureAssignClosestVertexToBoneTails.bl_idname, text="Assign Vertex to Bone Tails")
 
-    def draw_expanded_beamng_options(self, context, layout):
+    def draw_expanded_beamng_options(self, context, layout, obj):
         ebox = layout.box()
         row = ebox.box().row()
         row.prop(
@@ -197,6 +199,19 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             row.operator(EXPORT_OT_BeamngExportMeshToJbeam.bl_idname, text="Export JBeam")
             col.operator(OBJECT_OT_BeamngConvertJbeamToMesh_v1.bl_idname, text="Jbeam to Mesh (v1)")
             col.operator(OBJECT_OT_BeamngConvertJbeamToMesh_v2.bl_idname, text="Jbeam to Mesh (v2)")
+
+            if obj and obj.mode == 'EDIT' and obj.type == 'MESH' and "jbeam_node_id" in obj.data.attributes:
+                bm = bmesh.from_edit_mesh(obj.data)
+                bm.verts.ensure_lookup_table()
+                layer = bm.verts.layers.string.get("jbeam_node_id")
+                index = context.scene.active_vertex_idx
+                if index > -1 and layer:
+                    active_node_id = bm.verts[index][layer].decode("utf-8") if bm.verts[index][layer] else "None"
+                    col.label(text=f"Active Node: {active_node_id} ({index})")
+                    col.label(text=f"Selected Nodes: {context.scene.selected_nodes}")
+                    col.prop(context.scene, "active_node", text="Active Node ID")
+                    col.operator(OBJECT_OT_BeamngAssignNodeId.bl_idname, text="Assign JBeam ID")
+
             col.separator()
             col.operator(OBJECT_OT_BeamngCreateMetaBallCloud.bl_idname, text="Create MetaBall Cloud")
 
@@ -261,6 +276,10 @@ def register() -> None:
     bpy.types.Scene.expanded_armature_options = bpy.props.BoolProperty(default=False)
     bpy.types.Scene.expanded_bake_options = bpy.props.BoolProperty(default=False)
     bpy.types.Scene.expanded_beamng_options = bpy.props.BoolProperty(default=False)
+    bpy.types.Scene.active_vertex_idx = bpy.props.IntProperty(name="Vertex Index", default=-1)
+    bpy.types.Scene.active_node = bpy.props.StringProperty(name="JBeam Node ID")
+    bpy.types.Scene.selected_nodes = bpy.props.StringProperty(name="Selected Nodes")
+
     bpy.app.handlers.depsgraph_update_post.append(on_depsgraph_update)
 
 def unregister() -> None:
@@ -272,4 +291,7 @@ def unregister() -> None:
     del bpy.types.Scene.expanded_bake_options
     del bpy.types.Scene.expanded_beamng_options
     del bpy.types.Scene.my_property_group_pointer
+    del bpy.types.Scene.active_vertex_idx
+    del bpy.types.Scene.active_node
+    del bpy.types.Scene.selected_nodes
     bpy.app.handlers.depsgraph_update_post.clear()

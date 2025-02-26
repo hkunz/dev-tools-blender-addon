@@ -17,6 +17,8 @@ v[layer] = f"<new-value>".encode("utf-8")
 import bpy
 import bmesh
 
+import bpy
+import bmesh
 
 class VertexMonitorOperator(bpy.types.Operator):
     bl_idname = "wm.vertex_monitor"
@@ -64,7 +66,7 @@ class VertexMonitorOperator(bpy.types.Operator):
             if self._last_selected_indices:  # Only update if we had a previous selection
                 self._last_selected_indices.clear()
                 context.scene.active_vertex_idx = -1
-                context.scene.jbeam_node_id = ""
+                context.scene.selected_nodes = ""
                 
                 self.force_update_ui()
                 return
@@ -83,11 +85,19 @@ class VertexMonitorOperator(bpy.types.Operator):
             # Get JBeam IDs for all selected vertices
             layer = bm.verts.layers.string.get("jbeam_node_id")
             if layer:
-                jbeam_ids = [bm.verts[v_idx][layer].decode("utf-8") for v_idx in selected_verts if bm.verts[v_idx][layer]]
-                context.scene.jbeam_node_id = ", ".join(jbeam_ids)
+                jbeam_ids = [
+                    #f"{bm.verts[v_idx][layer].decode('utf-8')}({v_idx})"
+                    #for v_idx in selected_verts if bm.verts[v_idx][layer]
+                    bm.verts[v_idx][layer].decode('utf-8') if bm.verts[v_idx][layer] else f"({v_idx})"
+                    for v_idx in selected_verts
+                ]
+                context.scene.selected_nodes = ", ".join(jbeam_ids)
+                
             else:
-                context.scene.jbeam_node_id = ""
+                context.scene.selected_nodes = ""
             
+            context.scene.active_node = bm.verts[active_index][layer].decode("utf-8") if layer else ""
+                
             self.force_update_ui()
     
 
@@ -104,7 +114,7 @@ class AssignJBeamIDOperator(bpy.types.Operator):
 
         mesh = obj.data
         index = context.scene.active_vertex_idx
-        new_value = context.scene.jbeam_node_id.encode("utf-8")
+        new_value = context.scene.active_node.encode("utf-8")
 
         if obj.mode == 'EDIT':
             bm = bmesh.from_edit_mesh(mesh)
@@ -129,16 +139,19 @@ class VertexJBeamEditorPanel(bpy.types.Panel):
         layout.operator("wm.vertex_monitor", text="Start Selection Watcher")
 
         obj = context.object
-        mesh = obj.data
-
         if obj and obj.mode == 'EDIT' and obj.type == 'MESH' and "jbeam_node_id" in obj.data.attributes:
-            bm = bmesh.from_edit_mesh(mesh)
+            bm = bmesh.from_edit_mesh(obj.data)
             layer = bm.verts.layers.string.get("jbeam_node_id")
             index = scene.active_vertex_idx
-            active_node_id = bm.verts[index][layer].decode("utf-8")
+
+            if index == -1 or not layer:
+                return
+            active_node_id = bm.verts[index][layer].decode("utf-8") if bm.verts[index][layer] else "None"
             layout.label(text=f"Active Node: {active_node_id} ({index})")
-            layout.prop(scene, "jbeam_node_id", text="JBeam Node ID")
+            layout.label(text=f"Selected Nodes: {scene.selected_nodes}")
+            layout.prop(scene, "active_node", text="Active Node ID")
             layout.operator("object.assign_jbeam_id", text="Assign JBeam ID")
+
 
 
 def register():
@@ -146,17 +159,21 @@ def register():
     bpy.utils.register_class(VertexJBeamEditorPanel)
     bpy.utils.register_class(AssignJBeamIDOperator)
     bpy.types.Scene.active_vertex_idx = bpy.props.IntProperty(name="Vertex Index", default=-1)
-    bpy.types.Scene.jbeam_node_id = bpy.props.StringProperty(name="JBeam Node ID")
+    bpy.types.Scene.active_node = bpy.props.StringProperty(name="JBeam Node ID")
+    bpy.types.Scene.selected_nodes = bpy.props.StringProperty(name="Selected Nodes")
 
 def unregister():
     bpy.utils.unregister_class(VertexMonitorOperator)
     bpy.utils.unregister_class(VertexJBeamEditorPanel)
     bpy.utils.unregister_class(AssignJBeamIDOperator)
     del bpy.types.Scene.active_vertex_idx
-    del bpy.types.Scene.jbeam_node_id
+    del bpy.types.Scene.active_node
+    del bpy.types.Scene.selected_nodes
 
 if __name__ == "__main__":
     register()
+
+
 
 
 ==========================================================================

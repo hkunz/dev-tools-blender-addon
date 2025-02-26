@@ -14,12 +14,9 @@ v[layer] = f"<new-value>".encode("utf-8")
 
 
 
-
 import bpy
 import bmesh
 
-import bpy
-import bmesh
 
 class VertexMonitorOperator(bpy.types.Operator):
     bl_idname = "wm.vertex_monitor"
@@ -66,7 +63,7 @@ class VertexMonitorOperator(bpy.types.Operator):
         if not selected_verts:
             if self._last_selected_indices:  # Only update if we had a previous selection
                 self._last_selected_indices.clear()
-                context.scene.selected_vertex_index = -1
+                context.scene.active_vertex_idx = -1
                 context.scene.jbeam_node_id = ""
                 
                 self.force_update_ui()
@@ -81,7 +78,7 @@ class VertexMonitorOperator(bpy.types.Operator):
         # Only update UI if selection changed
         if set(selected_verts) != self._last_selected_indices:
             self._last_selected_indices = set(selected_verts)
-            context.scene.selected_vertex_index = active_index  # Display the active vertex
+            context.scene.active_vertex_idx = active_index  # Display the active vertex
             
             # Get JBeam IDs for all selected vertices
             layer = bm.verts.layers.string.get("jbeam_node_id")
@@ -106,7 +103,7 @@ class AssignJBeamIDOperator(bpy.types.Operator):
             return {'CANCELLED'}
 
         mesh = obj.data
-        index = context.scene.selected_vertex_index
+        index = context.scene.active_vertex_idx
         new_value = context.scene.jbeam_node_id.encode("utf-8")
 
         if obj.mode == 'EDIT':
@@ -137,7 +134,7 @@ class VertexJBeamEditorPanel(bpy.types.Panel):
         if obj and obj.mode == 'EDIT' and obj.type == 'MESH' and "jbeam_node_id" in obj.data.attributes:
             bm = bmesh.from_edit_mesh(mesh)
             layer = bm.verts.layers.string.get("jbeam_node_id")
-            index = scene.selected_vertex_index
+            index = scene.active_vertex_idx
             active_node_id = bm.verts[index][layer].decode("utf-8")
             layout.label(text=f"Active Node: {active_node_id} ({index})")
             layout.prop(scene, "jbeam_node_id", text="JBeam Node ID")
@@ -148,17 +145,19 @@ def register():
     bpy.utils.register_class(VertexMonitorOperator)
     bpy.utils.register_class(VertexJBeamEditorPanel)
     bpy.utils.register_class(AssignJBeamIDOperator)
-    bpy.types.Scene.selected_vertex_index = bpy.props.IntProperty(name="Vertex Index", default=-1)
+    bpy.types.Scene.active_vertex_idx = bpy.props.IntProperty(name="Vertex Index", default=-1)
     bpy.types.Scene.jbeam_node_id = bpy.props.StringProperty(name="JBeam Node ID")
 
 def unregister():
     bpy.utils.unregister_class(VertexMonitorOperator)
     bpy.utils.unregister_class(VertexJBeamEditorPanel)
     bpy.utils.unregister_class(AssignJBeamIDOperator)
-    del bpy.types.Scene.selected_vertex_index
+    del bpy.types.Scene.active_vertex_idx
     del bpy.types.Scene.jbeam_node_id
 
 if __name__ == "__main__":
     register()
+
+
 
 

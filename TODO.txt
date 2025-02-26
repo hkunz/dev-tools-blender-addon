@@ -1,1 +1,13 @@
 TODO
+
+Attribute can only be viewed using python when in Object Mode:
+bpy.data.meshes['bouncer_1'].attributes['jbeam_node_id'].data[0].value
+
+To view Attributes in Edit Mode:
+
+import bmesh
+bm = bmesh.from_edit_mesh(bpy.context.object.data)
+v = bm.verts[0]
+layer = bm.verts.layers.string.get("jbeam_node_id")
+value = v[layer]
+v[layer] = f"<new-value>".encode("utf-8")

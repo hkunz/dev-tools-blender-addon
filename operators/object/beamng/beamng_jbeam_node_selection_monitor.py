@@ -4,7 +4,7 @@ import bmesh
 class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
     bl_idname = "wm.devtools_beamng_jbeam_node_selection_monitor"
     bl_label = "Vertex Monitor"
-    bl_description = "DevTools: Monitor selected Jbeam node vertices and update JBeam Node IDs"
+    bl_description = "DevTools: Monitor selected Jbeam node vertices"
     bl_options = {'INTERNAL', 'UNDO'}
 
     _timer = None
@@ -16,8 +16,6 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
         return cls._handler is not None
 
     def modal(self, context, event):
-        if event.type == 'TIMER':
-            print(event.type)
         obj = context.object
         if not obj or obj.type != 'MESH' or obj.mode != 'EDIT':
             return {'PASS_THROUGH'}
@@ -97,7 +95,8 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
         bpy.app.timers.register(lambda: bpy.ops.wm.devtools_beamng_jbeam_node_selection_monitor('INVOKE_DEFAULT'), first_interval=0.5)
 
     def __del__(self):
-        return # Gets called and garbage collected for no reason
+        # Gets called and garbage collected because of https://blender.stackexchange.com/questions/331677/handler-in-load-post-not-called-when-using-bl-info-header-in-addon
+        return
         if self._timer is not None:
             wm = bpy.context.window_manager
             wm.event_timer_remove(self._timer)

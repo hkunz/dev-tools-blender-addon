@@ -82,6 +82,7 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
                 context.scene.selected_nodes = ""
             
             context.scene.active_node = bm.verts[active_index][layer].decode("utf-8") if layer else ""
+            bpy.ops.object.devtools_beamng_load_jbeam_node_props()
             self.force_update_ui()
 
     def cancel(self, context):

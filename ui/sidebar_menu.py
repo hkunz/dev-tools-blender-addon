@@ -208,22 +208,25 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                 index = context.scene.active_vertex_idx
                 if index > -1 and layer:
                     active_node_id = bm.verts[index][layer].decode("utf-8") if bm.verts[index][layer] else "None"
-                    col.label(text=f"Active Node: {active_node_id} ({index})")
-                    col.label(text=f"Selected Nodes: {context.scene.selected_nodes}")
-                    col.prop(context.scene, "active_node", text="Active Node ID")
-                    col.operator(OBJECT_OT_BeamngAssignNodeId.bl_idname, text="Assign JBeam ID")
+                    box = col.box()
+                    box.label(text=f"Active Node: {active_node_id} ({index})")
+                    box.label(text=f"Selected Nodes: {context.scene.selected_nodes}")
+                    box.prop(context.scene, "active_node", text="Active Node ID")
+                    box.operator(OBJECT_OT_BeamngAssignNodeId.bl_idname, text="Assign JBeam ID")
 
-                    col.operator(OBJECT_OT_BeamngLoadJbeamNodeProps.bl_idname, text="Load Properties")
+                    # col.operator(OBJECT_OT_BeamngLoadJbeamNodeProps.bl_idname, text="Load Properties")
+                    if context.scene.beamng_jbeam_vertex_props:
+                        for prop in context.scene.beamng_jbeam_vertex_props:
+                            r = box.row()
+                            r.prop(prop, "name", text="")
+                            r.prop(prop, "value", text="")
+                            r.operator(OBJECT_OT_BeamngSaveJbeamNodeProp.bl_idname, text="S").prop_name = prop.name
+                            r.operator(OBJECT_OT_BeamngRemoveJbeamNodeProp.bl_idname, text="X").prop_name = prop.name
+                    else:
+                        box.label(text=f"No jbeam properties in node {context.scene.selected_nodes}")
 
-                    for prop in context.scene.beamng_jbeam_vertex_props:
-                        r = col.row()
-                        r.prop(prop, "name", text="")
-                        r.prop(prop, "value", text="")
-                        r.operator(OBJECT_OT_BeamngSaveJbeamNodeProp.bl_idname, text="S").prop_name = prop.name
-                        r.operator(OBJECT_OT_BeamngRemoveJbeamNodeProp.bl_idname, text="X").prop_name = prop.name
-
-                    col.operator(OBJECT_OT_BeamngAddJbeamNodeProp.bl_idname, text="Add Node Property")
-                    col.operator(OBJECT_OT_BeamngSaveAllJbeamNodeProps.bl_idname, text="Save All")
+                    box.operator(OBJECT_OT_BeamngAddJbeamNodeProp.bl_idname, text="Add Node Property")
+                    box.operator(OBJECT_OT_BeamngSaveAllJbeamNodeProps.bl_idname, text="Save All")
 
             col.separator()
             col.operator(OBJECT_OT_BeamngCreateMetaBallCloud.bl_idname, text="Create MetaBall Cloud")

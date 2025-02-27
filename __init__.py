@@ -92,7 +92,12 @@ def add_executable_permission(exe: Union[str, Path]) -> Path: #https://blender.s
 def on_application_load(a, b):
     print("DevTools application load post handler ==============>", a, b)
     #check_DevTools addon_compatibility() # check compatibility of DevTools addon and its settings if opened in another blender version
-    bpy.ops.wm.devtools_beamng_jbeam_node_selection_monitor()
+    #bpy.ops.wm.devtools_beamng_jbeam_node_selection_monitor('INVOKE_DEFAULT') # Call this instead of in register function if run without using VSCode
+
+def start_beamng_jbeam_monitor():
+    bpy.ops.wm.devtools_beamng_jbeam_node_selection_monitor('INVOKE_DEFAULT')
+    return None  # Ensures Blender's timer system doesn't re-register unexpectedly
+
 
 def register() -> None:
     print("DevTools addon Registration Begin ==============>")
@@ -107,8 +112,10 @@ def register() -> None:
     register_generic_popup()
     TempFileManager().init()
     IconsManager().init()
+
+    bpy.app.timers.register(start_beamng_jbeam_monitor, first_interval=0.1, persistent=False) # Run this if running using VSCode else use the on_application_load
     bpy.app.handlers.load_post.append(on_application_load)
-    
+
     print("DevTools addon Registration Complete <==========\n")
 
 def unregister() -> None:

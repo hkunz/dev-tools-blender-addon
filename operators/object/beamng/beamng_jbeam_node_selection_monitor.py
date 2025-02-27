@@ -8,9 +8,16 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
     bl_options = {'INTERNAL', 'UNDO'}
 
     _timer = None
+    _handler = None
     _last_selected_indices = set()
     
+    @classmethod
+    def is_running(cls):
+        return cls._handler is not None
+
     def modal(self, context, event):
+        if event.type == 'TIMER':
+            print(event.type)
         obj = context.object
         if not obj or obj.type != 'MESH' or obj.mode != 'EDIT':
             return {'PASS_THROUGH'}
@@ -21,13 +28,21 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
         if event.type == 'TIMER':
             self.update_vertex_data(context)
         return {'PASS_THROUGH'}
-    
-    def execute(self, context):
+
+    def invoke(self, context, event):
+        cls = self.__class__
+        if cls._handler is not None:
+            return {'CANCELLED'}
+
         wm = context.window_manager
-        self._timer = wm.event_timer_add(0.1, window=context.window)
-        wm.modal_handler_add(self)
+
+        if cls._timer is None:
+            cls._timer = wm.event_timer_add(0.1, window=context.window)
+            wm.modal_handler_add(self)
+            cls._handler = self
+
         return {'RUNNING_MODAL'}
-    
+
     def force_update_ui(self):
         for area in bpy.context.screen.areas:
             if area.type in {'PROPERTIES', 'VIEW_3D'}:
@@ -70,13 +85,23 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
             
             context.scene.active_node = bm.verts[active_index][layer].decode("utf-8") if layer else ""
             self.force_update_ui()
-    
+
+    def cancel(self, context):
+        cls = self.__class__
+        wm = context.window_manager
+        wm.event_timer_remove(cls._timer)
+        cls._timer = None
+        cls._handler = None
+        print(f"Modal operator {cls.bl_idname} cancelled")
+
     def __del__(self):
+        return # Gets called and garbage collected for no reason
         if self._timer is not None:
             wm = bpy.context.window_manager
             wm.event_timer_remove(self._timer)
             self._timer = None
-    
+            self._handler = None
+
 class OBJECT_OT_BeamngAssignNodeId(bpy.types.Operator):
     """Assigns a new JBeam Node ID to the selected vertex"""
     bl_idname = "object.devtools_beamng_assign_jbeam_id"

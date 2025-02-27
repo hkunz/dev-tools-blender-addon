@@ -93,6 +93,8 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
         cls._timer = None
         cls._handler = None
         print(f"Modal operator {cls.bl_idname} cancelled")
+        # cancel gets called when opening or creating new blender file, to prevent, restart operator
+        bpy.app.timers.register(lambda: bpy.ops.wm.devtools_beamng_jbeam_node_selection_monitor('INVOKE_DEFAULT'), first_interval=0.5)
 
     def __del__(self):
         return # Gets called and garbage collected for no reason

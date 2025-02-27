@@ -96,8 +96,7 @@ def on_application_load(a, b):
 
 def start_beamng_jbeam_monitor():
     bpy.ops.wm.devtools_beamng_jbeam_node_selection_monitor('INVOKE_DEFAULT')
-    return None  # Ensures Blender's timer system doesn't re-register unexpectedly
-
+    return None # Ensures timer system doesn't re-register unexpectedly
 
 def register() -> None:
     print("DevTools addon Registration Begin ==============>")

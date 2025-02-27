@@ -17,8 +17,8 @@ from dev_tools.operators.object.beamng.beamng_parent_to_start01_empty_operator i
 from dev_tools.operators.object.beamng.beamng_export_mesh_to_jbeam import OBJECT_OT_BeamngCreateRefnodesVertexGroups, EXPORT_OT_BeamngExportMeshToJbeam # type: ignore
 from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_mesh_v1 import OBJECT_OT_BeamngConvertJbeamToMesh_v1 # type: ignore
 from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_mesh_v2 import OBJECT_OT_BeamngConvertJbeamToMesh_v2 # type: ignore
-from dev_tools.operators.object.beamng.beamng_jbeam_node_selection_monitor import OBJECT_OT_BeamngAssignNodeId # type: ignore
-from dev_tools.operators.object.beamng.beamng_jbeam_node_props_manager import OBJECT_OT_BeamngLoadJbeamNodeProps, OBJECT_OT_BeamngSaveJbeamNodeProp, OBJECT_OT_BeamngSaveAllJbeamNodeProps, OBJECT_OT_BeamngAddJbeamNodeProp, OBJECT_OT_BeamngRemoveJbeamNodeProp, JbeamPropertyItem # type: ignore
+from dev_tools.operators.object.beamng.beamng_jbeam_node_props_manager import OBJECT_OT_BeamngSaveJbeamNodeProp, OBJECT_OT_BeamngSaveAllJbeamNodeProps, OBJECT_OT_BeamngAddJbeamNodeProp, OBJECT_OT_BeamngRemoveJbeamNodeProp, JbeamPropertyItem # type: ignore
+from dev_tools.operators.object.beamng.beamng_jbeam_rename_selected_nodes import OBJECT_OT_BeamngJbeamRenameSelectedNodes # type:ignore
 
 from dev_tools.utils.utils import Utils # type: ignore
 from dev_tools.utils.object_utils import ObjectUtils # type: ignore
@@ -212,7 +212,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                     box.label(text=f"Active Node: {beamng_jbeam_active_node_id} ({index})")
                     box.label(text=f"Selected Nodes: {context.scene.beamng_jbeam_selected_nodes}")
                     box.prop(context.scene, "beamng_jbeam_active_node", text="Active Node ID")
-                    box.operator(OBJECT_OT_BeamngAssignNodeId.bl_idname, text="Assign JBeam ID")
+                    box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign JBeam ID")
 
                     # col.operator(OBJECT_OT_BeamngLoadJbeamNodeProps.bl_idname, text="Load Properties")
                     if context.scene.beamng_jbeam_vertex_props:

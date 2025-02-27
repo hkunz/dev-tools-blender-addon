@@ -62,8 +62,9 @@ from dev_tools.operators.object.beamng.beamng_parent_to_start01_empty_operator i
 from dev_tools.operators.object.beamng.beamng_export_mesh_to_jbeam import OBJECT_OT_BeamngCreateRefnodesVertexGroups, EXPORT_OT_BeamngExportMeshToJbeam # type: ignore
 from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_mesh_v1 import OBJECT_OT_BeamngConvertJbeamToMesh_v1 # type: ignore
 from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_mesh_v2 import OBJECT_OT_BeamngConvertJbeamToMesh_v2 # type: ignore
-from dev_tools.operators.object.beamng.beamng_jbeam_node_selection_monitor import OBJECT_OT_BeamngJbeamNodeSelectionMonitor, OBJECT_OT_BeamngAssignNodeId # type: ignore
+from dev_tools.operators.object.beamng.beamng_jbeam_node_selection_monitor import OBJECT_OT_BeamngJbeamNodeSelectionMonitor # type: ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_node_props_manager import OBJECT_OT_BeamngLoadJbeamNodeProps, OBJECT_OT_BeamngSaveJbeamNodeProp, OBJECT_OT_BeamngSaveAllJbeamNodeProps, OBJECT_OT_BeamngAddJbeamNodeProp, OBJECT_OT_BeamngRemoveJbeamNodeProp # type: ignore
+from dev_tools.operators.object.beamng.beamng_jbeam_rename_selected_nodes import OBJECT_OT_BeamngJbeamRenameSelectedNodes # type:ignore
 
 DEVTOOLS_CLASSES = [
     OBJECT_OT_ArmatureCreateBonesRandomVertices,
@@ -80,12 +81,12 @@ DEVTOOLS_CLASSES = [
     OBJECT_OT_BeamngConvertJbeamToMesh_v1,
     OBJECT_OT_BeamngConvertJbeamToMesh_v2,
     OBJECT_OT_BeamngJbeamNodeSelectionMonitor,
-    OBJECT_OT_BeamngAssignNodeId,
     OBJECT_OT_BeamngLoadJbeamNodeProps,
     OBJECT_OT_BeamngSaveJbeamNodeProp,
     OBJECT_OT_BeamngSaveAllJbeamNodeProps,
     OBJECT_OT_BeamngAddJbeamNodeProp,
-    OBJECT_OT_BeamngRemoveJbeamNodeProp
+    OBJECT_OT_BeamngRemoveJbeamNodeProp,
+    OBJECT_OT_BeamngJbeamRenameSelectedNodes
 ]
 
 def add_executable_permission(exe: Union[str, Path]) -> Path: #https://blender.stackexchange.com/questions/310144/mac-executable-binary-within-DevTools addon-zip-loses-execute-permission-when-DevTools addon-zip

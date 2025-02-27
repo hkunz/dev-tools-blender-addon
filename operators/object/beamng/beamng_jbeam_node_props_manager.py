@@ -11,6 +11,7 @@ class OBJECT_OT_BeamngLoadJbeamNodeProps(bpy.types.Operator):
     """Load JBeam properties of the selected vertex"""
     bl_idname = "object.devtools_beamng_load_jbeam_node_props"
     bl_label = "DevTools: BeamNG Load JBeam Node Properties"
+    bl_options = {'INTERNAL', 'UNDO'}
 
     def execute(self, context):
         obj = context.object
@@ -49,6 +50,7 @@ class OBJECT_OT_BeamngSaveJbeamNodeProp(bpy.types.Operator):
     """Save a single JBeam node property"""
     bl_idname = "object.devtools_beamng_save_jbeam_node_prop"
     bl_label = "DevTools: BeamNG Save JBeam Node Property"
+    bl_options = {'INTERNAL', 'UNDO'}
 
     prop_name: bpy.props.StringProperty() # type: ignore
 
@@ -86,6 +88,7 @@ class OBJECT_OT_BeamngSaveAllJbeamNodeProps(bpy.types.Operator):
     """Save all JBeam node properties"""
     bl_idname = "object.devtools_beamng_save_all_jbeam_node_props"
     bl_label = "DevTools: BeamNG Save All JBeam Node Properties"
+    bl_options = {'INTERNAL', 'UNDO'}
 
     def execute(self, context):
         obj = context.object
@@ -129,6 +132,7 @@ class OBJECT_OT_BeamngAddJbeamNodeProp(bpy.types.Operator):
     """Add a new JBeam node property"""
     bl_idname = "object.devtools_beamng_add_jbeam_node_prop"
     bl_label = "DevTools: BeamNG Add JBeam Node Property"
+    bl_options = {'INTERNAL', 'UNDO'}
 
     def execute(self, context):
         prop = context.scene.beamng_jbeam_vertex_props.add()
@@ -141,6 +145,7 @@ class OBJECT_OT_BeamngRemoveJbeamNodeProp(bpy.types.Operator):
     """Remove a JBeam node property"""
     bl_idname = "object.devtools_beamng_remove_jbeam_node_prop"
     bl_label = "DevTools: BeamNG Remove JBeam Node Property"
+    bl_options = {'INTERNAL', 'UNDO'}
 
     prop_name: bpy.props.StringProperty() # type: ignore
 

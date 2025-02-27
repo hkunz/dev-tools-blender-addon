@@ -105,27 +105,3 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
             wm.event_timer_remove(self._timer)
             self._timer = None
             self._handler = None
-
-class OBJECT_OT_BeamngAssignNodeId(bpy.types.Operator):
-    """Assigns a new JBeam Node ID to the selected vertex"""
-    bl_idname = "object.devtools_beamng_assign_jbeam_id"
-    bl_label = "Assign JBeam ID"
-
-    def execute(self, context):
-        obj = context.object
-        if obj is None or obj.type != 'MESH':
-            self.report({'WARNING'}, "No valid mesh object selected")
-            return {'CANCELLED'}
-
-        mesh = obj.data
-        index = context.scene.beamng_jbeam_active_vertex_idx
-        new_value = context.scene.beamng_jbeam_active_node.encode("utf-8")
-
-        if obj.mode == 'EDIT':
-            bm = bmesh.from_edit_mesh(mesh)
-            layer = bm.verts.layers.string.get("jbeam_node_id")
-            bm.verts[index][layer] = new_value
-            bmesh.update_edit_mesh(mesh)
-
-        self.report({'INFO'}, f"Assigned JBeam Node ID: {context.scene.beamng_jbeam_active_node} to vertex {index}")
-        return {'FINISHED'}

@@ -18,6 +18,7 @@ from dev_tools.operators.object.beamng.beamng_export_mesh_to_jbeam import OBJECT
 from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_mesh_v1 import OBJECT_OT_BeamngConvertJbeamToMesh_v1 # type: ignore
 from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_mesh_v2 import OBJECT_OT_BeamngConvertJbeamToMesh_v2 # type: ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_node_selection_monitor import OBJECT_OT_BeamngAssignNodeId # type: ignore
+from dev_tools.operators.object.beamng.beamng_jbeam_node_props_manager import OBJECT_OT_BeamngLoadJbeamNodeProps, OBJECT_OT_BeamngSaveJbeamNodeProp, OBJECT_OT_BeamngSaveAllJbeamNodeProps, OBJECT_OT_BeamngAddJbeamNodeProp, OBJECT_OT_BeamngRemoveJbeamNodeProp, JbeamPropertyItem # type: ignore
 
 from dev_tools.utils.utils import Utils # type: ignore
 from dev_tools.utils.object_utils import ObjectUtils # type: ignore
@@ -212,6 +213,18 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                     col.prop(context.scene, "active_node", text="Active Node ID")
                     col.operator(OBJECT_OT_BeamngAssignNodeId.bl_idname, text="Assign JBeam ID")
 
+                    col.operator(OBJECT_OT_BeamngLoadJbeamNodeProps.bl_idname, text="Load Properties")
+
+                    for prop in context.scene.beamng_jbeam_vertex_props:
+                        r = col.row()
+                        r.prop(prop, "name", text="")
+                        r.prop(prop, "value", text="")
+                        r.operator(OBJECT_OT_BeamngSaveJbeamNodeProp.bl_idname, text="S").prop_name = prop.name
+                        r.operator(OBJECT_OT_BeamngRemoveJbeamNodeProp.bl_idname, text="X").prop_name = prop.name
+
+                    col.operator(OBJECT_OT_BeamngAddJbeamNodeProp.bl_idname, text="Add Node Property")
+                    col.operator(OBJECT_OT_BeamngSaveAllJbeamNodeProps.bl_idname, text="Save All")
+
             col.separator()
             col.operator(OBJECT_OT_BeamngCreateMetaBallCloud.bl_idname, text="Create MetaBall Cloud")
 
@@ -271,6 +284,7 @@ def register() -> None:
     bpy.utils.register_class(OBJECT_PT_devtools_addon_panel)
     bpy.utils.register_class(MyPropertyGroup1)
     bpy.utils.register_class(MyPropertyGroup2)
+    bpy.utils.register_class(JbeamPropertyItem)
     bpy.types.Material.my_slot_setting = bpy.props.PointerProperty(type=MyPropertyGroup2)
     bpy.types.Scene.my_property_group_pointer = bpy.props.PointerProperty(type=MyPropertyGroup1)
     bpy.types.Scene.expanded_armature_options = bpy.props.BoolProperty(default=False)
@@ -279,6 +293,7 @@ def register() -> None:
     bpy.types.Scene.active_vertex_idx = bpy.props.IntProperty(name="Vertex Index", default=-1)
     bpy.types.Scene.active_node = bpy.props.StringProperty(name="JBeam Node ID")
     bpy.types.Scene.selected_nodes = bpy.props.StringProperty(name="Selected Nodes")
+    bpy.types.Scene.beamng_jbeam_vertex_props = bpy.props.CollectionProperty(type=JbeamPropertyItem)
 
     bpy.app.handlers.depsgraph_update_post.append(on_depsgraph_update)
 
@@ -286,6 +301,7 @@ def unregister() -> None:
     bpy.utils.unregister_class(OBJECT_PT_devtools_addon_panel)
     bpy.utils.unregister_class(MyPropertyGroup1)
     bpy.utils.unregister_class(MyPropertyGroup2)
+    bpy.utils.unregister_class(JbeamPropertyItem)
     del bpy.types.Material.my_slot_setting
     del bpy.types.Scene.expanded_armature_options
     del bpy.types.Scene.expanded_bake_options
@@ -294,4 +310,5 @@ def unregister() -> None:
     del bpy.types.Scene.active_vertex_idx
     del bpy.types.Scene.active_node
     del bpy.types.Scene.selected_nodes
+    del bpy.types.Scene.beamng_jbeam_vertex_props
     bpy.app.handlers.depsgraph_update_post.clear()

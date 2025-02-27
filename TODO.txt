@@ -182,14 +182,14 @@ import bpy
 import bmesh
 import json
 
-class JBeamPropertyItem(bpy.types.PropertyGroup):
+class JbeamPropertyItem(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Property Name")
     value: bpy.props.StringProperty(name="Value")
 
 
 class VertexJBeamPropertiesPanel(bpy.types.Panel):
     bl_label = "JBeam Vertex Properties"
-    bl_idname = "VIEW3D_PT_jbeam_vertex_props"
+    bl_idname = "VIEW3D_PT_beamng_jbeam_vertex_props"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "Tool"
@@ -204,26 +204,26 @@ class VertexJBeamPropertiesPanel(bpy.types.Panel):
             return
 
         # Button to load properties
-        layout.operator("object.load_jbeam_props", text="Load Properties")
+        layout.operator(OBJECT_OT_BeamngLoadJbeamNodeProps.bl_idname, text="Load Properties")
 
-        for prop in scene.jbeam_vertex_props:
+        for prop in scene.beamng_jbeam_vertex_props:
             row = layout.row()
             row.prop(prop, "name", text="")
             row.prop(prop, "value", text="")
-            row.operator("object.save_jbeam_prop", text="S").prop_name = prop.name
-            row.operator("object.remove_jbeam_prop", text="X").prop_name = prop.name
+            row.operator(OBJECT_OT_BeamngSaveJbeamNodeProp.bl_idname, text="S").prop_name = prop.name
+            row.operator(OBJECT_OT_BeamngRemoveJbeamNodeProp.bl_idname, text="X").prop_name = prop.name
 
         # Add new property button
-        layout.operator("object.add_jbeam_prop", text="Add Property")
+        layout.operator(OBJECT_OT_BeamngAddJbeamNodeProp.bl_idname, text="Add Node Property")
 
         # Save All Button
-        layout.operator("object.save_all_jbeam_props", text="Save All")
+        layout.operator(OBJECT_OT_BeamngSaveAllJbeamNodeProps.bl_idname, text="Save All")
 
 
-class LoadJBeamPropsOperator(bpy.types.Operator):
+class OBJECT_OT_OBJECT_OT_BeamngLoadJbeamNodeProps(bpy.types.Operator):
     """Load JBeam properties of the selected vertex"""
-    bl_idname = "object.load_jbeam_props"
-    bl_label = "Load JBeam Properties"
+    bl_idname = "object.devtools_beamng_load_jbeam_node_props"
+    bl_label = "DevTools: BeamNG Load JBeam Node Properties"
 
     def execute(self, context):
         obj = context.object
@@ -239,7 +239,7 @@ class LoadJBeamPropsOperator(bpy.types.Operator):
             self.report({'WARNING'}, "No selected vertices or no property data found")
             return {'CANCELLED'}
 
-        context.scene.jbeam_vertex_props.clear()
+        context.scene.beamng_jbeam_vertex_props.clear()
         properties = {}
 
         for v in selected_verts:
@@ -251,17 +251,17 @@ class LoadJBeamPropsOperator(bpy.types.Operator):
                 self.report({'ERROR'}, f"Failed to load properties: {e}")
 
         for key, value in properties.items():
-            prop = context.scene.jbeam_vertex_props.add()
+            prop = context.scene.beamng_jbeam_vertex_props.add()
             prop.name = key
             prop.value = str(value)
 
         return {'FINISHED'}
 
 
-class SaveJBeamPropOperator(bpy.types.Operator):
-    """Save a single JBeam property"""
-    bl_idname = "object.save_jbeam_prop"
-    bl_label = "Save JBeam Property"
+class OBJECT_OT_BeamngSaveJbeamNodeProp(bpy.types.Operator):
+    """Save a single JBeam node property"""
+    bl_idname = "object.devtools_beamng_save_jbeam_node_prop"
+    bl_label = "DevTools: BeamNG Save JBeam Node Property"
 
     prop_name: bpy.props.StringProperty()
 
@@ -282,7 +282,7 @@ class SaveJBeamPropOperator(bpy.types.Operator):
         for v in selected_verts:
             try:
                 props = json.loads(v[layer].decode("utf-8")) if v[layer] else {}
-                for prop in context.scene.jbeam_vertex_props:
+                for prop in context.scene.beamng_jbeam_vertex_props:
                     if prop.name == self.prop_name:
                         props[prop.name] = prop.value
                         break
@@ -295,10 +295,10 @@ class SaveJBeamPropOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class SaveAllJBeamPropsOperator(bpy.types.Operator):
-    """Save all JBeam properties"""
-    bl_idname = "object.save_all_jbeam_props"
-    bl_label = "Save All JBeam Properties"
+class OBJECT_OT_BeamngSaveAllJbeamNodeProps(bpy.types.Operator):
+    """Save all JBeam node properties"""
+    bl_idname = "object.devtools_beamng_save_all_jbeam_node_props"
+    bl_label = "DevTools: BeamNG Save All JBeam Node Properties"
 
     def execute(self, context):
         obj = context.object
@@ -315,7 +315,7 @@ class SaveAllJBeamPropsOperator(bpy.types.Operator):
             return {'CANCELLED'}
 
         # Get current properties in the UI
-        ui_props = {prop.name: prop.value for prop in context.scene.jbeam_vertex_props}
+        ui_props = {prop.name: prop.value for prop in context.scene.beamng_jbeam_vertex_props}
 
         for v in selected_verts:
             try:
@@ -339,56 +339,56 @@ class SaveAllJBeamPropsOperator(bpy.types.Operator):
 
 
 
-class AddJBeamPropOperator(bpy.types.Operator):
-    """Add a new JBeam property"""
-    bl_idname = "object.add_jbeam_prop"
-    bl_label = "Add JBeam Property"
+class OBJECT_OT_BeamngAddJbeamNodeProp(bpy.types.Operator):
+    """Add a new JBeam node property"""
+    bl_idname = "object.devtools_beamng_add_jbeam_node_prop"
+    bl_label = "DevTools: BeamNG Add JBeam Node Property"
 
     def execute(self, context):
-        prop = context.scene.jbeam_vertex_props.add()
+        prop = context.scene.beamng_jbeam_vertex_props.add()
         prop.name = "NewProp"
         prop.value = "0"
         return {'FINISHED'}
 
 
-class RemoveJBeamPropOperator(bpy.types.Operator):
-    """Remove a JBeam property"""
-    bl_idname = "object.remove_jbeam_prop"
-    bl_label = "Remove JBeam Property"
+class OBJECT_OT_BeamngRemoveJbeamNodeProp(bpy.types.Operator):
+    """Remove a JBeam node property"""
+    bl_idname = "object.devtools_beamng_remove_jbeam_node_prop"
+    bl_label = "DevTools: BeamNG Remove JBeam Node Property"
 
     prop_name: bpy.props.StringProperty()
 
     def execute(self, context):
         scene = context.scene
-        for i, prop in enumerate(scene.jbeam_vertex_props):
+        for i, prop in enumerate(scene.beamng_jbeam_vertex_props):
             if prop.name == self.prop_name:
-                scene.jbeam_vertex_props.remove(i)
+                scene.beamng_jbeam_vertex_props.remove(i)
                 break
         return {'FINISHED'}
 
 
 def register():
-    bpy.utils.register_class(JBeamPropertyItem)
+    bpy.utils.register_class(JbeamPropertyItem)
     bpy.utils.register_class(VertexJBeamPropertiesPanel)
-    bpy.utils.register_class(LoadJBeamPropsOperator)
-    bpy.utils.register_class(SaveJBeamPropOperator)
-    bpy.utils.register_class(SaveAllJBeamPropsOperator)
-    bpy.utils.register_class(AddJBeamPropOperator)
-    bpy.utils.register_class(RemoveJBeamPropOperator)
+    bpy.utils.register_class(OBJECT_OT_BeamngLoadJbeamNodeProps)
+    bpy.utils.register_class(OBJECT_OT_BeamngSaveJbeamNodeProp)
+    bpy.utils.register_class(OBJECT_OT_BeamngSaveAllJbeamNodeProps)
+    bpy.utils.register_class(OBJECT_OT_BeamngAddJbeamNodeProp)
+    bpy.utils.register_class(OBJECT_OT_BeamngRemoveJbeamNodeProp)
 
-    bpy.types.Scene.jbeam_vertex_props = bpy.props.CollectionProperty(type=JBeamPropertyItem)
+    bpy.types.Scene.beamng_jbeam_vertex_props = bpy.props.CollectionProperty(type=JbeamPropertyItem)
 
 
 def unregister():
-    bpy.utils.unregister_class(JBeamPropertyItem)
+    bpy.utils.unregister_class(JbeamPropertyItem)
     bpy.utils.unregister_class(VertexJBeamPropertiesPanel)
-    bpy.utils.unregister_class(LoadJBeamPropsOperator)
-    bpy.utils.unregister_class(SaveJBeamPropOperator)
-    bpy.utils.unregister_class(SaveAllJBeamPropsOperator)
-    bpy.utils.unregister_class(AddJBeamPropOperator)
-    bpy.utils.unregister_class(RemoveJBeamPropOperator)
+    bpy.utils.unregister_class(OBJECT_OT_BeamngLoadJbeamNodeProps)
+    bpy.utils.unregister_class(OBJECT_OT_BeamngSaveJbeamNodeProp)
+    bpy.utils.unregister_class(OBJECT_OT_BeamngSaveAllJbeamNodeProps)
+    bpy.utils.unregister_class(OBJECT_OT_BeamngAddJbeamNodeProp)
+    bpy.utils.unregister_class(OBJECT_OT_BeamngRemoveJbeamNodeProp)
 
-    del bpy.types.Scene.jbeam_vertex_props
+    del bpy.types.Scene.beamng_jbeam_vertex_props
 
 
 if __name__ == "__main__":

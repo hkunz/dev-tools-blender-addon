@@ -205,13 +205,13 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                 bm = bmesh.from_edit_mesh(obj.data)
                 bm.verts.ensure_lookup_table()
                 layer = bm.verts.layers.string.get("jbeam_node_id")
-                index = context.scene.active_vertex_idx
+                index = context.scene.beamng_jbeam_active_vertex_idx
                 if index > -1 and layer:
-                    active_node_id = bm.verts[index][layer].decode("utf-8") if bm.verts[index][layer] else "None"
+                    beamng_jbeam_active_node_id = bm.verts[index][layer].decode("utf-8") if bm.verts[index][layer] else "None"
                     box = col.box()
-                    box.label(text=f"Active Node: {active_node_id} ({index})")
-                    box.label(text=f"Selected Nodes: {context.scene.selected_nodes}")
-                    box.prop(context.scene, "active_node", text="Active Node ID")
+                    box.label(text=f"Active Node: {beamng_jbeam_active_node_id} ({index})")
+                    box.label(text=f"Selected Nodes: {context.scene.beamng_jbeam_selected_nodes}")
+                    box.prop(context.scene, "beamng_jbeam_active_node", text="Active Node ID")
                     box.operator(OBJECT_OT_BeamngAssignNodeId.bl_idname, text="Assign JBeam ID")
 
                     # col.operator(OBJECT_OT_BeamngLoadJbeamNodeProps.bl_idname, text="Load Properties")
@@ -223,7 +223,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                             r.operator(OBJECT_OT_BeamngSaveJbeamNodeProp.bl_idname, text="S").prop_name = prop.name
                             r.operator(OBJECT_OT_BeamngRemoveJbeamNodeProp.bl_idname, text="X").prop_name = prop.name
                     else:
-                        box.label(text=f"No jbeam properties in node {context.scene.selected_nodes}")
+                        box.label(text=f"No jbeam properties in node {context.scene.beamng_jbeam_selected_nodes}")
 
                     box.operator(OBJECT_OT_BeamngAddJbeamNodeProp.bl_idname, text="Add Node Property")
                     box.operator(OBJECT_OT_BeamngSaveAllJbeamNodeProps.bl_idname, text="Save All")
@@ -293,9 +293,9 @@ def register() -> None:
     bpy.types.Scene.expanded_armature_options = bpy.props.BoolProperty(default=False)
     bpy.types.Scene.expanded_bake_options = bpy.props.BoolProperty(default=False)
     bpy.types.Scene.expanded_beamng_options = bpy.props.BoolProperty(default=False)
-    bpy.types.Scene.active_vertex_idx = bpy.props.IntProperty(name="Vertex Index", default=-1)
-    bpy.types.Scene.active_node = bpy.props.StringProperty(name="JBeam Node ID")
-    bpy.types.Scene.selected_nodes = bpy.props.StringProperty(name="Selected Nodes")
+    bpy.types.Scene.beamng_jbeam_active_vertex_idx = bpy.props.IntProperty(name="Vertex Index", default=-1)
+    bpy.types.Scene.beamng_jbeam_active_node = bpy.props.StringProperty(name="JBeam Node ID")
+    bpy.types.Scene.beamng_jbeam_selected_nodes = bpy.props.StringProperty(name="Selected Nodes")
     bpy.types.Scene.beamng_jbeam_vertex_props = bpy.props.CollectionProperty(type=JbeamPropertyItem)
 
     bpy.app.handlers.depsgraph_update_post.append(on_depsgraph_update)
@@ -310,8 +310,8 @@ def unregister() -> None:
     del bpy.types.Scene.expanded_bake_options
     del bpy.types.Scene.expanded_beamng_options
     del bpy.types.Scene.my_property_group_pointer
-    del bpy.types.Scene.active_vertex_idx
-    del bpy.types.Scene.active_node
-    del bpy.types.Scene.selected_nodes
+    del bpy.types.Scene.beamng_jbeam_active_vertex_idx
+    del bpy.types.Scene.beamng_jbeam_active_node
+    del bpy.types.Scene.beamng_jbeam_selected_nodes
     del bpy.types.Scene.beamng_jbeam_vertex_props
     bpy.app.handlers.depsgraph_update_post.clear()

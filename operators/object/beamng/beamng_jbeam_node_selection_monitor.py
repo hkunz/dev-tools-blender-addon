@@ -60,8 +60,8 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
         if not selected_verts:
             if self._last_selected_indices:  # Only update if we had a previous selection
                 self._last_selected_indices.clear()
-                context.scene.active_vertex_idx = -1
-                context.scene.selected_nodes = ""
+                context.scene.beamng_jbeam_active_vertex_idx = -1
+                context.scene.beamng_jbeam_selected_nodes = ""
                 self.force_update_ui()
                 return
 
@@ -70,18 +70,18 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
 
         if set(selected_verts) != self._last_selected_indices:
             self._last_selected_indices = set(selected_verts)
-            context.scene.active_vertex_idx = active_index
+            context.scene.beamng_jbeam_active_vertex_idx = active_index
             layer = bm.verts.layers.string.get("jbeam_node_id")
             if layer:
                 jbeam_ids = [
                     bm.verts[v_idx][layer].decode('utf-8') if bm.verts[v_idx][layer] else f"({v_idx})"
                     for v_idx in selected_verts
                 ]
-                context.scene.selected_nodes = ", ".join(jbeam_ids)
+                context.scene.beamng_jbeam_selected_nodes = ", ".join(jbeam_ids)
             else:
-                context.scene.selected_nodes = ""
+                context.scene.beamng_jbeam_selected_nodes = ""
             
-            context.scene.active_node = bm.verts[active_index][layer].decode("utf-8") if layer else ""
+            context.scene.beamng_jbeam_active_node = bm.verts[active_index][layer].decode("utf-8") if layer else ""
             bpy.ops.object.devtools_beamng_load_jbeam_node_props()
             self.force_update_ui()
 
@@ -116,8 +116,8 @@ class OBJECT_OT_BeamngAssignNodeId(bpy.types.Operator):
             return {'CANCELLED'}
 
         mesh = obj.data
-        index = context.scene.active_vertex_idx
-        new_value = context.scene.active_node.encode("utf-8")
+        index = context.scene.beamng_jbeam_active_vertex_idx
+        new_value = context.scene.beamng_jbeam_active_node.encode("utf-8")
 
         if obj.mode == 'EDIT':
             bm = bmesh.from_edit_mesh(mesh)
@@ -125,5 +125,5 @@ class OBJECT_OT_BeamngAssignNodeId(bpy.types.Operator):
             bm.verts[index][layer] = new_value
             bmesh.update_edit_mesh(mesh)
 
-        self.report({'INFO'}, f"Assigned JBeam Node ID: {context.scene.active_node} to vertex {index}")
+        self.report({'INFO'}, f"Assigned JBeam Node ID: {context.scene.beamng_jbeam_active_node} to vertex {index}")
         return {'FINISHED'}

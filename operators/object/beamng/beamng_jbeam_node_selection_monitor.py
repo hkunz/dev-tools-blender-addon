@@ -93,7 +93,9 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
         cls._handler = None
         print(f"Modal operator {cls.bl_idname} cancelled")
         # cancel gets called when opening or creating new blender file, to prevent, restart operator
-        bpy.app.timers.register(lambda: bpy.ops.wm.devtools_beamng_jbeam_node_selection_monitor('INVOKE_DEFAULT'), first_interval=0.5)
+        #bpy.app.timers.register(lambda: bpy.ops.wm.devtools_beamng_jbeam_node_selection_monitor('INVOKE_DEFAULT'), first_interval=0.5)
+        bpy.app.timers.register(lambda: (bpy.ops.wm.devtools_beamng_jbeam_node_selection_monitor('INVOKE_DEFAULT'), 0.1)[1], first_interval=0.5)
+
 
     def __del__(self):
         # Gets called and garbage collected because of https://blender.stackexchange.com/questions/331677/handler-in-load-post-not-called-when-using-bl-info-header-in-addon

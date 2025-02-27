@@ -214,10 +214,8 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                     box.prop(context.scene, "beamng_jbeam_active_node", text="Active Node ID")
                     box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign JBeam ID")
 
-                    # col.operator(OBJECT_OT_BeamngLoadJbeamNodeProps.bl_idname, text="Load Properties")
                     if context.scene.beamng_jbeam_vertex_props:
-                        sorted_props = sorted(context.scene.beamng_jbeam_vertex_props, key=lambda p: p.name.lower())  # Sort alphabetically (case-insensitive)
-                        for prop in sorted_props:
+                        for prop in context.scene.beamng_jbeam_vertex_props:
                             r = box.row()
                             r.prop(prop, "name", text="")
                             r.prop(prop, "value", text="")

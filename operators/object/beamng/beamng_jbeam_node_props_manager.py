@@ -38,12 +38,17 @@ class OBJECT_OT_BeamngLoadJbeamNodeProps(bpy.types.Operator):
             except Exception as e:
                 self.report({'ERROR'}, f"Failed to load properties: {e}")
 
-        for key, value in properties.items():
+        # Sort properties alphabetically (case-insensitive)
+        sorted_props = sorted(properties.items(), key=lambda item: item[0].lower())
+
+        # Add sorted properties to scene properties
+        for key, value in sorted_props:
             prop = context.scene.beamng_jbeam_vertex_props.add()
             prop.name = key
             prop.value = str(value)
 
         return {'FINISHED'}
+
 
 
 class OBJECT_OT_BeamngSaveJbeamNodeProp(bpy.types.Operator):

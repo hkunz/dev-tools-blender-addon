@@ -1,7 +1,7 @@
 TODO
 
 Attribute can only be viewed using python when in Object Mode:
-bpy.data.meshes['bouncer_1'].attributes['jbeam_node_id'].data[0].value
+node_id = obj.data.attributes['jbeam_node_id'].data[vertex_index].value.decode(utf8)
 
 To view Attributes in Edit Mode:
 
@@ -14,382 +14,239 @@ v[layer] = f"<new-value>".encode("utf-8")
 
 
 
-import bpy
-import bmesh
+'''
+I have a script that generates a structured list of nodes and their properties, making it easier to merge and propagate attributes upward in the hierarchy. The goal is to transform this data into a valid JBeam format while minimizing redundancy. Since JBeam is designed to reduce duplicate property definitions:
+'''
 
 import bpy
-import bmesh
-
-class VertexMonitorOperator(bpy.types.Operator):
-    bl_idname = "wm.vertex_monitor"
-    bl_label = "Vertex Monitor"
-    bl_description = "Monitor selected vertices and update JBeam Node IDs"
-    
-    _timer = None
-    _last_selected_indices = set()
-    
-    def modal(self, context, event):
-        obj = context.object
-        if not obj or obj.type != 'MESH' or obj.mode != 'EDIT':
-            return {'PASS_THROUGH'}
-
-        if "jbeam_node_id" not in obj.data.attributes:
-            return {'PASS_THROUGH'}  # Ignore non-JBeam objects
-
-        if event.type == 'TIMER':
-            self.update_vertex_data(context)
-        return {'PASS_THROUGH'}
-    
-    def execute(self, context):
-        wm = context.window_manager
-        self._timer = wm.event_timer_add(0.1, window=context.window)
-        wm.modal_handler_add(self)
-        return {'RUNNING_MODAL'}
-    
-    def force_update_ui(self):
-        for area in bpy.context.screen.areas:
-            if area.type in {'PROPERTIES', 'VIEW_3D'}:
-                for region in area.regions:
-                    if region.type in {'WINDOW', 'UI'}:
-                        region.tag_redraw()
-    
-    def update_vertex_data(self, context):
-        obj = context.object
-        if obj is None or obj.type != 'MESH' or obj.mode != 'EDIT':
-            return
-        
-        bm = bmesh.from_edit_mesh(obj.data)
-        bm.verts.ensure_lookup_table()
-        selected_verts = [v.index for v in bm.verts if v.select]
-
-        if not selected_verts:
-            if self._last_selected_indices:  # Only update if we had a previous selection
-                self._last_selected_indices.clear()
-                context.scene.active_vertex_idx = -1
-                context.scene.selected_nodes = ""
-                
-                self.force_update_ui()
-                return
-                
-        
-        # Get active vertex if possible
-        active_vert = bm.select_history.active if isinstance(bm.select_history.active, bmesh.types.BMVert) else None
-        active_index = active_vert.index if active_vert else (selected_verts[-1] if selected_verts else -1)
-
-
-        # Only update UI if selection changed
-        if set(selected_verts) != self._last_selected_indices:
-            self._last_selected_indices = set(selected_verts)
-            context.scene.active_vertex_idx = active_index  # Display the active vertex
-            
-            # Get JBeam IDs for all selected vertices
-            layer = bm.verts.layers.string.get("jbeam_node_id")
-            if layer:
-                jbeam_ids = [
-                    #f"{bm.verts[v_idx][layer].decode('utf-8')}({v_idx})"
-                    #for v_idx in selected_verts if bm.verts[v_idx][layer]
-                    bm.verts[v_idx][layer].decode('utf-8') if bm.verts[v_idx][layer] else f"({v_idx})"
-                    for v_idx in selected_verts
-                ]
-                context.scene.selected_nodes = ", ".join(jbeam_ids)
-                
-            else:
-                context.scene.selected_nodes = ""
-            
-            context.scene.active_node = bm.verts[active_index][layer].decode("utf-8") if layer else ""
-                
-            self.force_update_ui()
-    
-
-class AssignJBeamIDOperator(bpy.types.Operator):
-    """Assigns a new JBeam Node ID to the selected vertex"""
-    bl_idname = "object.assign_jbeam_id"
-    bl_label = "Assign JBeam ID"
-
-    def execute(self, context):
-        obj = context.object
-        if obj is None or obj.type != 'MESH':
-            self.report({'WARNING'}, "No valid mesh object selected")
-            return {'CANCELLED'}
-
-        mesh = obj.data
-        index = context.scene.active_vertex_idx
-        new_value = context.scene.active_node.encode("utf-8")
-
-        if obj.mode == 'EDIT':
-            bm = bmesh.from_edit_mesh(mesh)
-            layer = bm.verts.layers.string.get("jbeam_node_id")
-            bm.verts[index][layer] = new_value
-            bmesh.update_edit_mesh(mesh)
-
-        self.report({'INFO'}, f"Assigned JBeam Node ID: {context.scene.jbeam_node_id}")
-        return {'FINISHED'}
-
-class VertexJBeamEditorPanel(bpy.types.Panel):
-    bl_label = "Vertex JBeam Editor"
-    bl_idname = "VIEW3D_PT_vertex_jbeam_editor"
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_category = "Tool"
-
-    def draw(self, context):
-        layout = self.layout
-        scene = context.scene
-
-        layout.operator("wm.vertex_monitor", text="Start Selection Watcher")
-
-        obj = context.object
-        if obj and obj.mode == 'EDIT' and obj.type == 'MESH' and "jbeam_node_id" in obj.data.attributes:
-            bm = bmesh.from_edit_mesh(obj.data)
-            layer = bm.verts.layers.string.get("jbeam_node_id")
-            index = scene.active_vertex_idx
-
-            if index == -1 or not layer:
-                return
-            active_node_id = bm.verts[index][layer].decode("utf-8") if bm.verts[index][layer] else "None"
-            layout.label(text=f"Active Node: {active_node_id} ({index})")
-            layout.label(text=f"Selected Nodes: {scene.selected_nodes}")
-            layout.prop(scene, "active_node", text="Active Node ID")
-            layout.operator("object.assign_jbeam_id", text="Assign JBeam ID")
-
-
-
-def register():
-    bpy.utils.register_class(VertexMonitorOperator)
-    bpy.utils.register_class(VertexJBeamEditorPanel)
-    bpy.utils.register_class(AssignJBeamIDOperator)
-    bpy.types.Scene.active_vertex_idx = bpy.props.IntProperty(name="Vertex Index", default=-1)
-    bpy.types.Scene.active_node = bpy.props.StringProperty(name="JBeam Node ID")
-    bpy.types.Scene.selected_nodes = bpy.props.StringProperty(name="Selected Nodes")
-
-def unregister():
-    bpy.utils.unregister_class(VertexMonitorOperator)
-    bpy.utils.unregister_class(VertexJBeamEditorPanel)
-    bpy.utils.unregister_class(AssignJBeamIDOperator)
-    del bpy.types.Scene.active_vertex_idx
-    del bpy.types.Scene.active_node
-    del bpy.types.Scene.selected_nodes
-
-if __name__ == "__main__":
-    register()
-
-
-
-
-==========================================================================
-
-import bpy
-import bmesh
 import json
 
-class JbeamPropertyItem(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty(name="Property Name")
-    value: bpy.props.StringProperty(name="Value")
+DEFAULT_SCOPE_MODIFIER_VALUES = {
+    "frictionCoef": "1.0",
+    "nodeMaterial": "|NM_METAL",
+    "nodeWeight": "25",
+    "collision": "true",
+    "selfCollision": "false",
+    "fixed": "false",
+    "group": "",
+    "disable": "",
+    "beamPrecompression": "1",
+    "beamType": "|NORMAL",
+    "beamLongBound": "1",
+    "beamShortBound": "1",
+    "beamSpring": "10000000",
+    "beamDamp": "0",
+    "beamDeform": "FLT_MAX",
+    "beamStrength": "FLT_MAX",
+    "breakGroup": "",
+    "groundModel": "asphalt"
+}
 
+def get_vertex_groups(obj):
+    return {vg.index: vg.name for vg in obj.vertex_groups if vg.name.startswith("group_")}
 
-class VertexJBeamPropertiesPanel(bpy.types.Panel):
-    bl_label = "JBeam Vertex Properties"
-    bl_idname = "VIEW3D_PT_beamng_jbeam_vertex_props"
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_category = "Tool"
+def get_vertex_group_memberships(obj, vertex_groups):
+    return {
+        v.index: sorted([vertex_groups[g.group] for g in v.groups if g.group in vertex_groups])
+        for v in obj.data.vertices
+    }
 
-    def draw(self, context):
-        layout = self.layout
-        scene = context.scene
-        obj = context.object
+def get_node_properties(obj):
+    attr = obj.data.attributes.get("jbeam_node_props")
+    if attr:
+        return {i: attr.data[i].value.decode("utf-8") for i in range(len(attr.data))}
+    return {}
 
-        if not obj or obj.type != 'MESH' or obj.mode != 'EDIT':
-            layout.label(text="Select a mesh in Edit Mode")
-            return
+def parse_properties(properties_str):
+    if not properties_str:
+        return {}
+    return {item.split(":")[0].strip(): item.split(":")[1].strip() for item in properties_str.strip("{}").replace('"', '').split(",")}
 
-        # Button to load properties
-        layout.operator(OBJECT_OT_BeamngLoadJbeamNodeProps.bl_idname, text="Load Properties")
+def structure_vertex_data(obj):
+    vertex_groups = get_vertex_groups(obj)
+    vertex_to_groups = get_vertex_group_memberships(obj, vertex_groups)
+    node_props = get_node_properties(obj)
 
-        for prop in scene.beamng_jbeam_vertex_props:
-            row = layout.row()
-            row.prop(prop, "name", text="")
-            row.prop(prop, "value", text="")
-            row.operator(OBJECT_OT_BeamngSaveJbeamNodeProp.bl_idname, text="S").prop_name = prop.name
-            row.operator(OBJECT_OT_BeamngRemoveJbeamNodeProp.bl_idname, text="X").prop_name = prop.name
+    node_data_dict = {
+        obj.data.attributes["jbeam_node_id"].data[v_idx].value.decode("utf-8"): {
+            "group": groups,
+            **parse_properties(node_props.get(v_idx, ""))
+        }
+        for v_idx, groups in vertex_to_groups.items()
+    }
 
-        # Add new property button
-        layout.operator(OBJECT_OT_BeamngAddJbeamNodeProp.bl_idname, text="Add Node Property")
+    sorted_nodes = sorted(node_data_dict.items(), key=lambda x: (not x[1]["group"], x[0].lower()))
 
-        # Save All Button
-        layout.operator(OBJECT_OT_BeamngSaveAllJbeamNodeProps.bl_idname, text="Save All")
+    unique_props = set()  # Collect all unique properties dynamically
 
+    # First pass: Find all unique properties
+    for node_info in node_data_dict.values():
+        unique_props.update(node_info.keys())
 
-class OBJECT_OT_OBJECT_OT_BeamngLoadJbeamNodeProps(bpy.types.Operator):
-    """Load JBeam properties of the selected vertex"""
-    bl_idname = "object.devtools_beamng_load_jbeam_node_props"
-    bl_label = "DevTools: BeamNG Load JBeam Node Properties"
+    # Second pass: Ensure each node has all unique properties
+    for node_id, node_info in sorted_nodes:
+        cleaned_node_info = {k.strip(): v for k, v in node_info.items()}
 
-    def execute(self, context):
-        obj = context.object
-        if not obj or obj.type != 'MESH':
-            self.report({'WARNING'}, "No valid mesh object selected")
-            return {'CANCELLED'}
+        # Add missing properties based on the unique list
+        for prop in unique_props:
+            if prop not in cleaned_node_info:
+                cleaned_node_info[prop] = DEFAULT_SCOPE_MODIFIER_VALUES.get(prop, "")
 
-        bm = bmesh.from_edit_mesh(obj.data)
-        layer = bm.verts.layers.string.get("jbeam_node_props")
-        selected_verts = [v for v in bm.verts if v.select]
+        sorted_props = {"group": cleaned_node_info.pop("group")}
+        sorted_props.update(dict(sorted(cleaned_node_info.items(), key=lambda x: x[0].lower())))
 
-        if not selected_verts or not layer:
-            self.report({'WARNING'}, "No selected vertices or no property data found")
-            return {'CANCELLED'}
+        formatted_props = ", ".join(
+            f'"{k}": {json.dumps(v) if isinstance(v, (list, bool, int, float)) else json.dumps(str(v).strip())}'
+            for k, v in sorted_props.items()
+        )
+        print(f'"{node_id}" => {{{formatted_props}}}')
 
-        context.scene.beamng_jbeam_vertex_props.clear()
-        properties = {}
+    print("\n🔹 Unique Properties Used:\n", sorted(unique_props))
 
-        for v in selected_verts:
-            try:
-                props = json.loads(v[layer].decode("utf-8")) if v[layer] else {}
-                for key, value in props.items():
-                    properties[key] = value
-            except Exception as e:
-                self.report({'ERROR'}, f"Failed to load properties: {e}")
+print("\n\n")
 
-        for key, value in properties.items():
-            prop = context.scene.beamng_jbeam_vertex_props.add()
-            prop.name = key
-            prop.value = str(value)
+if bpy.context.object:
+    structure_vertex_data(bpy.context.object)
 
-        return {'FINISHED'}
+'''
+This script currently outputs something that looks like this:
 
+data = {
+    "b1" : {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "true"},
+    "b11" : {"group": ["group_bouncer_spring"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"},
+    "b12" : {"group": ["group_bouncer_base"], "collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "3.5", "selfCollision": "false"},
+    "b13" : {"group": ["group_bouncer_base"], "collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"},
+    "b14" : {"group": ["group_bouncer_base"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"},
+    "b15" : {"group": ["group_bouncer_base"], "collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "3.5", "selfCollision": "false"},
+    "b16" : {"group": ["group_bouncer_top"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
+    "b17" : {"group": ["group_bouncer_top"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "6.3", "selfCollision": "false"},
+    "b18" : {"group": ["group_bouncer_top"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
+    "b19" : {"group": ["group_bouncer_top"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"},
+    "b2" : {"group": ["group_bouncer_spring", "group_bouncer_top"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "2.3", "selfCollision": "false"},
+    "b3" : {"group": ["group_bouncer_spring", "group_bouncer_top"], "collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "3.5", "selfCollision": "false"},
+    "b4" : {"group": ["group_bouncer_spring", "group_bouncer_top"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "false"},
+    "b5" : {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "1.3", "selfCollision": "true"},
+    "b6" : {"group": ["group_bouncer_spring", "group_bouncer_top"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "false"},
+    "b8" : {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "true"},
+    "b9" : {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "1.3", "selfCollision": "true"},
+    "b10" : {"group": [], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
+    "b7" : {"group": [], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
+    "ref" : {"group": [], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"}
+}
 
-class OBJECT_OT_BeamngSaveJbeamNodeProp(bpy.types.Operator):
-    """Save a single JBeam node property"""
-    bl_idname = "object.devtools_beamng_save_jbeam_node_prop"
-    bl_label = "DevTools: BeamNG Save JBeam Node Property"
+🔹 Unique Properties Used:
+['collision', 'fixed', 'frictionCoef', 'group', 'nodeMaterial', 'nodeWeight', 'selfCollision']
 
-    prop_name: bpy.props.StringProperty()
-
-    def execute(self, context):
-        obj = context.object
-        if not obj or obj.type != 'MESH':
-            self.report({'WARNING'}, "No valid mesh object selected")
-            return {'CANCELLED'}
-
-        bm = bmesh.from_edit_mesh(obj.data)
-        layer = bm.verts.layers.string.get("jbeam_node_props")
-        selected_verts = [v for v in bm.verts if v.select]
-
-        if not selected_verts or not layer:
-            self.report({'WARNING'}, "No selected vertices or no property data found")
-            return {'CANCELLED'}
-
-        for v in selected_verts:
-            try:
-                props = json.loads(v[layer].decode("utf-8")) if v[layer] else {}
-                for prop in context.scene.beamng_jbeam_vertex_props:
-                    if prop.name == self.prop_name:
-                        props[prop.name] = prop.value
-                        break
-                v[layer] = json.dumps(props).encode("utf-8")
-            except Exception as e:
-                self.report({'ERROR'}, f"Failed to save property: {e}")
-
-        bmesh.update_edit_mesh(obj.data)
-        self.report({'INFO'}, f"Saved property: {self.prop_name}")
-        return {'FINISHED'}
-
-
-class OBJECT_OT_BeamngSaveAllJbeamNodeProps(bpy.types.Operator):
-    """Save all JBeam node properties"""
-    bl_idname = "object.devtools_beamng_save_all_jbeam_node_props"
-    bl_label = "DevTools: BeamNG Save All JBeam Node Properties"
-
-    def execute(self, context):
-        obj = context.object
-        if not obj or obj.type != 'MESH':
-            self.report({'WARNING'}, "No valid mesh object selected")
-            return {'CANCELLED'}
-
-        bm = bmesh.from_edit_mesh(obj.data)
-        layer = bm.verts.layers.string.get("jbeam_node_props")
-        selected_verts = [v for v in bm.verts if v.select]
-
-        if not selected_verts or not layer:
-            self.report({'WARNING'}, "No selected vertices or no property data found")
-            return {'CANCELLED'}
-
-        # Get current properties in the UI
-        ui_props = {prop.name: prop.value for prop in context.scene.beamng_jbeam_vertex_props}
-
-        for v in selected_verts:
-            try:
-                props = json.loads(v[layer].decode("utf-8")) if v[layer] else {}
-
-                # Remove properties that are missing from the UI
-                props = {k: v for k, v in props.items() if k in ui_props}
-
-                # Update values from the UI
-                for prop_name, prop_value in ui_props.items():
-                    props[prop_name] = prop_value
-
-                v[layer] = json.dumps(props).encode("utf-8")
-
-            except Exception as e:
-                self.report({'ERROR'}, f"Failed to save properties: {e}")
-
-        bmesh.update_edit_mesh(obj.data)
-        self.report({'INFO'}, "Saved all properties")
-        return {'FINISHED'}
+b1: {'group': ['group_bouncer_base', 'group_bouncer_spring'], 'collision': 'false', 'fixed': 'true', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_RUBBER', 'nodeWeight': '2.3', 'selfCollision': 'true'}
+b5: {'group': ['group_bouncer_base', 'group_bouncer_spring'], 'collision': 'false', 'fixed': 'false', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_RUBBER', 'nodeWeight': '1.3', 'selfCollision': 'true'}
+b8: {'group': ['group_bouncer_base', 'group_bouncer_spring'], 'collision': 'false', 'fixed': 'true', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_RUBBER', 'nodeWeight': '2.3', 'selfCollision': 'true'}
+b9: {'group': ['group_bouncer_base', 'group_bouncer_spring'], 'collision': 'false', 'fixed': 'false', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_RUBBER', 'nodeWeight': '1.3', 'selfCollision': 'true'}
+b2: {'group': ['group_bouncer_spring', 'group_bouncer_top'], 'collision': 'false', 'fixed': 'false', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_PLASTIC', 'nodeWeight': '2.3', 'selfCollision': 'false'}
+b3: {'group': ['group_bouncer_spring', 'group_bouncer_top'], 'collision': 'true', 'fixed': 'false', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_RUBBER', 'nodeWeight': '3.5', 'selfCollision': 'false'}
+b4: {'group': ['group_bouncer_spring', 'group_bouncer_top'], 'collision': 'false', 'fixed': 'true', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_RUBBER', 'nodeWeight': '2.3', 'selfCollision': 'false'}
+b6: {'group': ['group_bouncer_spring', 'group_bouncer_top'], 'collision': 'false', 'fixed': 'false', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_RUBBER', 'nodeWeight': '2.3', 'selfCollision': 'false'}
+b12: {'group': ['group_bouncer_base'], 'collision': 'true', 'fixed': 'false', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_RUBBER', 'nodeWeight': '3.5', 'selfCollision': 'false'}
+b13: {'group': ['group_bouncer_base'], 'collision': 'true', 'fixed': 'false', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_PLASTIC', 'nodeWeight': '3.5', 'selfCollision': 'false'}
+b14: {'group': ['group_bouncer_base'], 'collision': 'false', 'fixed': 'false', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_PLASTIC', 'nodeWeight': '3.5', 'selfCollision': 'false'}
+b15: {'group': ['group_bouncer_base'], 'collision': 'true', 'fixed': 'false', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_RUBBER', 'nodeWeight': '3.5', 'selfCollision': 'false'}
+b11: {'group': ['group_bouncer_spring'], 'collision': 'false', 'fixed': 'false', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_PLASTIC', 'nodeWeight': '3.5', 'selfCollision': 'false'}
+b16: {'group': ['group_bouncer_top'], 'collision': 'false', 'fixed': 'true', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_PLASTIC', 'nodeWeight': '10', 'selfCollision': 'true'}
+b17: {'group': ['group_bouncer_top'], 'collision': 'false', 'fixed': 'true', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_PLASTIC', 'nodeWeight': '6.3', 'selfCollision': 'false'}
+b18: {'group': ['group_bouncer_top'], 'collision': 'false', 'fixed': 'true', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_PLASTIC', 'nodeWeight': '10', 'selfCollision': 'true'}
+b19: {'group': ['group_bouncer_top'], 'collision': 'false', 'fixed': 'false', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_PLASTIC', 'nodeWeight': '3.5', 'selfCollision': 'false'}
+b10: {'group': [], 'collision': 'false', 'fixed': 'true', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_PLASTIC', 'nodeWeight': '10', 'selfCollision': 'true'}
+b7: {'group': [], 'collision': 'false', 'fixed': 'false', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_PLASTIC', 'nodeWeight': '10', 'selfCollision': 'true'}
+ref: {'group': [], 'collision': 'false', 'fixed': 'true', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_PLASTIC', 'nodeWeight': '10', 'selfCollision': 'true'}
 
 
 
-class OBJECT_OT_BeamngAddJbeamNodeProp(bpy.types.Operator):
-    """Add a new JBeam node property"""
-    bl_idname = "object.devtools_beamng_add_jbeam_node_prop"
-    bl_label = "DevTools: BeamNG Add JBeam Node Property"
-
-    def execute(self, context):
-        prop = context.scene.beamng_jbeam_vertex_props.add()
-        prop.name = "NewProp"
-        prop.value = "0"
-        return {'FINISHED'}
 
 
-class OBJECT_OT_BeamngRemoveJbeamNodeProp(bpy.types.Operator):
-    """Remove a JBeam node property"""
-    bl_idname = "object.devtools_beamng_remove_jbeam_node_prop"
-    bl_label = "DevTools: BeamNG Remove JBeam Node Property"
+ # RESTRUCTURED:
 
-    prop_name: bpy.props.StringProperty()
-
-    def execute(self, context):
-        scene = context.scene
-        for i, prop in enumerate(scene.beamng_jbeam_vertex_props):
-            if prop.name == self.prop_name:
-                scene.beamng_jbeam_vertex_props.remove(i)
-                break
-        return {'FINISHED'}
-
-
-def register():
-    bpy.utils.register_class(JbeamPropertyItem)
-    bpy.utils.register_class(VertexJBeamPropertiesPanel)
-    bpy.utils.register_class(OBJECT_OT_BeamngLoadJbeamNodeProps)
-    bpy.utils.register_class(OBJECT_OT_BeamngSaveJbeamNodeProp)
-    bpy.utils.register_class(OBJECT_OT_BeamngSaveAllJbeamNodeProps)
-    bpy.utils.register_class(OBJECT_OT_BeamngAddJbeamNodeProp)
-    bpy.utils.register_class(OBJECT_OT_BeamngRemoveJbeamNodeProp)
-
-    bpy.types.Scene.beamng_jbeam_vertex_props = bpy.props.CollectionProperty(type=JbeamPropertyItem)
+m1 = "collision":false
+m2 = "collision":true
+m3 = "fixed":true
+m4 = "fixed":false
+m5 = "frictionCoef":1.2
+m6 = "nodeMaterial":"|NM_RUBBER"
+m7 = "nodeMaterial":"|NM_PLASTIC"
+m8 = "nodeWeight":3.5
+m9 = "nodeWeight":2.3
+m10 = "selfCollision":true
+m11 = "selfCollision":false
+m12 = "nodeWeight":10
+m13 = "nodeWeight":1.3
+m14 = "nodeWeight": "6.3"
+m## ... etc there can be any amount of properties
 
 
-def unregister():
-    bpy.utils.unregister_class(JbeamPropertyItem)
-    bpy.utils.unregister_class(VertexJBeamPropertiesPanel)
-    bpy.utils.unregister_class(OBJECT_OT_BeamngLoadJbeamNodeProps)
-    bpy.utils.unregister_class(OBJECT_OT_BeamngSaveJbeamNodeProp)
-    bpy.utils.unregister_class(OBJECT_OT_BeamngSaveAllJbeamNodeProps)
-    bpy.utils.unregister_class(OBJECT_OT_BeamngAddJbeamNodeProp)
-    bpy.utils.unregister_class(OBJECT_OT_BeamngRemoveJbeamNodeProp)
+"b1" => {"group": ["group_bouncer_base", "group_bouncer_spring"], m1, m3, m5, m6, m9, m10}
+"b11" => {"group": ["group_bouncer_spring"], m1, m4, m5, m7, m8, m11}
+"b12" => {"group": ["group_bouncer_base"], m2, m4, m5, m6, m8, m11}
+"b13" => {"group": ["group_bouncer_base"], m2, m4, m5, m7, m8, m11}
+"b14" => {"group": ["group_bouncer_base"], m1, m4, m5, m7, m8, m11}
+"b15" => {"group": ["group_bouncer_base"], m2, m4, m5, m6, m8, m11}
+"b16" => {"group": ["group_bouncer_top"], m1, m3, m5, m7, m12, m10}
+"b17" => {"group": ["group_bouncer_top"], m1, m3, m5, m7, m14, m11}
+"b18" => {"group": ["group_bouncer_top"], m1, m3, m5, m7, m12, m10}
+"b19" => {"group": ["group_bouncer_top"], m1, m4, m5, m7, m8, m11}
+"b2" => {"group": ["group_bouncer_spring", "group_bouncer_top"], m1, m4, m5, m7, m9, m11}
+"b3" => {"group": ["group_bouncer_spring", "group_bouncer_top"], m2, m4, m5, m6, m8, m11}
+"b4" => {"group": ["group_bouncer_spring", "group_bouncer_top"], m1, m3, m5, m6, m9, m11}
+"b5" => {"group": ["group_bouncer_base", "group_bouncer_spring"], m1, m4, m5, m6, m13, m10}
+"b6" => {"group": ["group_bouncer_spring", "group_bouncer_top"], m1, m4, m5, m6, m9, m11}
+"b8" => {"group": ["group_bouncer_base", "group_bouncer_spring"], m1, m3, m5, m6, m9, m10}
+"b9" => {"group": ["group_bouncer_base", "group_bouncer_spring"], m1, m4, m5, m6, m13, m10}
+"b10" => {"group": [], m1, m3, m5, m7, m12, m10}
+"b7" => {"group": [], m1, m4, m5, m7, m12, m10}
+"ref" => {"group": [], m1, m3, m5, m7, m12, m10}
 
-    del bpy.types.Scene.beamng_jbeam_vertex_props
 
-
-if __name__ == "__main__":
-    register()
+{"group":["group_bouncer_base","group_bouncer_spring"]},
+{m5},
+{m6},
+{m13},
+{m1},
+{m10},
+["b5"],
+{m1},
+["b9"],
+{m3},
+{m9},
+["b8"],
+["b1"],
+{"group":["group_bouncer_spring","group_bouncer_top"]},
+{m11},
+["b4"],
+{"fixed":false},
+["b6"],
+{m7},
+["b2"],
+{m8},
+{m6},
+{m2},
+["b3"],
+{"group":"group_bouncer_base"},
+["b12"],
+["b15"],
+["b13"],
+{m1},
+["b14"],
+{"group":"group_bouncer_spring"},
+["b11"],
+{"group":"group_bouncer_top"},
+["b19"],
+{"nodeWeight":6.3},
+{m3},
+["b17"],
+{m12},
+{m10},
+["b16"],
+["b18"],
+{"group":""},
+["ref"],
+{m3},
+["b10"],
+{m4},
+["b7"],

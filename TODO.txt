@@ -60,7 +60,12 @@ def get_node_properties(obj):
 def parse_properties(properties_str):
     if not properties_str:
         return {}
-    return {item.split(":")[0].strip(): item.split(":")[1].strip() for item in properties_str.strip("{}").replace('"', '').split(",")}
+    return {
+        k.strip(): v.strip()
+        for item in properties_str.strip("{}").replace('"', '').split(",")
+        if (parts := item.split(":", 1)) and len(parts) == 2
+        for k, v in [parts]
+    }
 
 def structure_vertex_data(obj):
     vertex_groups = get_vertex_groups(obj)
@@ -83,15 +88,17 @@ def structure_vertex_data(obj):
     for node_info in node_data_dict.values():
         unique_props.update(node_info.keys())
 
-    # Second pass: Ensure each node has all unique properties
+    # Second pass: Ensure each node only has missing properties filled
+    final_node_list = {}
     for node_id, node_info in sorted_nodes:
         cleaned_node_info = {k.strip(): v for k, v in node_info.items()}
 
-        # Add missing properties based on the unique list
+        # Add only missing properties
         for prop in unique_props:
             if prop not in cleaned_node_info:
                 cleaned_node_info[prop] = DEFAULT_SCOPE_MODIFIER_VALUES.get(prop, "")
 
+        # Ensure group is first, rest sorted alphabetically
         sorted_props = {"group": cleaned_node_info.pop("group")}
         sorted_props.update(dict(sorted(cleaned_node_info.items(), key=lambda x: x[0].lower())))
 
@@ -99,65 +106,45 @@ def structure_vertex_data(obj):
             f'"{k}": {json.dumps(v) if isinstance(v, (list, bool, int, float)) else json.dumps(str(v).strip())}'
             for k, v in sorted_props.items()
         )
-        print(f'"{node_id}" => {{{formatted_props}}}')
+        final_node_list[node_id] = f"{{{formatted_props}}}"
+
+    data_sorted = dict(sorted(final_node_list.items(), key=lambda x: (-len(json.loads(x[1])['group']), json.loads(x[1])['group'])))
+
+    print("\n\n")
+    for key, value in data_sorted.items():
+        print(f"{key}: {value}")
 
     print("\n🔹 Unique Properties Used:\n", sorted(unique_props))
 
-print("\n\n")
 
-if bpy.context.object:
-    structure_vertex_data(bpy.context.object)
+structure_vertex_data(bpy.context.object)
+
 
 '''
 This script currently outputs something that looks like this:
 
 data = {
-    "b1" : {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "true"},
-    "b11" : {"group": ["group_bouncer_spring"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"},
-    "b12" : {"group": ["group_bouncer_base"], "collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "3.5", "selfCollision": "false"},
-    "b13" : {"group": ["group_bouncer_base"], "collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"},
-    "b14" : {"group": ["group_bouncer_base"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"},
-    "b15" : {"group": ["group_bouncer_base"], "collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "3.5", "selfCollision": "false"},
-    "b16" : {"group": ["group_bouncer_top"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
-    "b17" : {"group": ["group_bouncer_top"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "6.3", "selfCollision": "false"},
-    "b18" : {"group": ["group_bouncer_top"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
-    "b19" : {"group": ["group_bouncer_top"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"},
-    "b2" : {"group": ["group_bouncer_spring", "group_bouncer_top"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "2.3", "selfCollision": "false"},
-    "b3" : {"group": ["group_bouncer_spring", "group_bouncer_top"], "collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "3.5", "selfCollision": "false"},
-    "b4" : {"group": ["group_bouncer_spring", "group_bouncer_top"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "false"},
-    "b5" : {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "1.3", "selfCollision": "true"},
-    "b6" : {"group": ["group_bouncer_spring", "group_bouncer_top"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "false"},
-    "b8" : {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "true"},
-    "b9" : {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "1.3", "selfCollision": "true"},
-    "b10" : {"group": [], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
-    "b7" : {"group": [], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
-    "ref" : {"group": [], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"}
+    b1: {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "true"}
+    b5: {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "1.3", "selfCollision": "true"}
+    b8: {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "true"}
+    b9: {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "1.3", "selfCollision": "true"}
+    b2: {"group": ["group_bouncer_spring", "group_bouncer_top"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "2.3", "selfCollision": "false"}
+    b3: {"group": ["group_bouncer_spring", "group_bouncer_top"], "collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "3.5", "selfCollision": "false"}
+    b4: {"group": ["group_bouncer_spring", "group_bouncer_top"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "false"}
+    b6: {"group": ["group_bouncer_spring", "group_bouncer_top"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "false"}
+    b12: {"group": ["group_bouncer_base"], "collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "3.5", "selfCollision": "false"}
+    b13: {"group": ["group_bouncer_base"], "collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"}
+    b14: {"group": ["group_bouncer_base"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"}
+    b15: {"group": ["group_bouncer_base"], "collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "3.5", "selfCollision": "false"}
+    b11: {"group": ["group_bouncer_spring"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"}
+    b16: {"group": ["group_bouncer_top"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"}
+    b17: {"group": ["group_bouncer_top"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "6.3", "selfCollision": "false"}
+    b18: {"group": ["group_bouncer_top"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"}
+    b19: {"group": ["group_bouncer_top"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"}
+    b10: {"group": [], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"}
+    b7: {"group": [], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"}
+    ref: {"group": [], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"}
 }
-
-🔹 Unique Properties Used:
-['collision', 'fixed', 'frictionCoef', 'group', 'nodeMaterial', 'nodeWeight', 'selfCollision']
-
-b1: {'group': ['group_bouncer_base', 'group_bouncer_spring'], 'collision': 'false', 'fixed': 'true', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_RUBBER', 'nodeWeight': '2.3', 'selfCollision': 'true'}
-b5: {'group': ['group_bouncer_base', 'group_bouncer_spring'], 'collision': 'false', 'fixed': 'false', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_RUBBER', 'nodeWeight': '1.3', 'selfCollision': 'true'}
-b8: {'group': ['group_bouncer_base', 'group_bouncer_spring'], 'collision': 'false', 'fixed': 'true', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_RUBBER', 'nodeWeight': '2.3', 'selfCollision': 'true'}
-b9: {'group': ['group_bouncer_base', 'group_bouncer_spring'], 'collision': 'false', 'fixed': 'false', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_RUBBER', 'nodeWeight': '1.3', 'selfCollision': 'true'}
-b2: {'group': ['group_bouncer_spring', 'group_bouncer_top'], 'collision': 'false', 'fixed': 'false', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_PLASTIC', 'nodeWeight': '2.3', 'selfCollision': 'false'}
-b3: {'group': ['group_bouncer_spring', 'group_bouncer_top'], 'collision': 'true', 'fixed': 'false', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_RUBBER', 'nodeWeight': '3.5', 'selfCollision': 'false'}
-b4: {'group': ['group_bouncer_spring', 'group_bouncer_top'], 'collision': 'false', 'fixed': 'true', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_RUBBER', 'nodeWeight': '2.3', 'selfCollision': 'false'}
-b6: {'group': ['group_bouncer_spring', 'group_bouncer_top'], 'collision': 'false', 'fixed': 'false', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_RUBBER', 'nodeWeight': '2.3', 'selfCollision': 'false'}
-b12: {'group': ['group_bouncer_base'], 'collision': 'true', 'fixed': 'false', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_RUBBER', 'nodeWeight': '3.5', 'selfCollision': 'false'}
-b13: {'group': ['group_bouncer_base'], 'collision': 'true', 'fixed': 'false', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_PLASTIC', 'nodeWeight': '3.5', 'selfCollision': 'false'}
-b14: {'group': ['group_bouncer_base'], 'collision': 'false', 'fixed': 'false', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_PLASTIC', 'nodeWeight': '3.5', 'selfCollision': 'false'}
-b15: {'group': ['group_bouncer_base'], 'collision': 'true', 'fixed': 'false', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_RUBBER', 'nodeWeight': '3.5', 'selfCollision': 'false'}
-b11: {'group': ['group_bouncer_spring'], 'collision': 'false', 'fixed': 'false', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_PLASTIC', 'nodeWeight': '3.5', 'selfCollision': 'false'}
-b16: {'group': ['group_bouncer_top'], 'collision': 'false', 'fixed': 'true', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_PLASTIC', 'nodeWeight': '10', 'selfCollision': 'true'}
-b17: {'group': ['group_bouncer_top'], 'collision': 'false', 'fixed': 'true', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_PLASTIC', 'nodeWeight': '6.3', 'selfCollision': 'false'}
-b18: {'group': ['group_bouncer_top'], 'collision': 'false', 'fixed': 'true', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_PLASTIC', 'nodeWeight': '10', 'selfCollision': 'true'}
-b19: {'group': ['group_bouncer_top'], 'collision': 'false', 'fixed': 'false', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_PLASTIC', 'nodeWeight': '3.5', 'selfCollision': 'false'}
-b10: {'group': [], 'collision': 'false', 'fixed': 'true', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_PLASTIC', 'nodeWeight': '10', 'selfCollision': 'true'}
-b7: {'group': [], 'collision': 'false', 'fixed': 'false', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_PLASTIC', 'nodeWeight': '10', 'selfCollision': 'true'}
-ref: {'group': [], 'collision': 'false', 'fixed': 'true', 'frictionCoef': '1.2', 'nodeMaterial': '|NM_PLASTIC', 'nodeWeight': '10', 'selfCollision': 'true'}
-
 
 
 
@@ -249,4 +236,54 @@ m## ... etc there can be any amount of properties
 {m3},
 ["b10"],
 {m4},
+["b7"],
+
+
+{"group":["group_bouncer_base","group_bouncer_spring"]},
+{"frictionCoef":1.2},
+{"nodeMaterial":"|NM_RUBBER"},
+{"nodeWeight":1.3},
+{"collision":false},
+{"selfCollision":true},
+["b5"],
+{"collision":false},
+["b9"],
+{"fixed":true},
+{"nodeWeight":2.3},
+["b8"],
+["b1"],
+{"group":["group_bouncer_spring","group_bouncer_top"]},
+{"selfCollision":false},
+["b4"],
+{"fixed":false},
+["b6"],
+{"nodeMaterial":"|NM_PLASTIC"},
+["b2"],
+{"nodeWeight":3.5},
+{"nodeMaterial":"|NM_RUBBER"},
+{"collision":true},
+["b3"],
+{"group":"group_bouncer_base"},
+["b12"],
+["b15"],
+{"nodeMaterial":"|NM_PLASTIC"},
+["b13"],
+{"collision":false},
+["b14"],
+{"group":"group_bouncer_spring"},
+["b11"],
+{"group":"group_bouncer_top"},
+["b19"],
+{"nodeWeight":6.3},
+{"fixed":true},
+["b17"],
+{"nodeWeight":10},
+{"selfCollision":true},
+["b16"],
+["b18"],
+{"group":""},
+["ref"],
+{"fixed":true},
+["b10"],
+{"fixed":false},
 ["b7"],

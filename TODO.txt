@@ -20,6 +20,7 @@ I have a script that generates a structured list of nodes and their properties, 
 
 import bpy
 import json
+from collections import OrderedDict
 
 DEFAULT_SCOPE_MODIFIER_VALUES = {
     "frictionCoef": "1.0",
@@ -75,7 +76,7 @@ def structure_vertex_data(obj):
     node_data_dict = {
         obj.data.attributes["jbeam_node_id"].data[v_idx].value.decode("utf-8"): {
             "group": groups,
-            **parse_properties(node_props.get(v_idx, ""))
+            **parse_properties(node_props.get(v_idx, "")),
         }
         for v_idx, groups in vertex_to_groups.items()
     }
@@ -106,9 +107,15 @@ def structure_vertex_data(obj):
             f'"{k}": {json.dumps(v) if isinstance(v, (list, bool, int, float)) else json.dumps(str(v).strip())}'
             for k, v in sorted_props.items()
         )
+
         final_node_list[node_id] = f"{{{formatted_props}}}"
 
-    data_sorted = dict(sorted(final_node_list.items(), key=lambda x: (-len(json.loads(x[1])['group']), json.loads(x[1])['group'])))
+    # Sort first by 'group' length, then by group name, and then by all other properties' order
+    data_sorted = dict(sorted(final_node_list.items(), key=lambda x: (
+        -len(json.loads(x[1])['group']), 
+        json.loads(x[1])['group'],
+        tuple(json.loads(x[1]).get(prop, "") for prop in unique_props)  # Sub-sort by the values of all properties in order
+    )))
 
     print("\n\n")
     for key, value in data_sorted.items():

@@ -154,95 +154,6 @@ data = {
 }
 
 
- # RESTRUCTURED:
-
-m1 = "collision":false
-m2 = "collision":true
-m3 = "fixed":true
-m4 = "fixed":false
-m5 = "frictionCoef":1.2
-m6 = "nodeMaterial":"|NM_RUBBER"
-m7 = "nodeMaterial":"|NM_PLASTIC"
-m8 = "nodeWeight":3.5
-m9 = "nodeWeight":2.3
-m10 = "selfCollision":true
-m11 = "selfCollision":false
-m12 = "nodeWeight":10
-m13 = "nodeWeight":1.3
-m14 = "nodeWeight": "6.3"
-m## ... etc there can be any amount of properties
-
-
-"b1" => {"group": ["group_bouncer_base", "group_bouncer_spring"], m1, m3, m5, m6, m9, m10}
-"b11" => {"group": ["group_bouncer_spring"], m1, m4, m5, m7, m8, m11}
-"b12" => {"group": ["group_bouncer_base"], m2, m4, m5, m6, m8, m11}
-"b13" => {"group": ["group_bouncer_base"], m2, m4, m5, m7, m8, m11}
-"b14" => {"group": ["group_bouncer_base"], m1, m4, m5, m7, m8, m11}
-"b15" => {"group": ["group_bouncer_base"], m2, m4, m5, m6, m8, m11}
-"b16" => {"group": ["group_bouncer_top"], m1, m3, m5, m7, m12, m10}
-"b17" => {"group": ["group_bouncer_top"], m1, m3, m5, m7, m14, m11}
-"b18" => {"group": ["group_bouncer_top"], m1, m3, m5, m7, m12, m10}
-"b19" => {"group": ["group_bouncer_top"], m1, m4, m5, m7, m8, m11}
-"b2" => {"group": ["group_bouncer_spring", "group_bouncer_top"], m1, m4, m5, m7, m9, m11}
-"b3" => {"group": ["group_bouncer_spring", "group_bouncer_top"], m2, m4, m5, m6, m8, m11}
-"b4" => {"group": ["group_bouncer_spring", "group_bouncer_top"], m1, m3, m5, m6, m9, m11}
-"b5" => {"group": ["group_bouncer_base", "group_bouncer_spring"], m1, m4, m5, m6, m13, m10}
-"b6" => {"group": ["group_bouncer_spring", "group_bouncer_top"], m1, m4, m5, m6, m9, m11}
-"b8" => {"group": ["group_bouncer_base", "group_bouncer_spring"], m1, m3, m5, m6, m9, m10}
-"b9" => {"group": ["group_bouncer_base", "group_bouncer_spring"], m1, m4, m5, m6, m13, m10}
-"b10" => {"group": [], m1, m3, m5, m7, m12, m10}
-"b7" => {"group": [], m1, m4, m5, m7, m12, m10}
-"ref" => {"group": [], m1, m3, m5, m7, m12, m10}
-
-
-{"group":["group_bouncer_base","group_bouncer_spring"]},
-{m5},
-{m6},
-{m13},
-{m1},
-{m10},
-["b5"],
-{m1},
-["b9"],
-{m3},
-{m9},
-["b8"],
-["b1"],
-{"group":["group_bouncer_spring","group_bouncer_top"]},
-{m11},
-["b4"],
-{"fixed":false},
-["b6"],
-{m7},
-["b2"],
-{m8},
-{m6},
-{m2},
-["b3"],
-{"group":"group_bouncer_base"},
-["b12"],
-["b15"],
-["b13"],
-{m1},
-["b14"],
-{"group":"group_bouncer_spring"},
-["b11"],
-{"group":"group_bouncer_top"},
-["b19"],
-{"nodeWeight":6.3},
-{m3},
-["b17"],
-{m12},
-{m10},
-["b16"],
-["b18"],
-{"group":""},
-["ref"],
-{m3},
-["b10"],
-{m4},
-["b7"],
-
 
 {"group":["group_bouncer_base","group_bouncer_spring"]},
 {"frictionCoef":1.2},
@@ -371,3 +282,65 @@ reduced_hierarchy = reduce_redundancy(data)
 
 for item in reduced_hierarchy:
     print(item)
+
+
+
+'''
+which gives output:
+
+{'selfCollision': 'true'}
+{'nodeWeight': '1.3'}
+{'nodeMaterial': '|NM_RUBBER'}
+{'frictionCoef': '1.2'}
+{'fixed': 'false'}
+{'collision': 'false'}
+{'group': ('group_bouncer_base', 'group_bouncer_spring')}
+['b5']
+['b9']
+{'nodeWeight': '2.3'}
+{'fixed': 'true'}
+['b1']
+['b8']
+{'selfCollision': 'false'}
+{'nodeMaterial': '|NM_PLASTIC'}
+{'fixed': 'false'}
+{'group': ('group_bouncer_spring', 'group_bouncer_top')}
+['b2']
+{'nodeMaterial': '|NM_RUBBER'}
+['b6']
+{'fixed': 'true'}
+['b4']
+{'nodeWeight': '3.5'}
+{'fixed': 'false'}
+{'collision': 'true'}
+['b3']
+{'nodeMaterial': '|NM_PLASTIC'}
+{'collision': 'false'}
+{'group': ('group_bouncer_base',)}
+['b14']
+{'collision': 'true'}
+['b13']
+{'nodeMaterial': '|NM_RUBBER'}
+['b12']
+['b15']
+{'nodeMaterial': '|NM_PLASTIC'}
+{'collision': 'false'}
+{'group': ('group_bouncer_spring',)}
+['b11']
+{'group': ('group_bouncer_top',)}
+['b19']
+{'nodeWeight': '6.3'}
+{'fixed': 'true'}
+['b17']
+{'selfCollision': 'true'}
+{'nodeWeight': '10'}
+['b16']
+['b18']
+{'fixed': 'false'}
+{'group': ()}
+['b7']
+{'fixed': 'true'}
+['b10']
+['ref']
+
+'''

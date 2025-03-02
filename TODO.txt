@@ -43,88 +43,97 @@ DEFAULT_SCOPE_MODIFIER_VALUES = {
     "groundModel": "asphalt"
 }
 
-def get_vertex_groups(obj):
-    return {vg.index: vg.name for vg in obj.vertex_groups if vg.name.startswith("group_")}
+class JBeamStructure:
+    def __init__(self, obj):
+        self.obj = obj
+        self.vertex_groups = self.get_vertex_groups()
+        self.vertex_to_groups = self.get_vertex_group_memberships()
+        self.node_props = self.get_node_properties()
 
-def get_vertex_group_memberships(obj, vertex_groups):
-    return {
-        v.index: sorted([vertex_groups[g.group] for g in v.groups if g.group in vertex_groups])
-        for v in obj.data.vertices
-    }
+    def get_vertex_groups(self):
+        return {vg.index: vg.name for vg in self.obj.vertex_groups if vg.name.startswith("group_")}
 
-def get_node_properties(obj):
-    attr = obj.data.attributes.get("jbeam_node_props")
-    if attr:
-        return {i: attr.data[i].value.decode("utf-8") for i in range(len(attr.data))}
-    return {}
-
-def parse_properties(properties_str):
-    if not properties_str:
-        return {}
-    return {
-        k.strip(): v.strip()
-        for item in properties_str.strip("{}").replace('"', '').split(",")
-        if (parts := item.split(":", 1)) and len(parts) == 2
-        for k, v in [parts]
-    }
-
-def structure_vertex_data(obj):
-    vertex_groups = get_vertex_groups(obj)
-    vertex_to_groups = get_vertex_group_memberships(obj, vertex_groups)
-    node_props = get_node_properties(obj)
-
-    node_data_dict = {
-        obj.data.attributes["jbeam_node_id"].data[v_idx].value.decode("utf-8"): {
-            "group": groups,
-            **parse_properties(node_props.get(v_idx, "")),
+    def get_vertex_group_memberships(self):
+        return {
+            v.index: sorted([self.vertex_groups[g.group] for g in v.groups if g.group in self.vertex_groups])
+            for v in self.obj.data.vertices
         }
-        for v_idx, groups in vertex_to_groups.items()
-    }
 
-    sorted_nodes = sorted(node_data_dict.items(), key=lambda x: (not x[1]["group"], x[0].lower()))
+    def get_node_properties(self):
+        attr = self.obj.data.attributes.get("jbeam_node_props")
+        if attr:
+            return {i: attr.data[i].value.decode("utf-8") for i in range(len(attr.data))}
+        return {}
 
-    unique_props = set()  # Collect all unique properties dynamically
+    def parse_properties(self, properties_str):
+        if not properties_str:
+            return {}
+        return {
+            k.strip(): v.strip()
+            for item in properties_str.strip("{}").replace('"', '').split(",")
+            if (parts := item.split(":", 1)) and len(parts) == 2
+            for k, v in [parts]
+        }
 
-    # First pass: Find all unique properties
-    for node_info in node_data_dict.values():
-        unique_props.update(node_info.keys())
+    def structure_vertex_data(self):
+        node_data_dict = {
+            #self.obj.data.attributes["jbeam_node_id"].data[v_idx].value.decode("utf-8"): {
+            v_idx: {
+                "group": groups,
+                **self.parse_properties(self.node_props.get(v_idx, "")),
+            }
+            for v_idx, groups in self.vertex_to_groups.items()
+        }
 
-    # Second pass: Ensure each node only has missing properties filled
-    final_node_list = {}
-    for node_id, node_info in sorted_nodes:
-        cleaned_node_info = {k.strip(): v for k, v in node_info.items()}
+        sorted_nodes = sorted(node_data_dict.items(), key=lambda x: (not x[1]["group"], x[0])) # x[0].lower()))
 
-        # Add only missing properties
-        for prop in unique_props:
-            if prop not in cleaned_node_info:
-                cleaned_node_info[prop] = DEFAULT_SCOPE_MODIFIER_VALUES.get(prop, "")
+        unique_props = set()  # Collect all unique properties dynamically
 
-        # Ensure group is first, rest sorted alphabetically
-        sorted_props = {"group": cleaned_node_info.pop("group")}
-        sorted_props.update(dict(sorted(cleaned_node_info.items(), key=lambda x: x[0].lower())))
+        # First pass: Find all unique properties
+        for node_info in node_data_dict.values():
+            unique_props.update(node_info.keys())
 
-        formatted_props = ", ".join(
-            f'"{k}": {json.dumps(v) if isinstance(v, (list, bool, int, float)) else json.dumps(str(v).strip())}'
-            for k, v in sorted_props.items()
-        )
+        # Second pass: Ensure each node only has missing properties filled
+        final_node_list = {}
+        for node_id, node_info in sorted_nodes:
+            cleaned_node_info = {k.strip(): v for k, v in node_info.items()}
 
-        final_node_list[node_id] = f"{{{formatted_props}}}"
+            # Add only missing properties
+            for prop in unique_props:
+                if prop not in cleaned_node_info:
+                    cleaned_node_info[prop] = DEFAULT_SCOPE_MODIFIER_VALUES.get(prop, "")
 
-    # Sort first by 'group' length, then by group name, and then by all other properties' order
-    data_sorted = dict(sorted(final_node_list.items(), key=lambda x: (
-        -len(json.loads(x[1])['group']), 
-        json.loads(x[1])['group'],
-        tuple(json.loads(x[1]).get(prop, "") for prop in unique_props)  # Sub-sort by the values of all properties in order
-    )))
+            # Ensure group is first, rest sorted alphabetically
+            sorted_props = {"group": cleaned_node_info.pop("group")}
+            sorted_props.update(dict(sorted(cleaned_node_info.items(), key=lambda x: x[0].lower())))
 
-    print("\n\n")
-    for key, value in data_sorted.items():
-        print(f"{key}: {value}")
+            formatted_props = ", ".join(
+                f'"{k}": {json.dumps(v) if isinstance(v, (list, bool, int, float)) else json.dumps(str(v).strip())}'
+                for k, v in sorted_props.items()
+            )
 
-    print("\n🔹 Unique Properties Used:\n", sorted(unique_props))
+            final_node_list[node_id] = f"{{{formatted_props}}}"
 
+        # Sort first by 'group' length, then by group name, and then by all other properties' order
+        data_sorted = dict(sorted(final_node_list.items(), key=lambda x: (
+            -len(json.loads(x[1])['group']),
+            json.loads(x[1])['group'],
+            tuple(json.loads(x[1]).get(prop, "") for prop in unique_props)  # Sub-sort by the values of all properties in order
+        )))
 
-structure_vertex_data(bpy.context.object)
+        #for key, value in data_sorted.items():
+        #    print(f"{key}: {value}")
+        #print("\n🔹 Unique Properties Used:\n", sorted(unique_props))
+
+        return data_sorted
+
+# Usage
+jbeam = JBeamStructure(bpy.context.object)
+data = jbeam.structure_vertex_data()
+print("\n\n")
+for key, value in data.items():
+    print(f"\"{key}\": {value}")
+
 
 
 '''
@@ -230,9 +239,10 @@ data = {
     "ref": {"group": [], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
 }
 
+import bpy
 from collections import defaultdict
 
-def reduce_redundancy(data):
+def reduce_redundancy(obj, data):
     hierarchy = []
     
     # Initialize a defaultdict to keep track of nodes by each property
@@ -265,7 +275,8 @@ def reduce_redundancy(data):
                     hierarchy.append({key: current_properties[key]})
                 current_properties[key] = value
         
-        hierarchy.append([node])  # Append the node itself to the hierarchy
+        node_id = obj.data.attributes['jbeam_node_id'].data[node].value.decode("utf-8") if isinstance(node, int) else node
+        hierarchy.append([node_id]) # Append the node itself to the hierarchy
 
     # Add the last property values
     for key, value in current_properties.items():
@@ -278,7 +289,7 @@ def reduce_redundancy(data):
 
 
 print("START ====")
-reduced_hierarchy = reduce_redundancy(data)
+reduced_hierarchy = reduce_redundancy(obj, data)
 
 for item in reduced_hierarchy:
     print(item)
@@ -344,3 +355,5 @@ which gives output:
 ['ref']
 
 '''
+
+

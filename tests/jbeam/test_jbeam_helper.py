@@ -3,6 +3,7 @@ import json
 import difflib
 import unittest
 
+from pprint import pprint
 from dev_tools.utils.jbeam_helper import PreJbeamStructureHelper, RedundancyReducerJbeamNodesGenerator # type: ignore
 
 class JbeamTestObject:
@@ -152,6 +153,7 @@ class TestJBeamHelper(unittest.TestCase):
         }
         '''
 
+        # Expected Output:
         assert_data = {
             5: {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "1.3", "selfCollision": "true"},
             6: {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "1.3", "selfCollision": "true"},
@@ -207,8 +209,84 @@ class TestJBeamHelper(unittest.TestCase):
         reducer = RedundancyReducerJbeamNodesGenerator(bpy.context.object, data)
         reduced_hierarchy = reducer.reduce_redundancy()
 
+        # Expected Output:
+        assert_output = [
+            {'selfCollision': 'true'},
+            {'nodeWeight': '1.3'},
+            {'nodeMaterial': '|NM_RUBBER'},
+            {'frictionCoef': '1.2'},
+            {'fixed': 'false'},
+            {'collision': 'false'},
+            {'group': ['group_bouncer_base', 'group_bouncer_spring']},
+            ['b9'],
+            ['b5'],
+            {'nodeWeight': '2.3'},
+            {'fixed': 'true'},
+            ['b8'],
+            ['b1'],
+            {'selfCollision': 'false'},
+            {'nodeMaterial': '|NM_PLASTIC'},
+            {'fixed': 'false'},
+            {'group': ['group_bouncer_spring', 'group_bouncer_top']},
+            ['b2'],
+            {'nodeMaterial': '|NM_RUBBER'},
+            ['b6'],
+            {'nodeWeight': '3.5'},
+            {'collision': 'true'},
+            ['b3'],
+            {'nodeWeight': '2.3'},
+            {'fixed': 'true'},
+            {'collision': 'false'},
+            ['b4'],
+            {'nodeWeight': '3.5'},
+            {'nodeMaterial': '|NM_PLASTIC'},
+            {'fixed': 'false'},
+            {'group': ['group_bouncer_base']},
+            ['b14'],
+            {'collision': 'true'},
+            ['b13'],
+            {'nodeMaterial': '|NM_RUBBER'},
+            ['b12'],
+            ['b15'],
+            {'nodeMaterial': '|NM_PLASTIC'},
+            {'collision': 'false'},
+            {'group': ['group_bouncer_spring']},
+            ['b11'],
+            {'group': ['group_bouncer_top']},
+            ['b19'],
+            {'nodeWeight': '6.3'},
+            {'fixed': 'true'},
+            ['b17'],
+            {'selfCollision': 'true'},
+            {'nodeWeight': '10'},
+            ['b18'],
+            ['b16'],
+            {'fixed': 'false'},
+            {'group': ""},
+            ['b7'],
+            {'fixed': 'true'},
+            ['ref'],
+            ['b10'],
+        ]
+
+        print("Jbeam Nodes Output Result =====================================")
         for item in reduced_hierarchy:
             print(item)
+
+        self.assertEqual(assert_output, reduced_hierarchy, "Data does not match expected jbeam nodes list")
+
+        pp = pprint.PrettyPrinter(indent=4)
+        print("🔹 Expected Output:")
+        pp.pprint(assert_output)
+        print("\n🔸 Actual Output:")
+        pp.pprint(reduced_hierarchy)
+
+        expected_lines = [str(item) for item in assert_output]
+        actual_lines = [str(item) for item in reduced_hierarchy]
+        diff = difflib.unified_diff(expected_lines, actual_lines, lineterm='')
+
+        print("\n🔍 Differences:")
+        print("\n".join(diff))
 
         print("test_jbeam_structure: Test Passed!")
 

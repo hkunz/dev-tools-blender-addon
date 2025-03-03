@@ -258,7 +258,14 @@ class TestJBeamHelper(unittest.TestCase):
             ['b7', 19.0, 4.75, 9.5],
             {'fixed': 'true'},
             ['ref', 17.0, 4.25, 8.5],
-            ['b10', 18.0, 4.5, 9.0]
+            ['b10', 18.0, 4.5, 9.0],
+            {'collision': 'true'},
+            {'fixed': 'false'},
+            {'frictionCoef': 1.0},
+            {'group': ''},
+            {'nodeMaterial': '|NM_METAL'},
+            {'nodeWeight': 25},
+            {'selfCollision': 'false'},
         ]
 
         pp = pprint.PrettyPrinter(indent=4)

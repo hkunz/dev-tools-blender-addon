@@ -4,20 +4,20 @@ from collections import OrderedDict
 from dev_tools.utils.number_utils import NumberUtils # type: ignore
 
 DEFAULT_SCOPE_MODIFIER_VALUES = {
-    "frictionCoef": "1.0",
+    "frictionCoef": 1.0,
     "nodeMaterial": "|NM_METAL",
-    "nodeWeight": "25",
+    "nodeWeight": 25,
     "collision": "true",
     "selfCollision": "false",
     "fixed": "false",
     "group": "",
     "disable": "",
-    "beamPrecompression": "1",
+    "beamPrecompression": 1,
     "beamType": "|NORMAL",
-    "beamLongBound": "1",
-    "beamShortBound": "1",
-    "beamSpring": "10000000",
-    "beamDamp": "0",
+    "beamLongBound": 1,
+    "beamShortBound": 1,
+    "beamSpring": 10000000,
+    "beamDamp": 0,
     "beamDeform": "FLT_MAX",
     "beamStrength": "FLT_MAX",
     "breakGroup": "",
@@ -165,6 +165,10 @@ class RedundancyReducerJbeamNodesGenerator:
                     processed_value = ""  # Convert empty list to empty string
                 hierarchy.append({key: processed_value})
 
-        hierarchy.reverse()  # Reverse to maintain the correct order
-        
+        hierarchy.reverse()
+        used_properties = sorted(set(key for node, properties in self.data.items() for key in properties))
+
+        for key in used_properties:
+            hierarchy.append({key: DEFAULT_SCOPE_MODIFIER_VALUES.get(key, '')})
+
         return hierarchy

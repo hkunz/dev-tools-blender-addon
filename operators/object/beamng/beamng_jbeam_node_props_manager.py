@@ -76,6 +76,9 @@ class OBJECT_OT_BeamngSaveJbeamNodeProp(bpy.types.Operator):
         for v in selected_verts:
             try:
                 props = json.loads(v[layer].decode("utf-8")) if v[layer] else {}
+                if any(prop.name.lower() == "group" for prop in context.scene.beamng_jbeam_vertex_props):
+                    self.report({'WARNING'}, "Keyword 'group' is reserved. Use vertex groups prefixed 'group_' to assign nodes to groups.")
+                    return {'CANCELLED'}
                 for prop in context.scene.beamng_jbeam_vertex_props:
                     if prop.name == self.prop_name:
                         props[prop.name] = prop.value
@@ -111,6 +114,9 @@ class OBJECT_OT_BeamngSaveAllJbeamNodeProps(bpy.types.Operator):
 
         # Get current properties in the UI
         ui_props = {prop.name: prop.value for prop in context.scene.beamng_jbeam_vertex_props}
+        if any(prop_name.lower() == "group" for prop_name in ui_props):
+            self.report({'WARNING'}, "Keyword 'group' is reserved. Use vertex groups prefixed 'group_' to assign nodes to groups.")
+            return {'CANCELLED'}
 
         for v in selected_verts:
             try:

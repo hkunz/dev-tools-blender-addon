@@ -27,9 +27,17 @@ DEFAULT_SCOPE_MODIFIER_VALUES = {
 class PreJbeamStructureHelper:
     def __init__(self, obj):
         self.obj = obj
+        self.check()
         self.vertex_groups = self.get_vertex_groups()
         self.vertex_to_groups = self.get_vertex_group_memberships()
         self.node_props = self.get_node_properties()
+
+    def check(self):
+        mesh = self.obj.data
+        if "jbeam_node_id" not in mesh.attributes or "jbeam_node_props" not in mesh.attributes:
+            raise ValueError(f"ERROR: Required attributes \"jbeam_node_id\" and \"jbeam_node_props\" not found in mesh")
+        group_map = {g.index: g.name for g in self.obj.vertex_groups if g.name.startswith("group_")}
+        print(f"Vertex Groups Found: {group_map}")
 
     def get_vertex_groups(self):
         return {vg.index: vg.name for vg in self.obj.vertex_groups if vg.name.startswith("group_")}
@@ -105,7 +113,7 @@ class RedundancyReducerJbeamNodesGenerator:
     def reduce_redundancy(self):
         hierarchy = []
         property_dict = defaultdict(list) # Initialize a defaultdict to keep track of nodes by each property
-
+        
         # Iterate over the data to group nodes by their properties
         for node, properties in self.data.items():
             for key, value in properties.items():

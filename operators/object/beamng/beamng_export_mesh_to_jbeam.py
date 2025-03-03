@@ -6,6 +6,7 @@ import json
 from pprint import pprint
 
 from dev_tools.utils.json_cleanup import json_cleanup # type: ignore
+from dev_tools.utils.jbeam_helper import PreJbeamStructureHelper, RedundancyReducerJbeamNodesGenerator # type: ignore
 
 import io
 import json
@@ -194,6 +195,26 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         formatted_str = formatted_str.replace('True', 'true').replace('False', 'false')
         return formatted_str
 
+    def generate_jbeam_node_list(self, obj):
+
+        jbeam = PreJbeamStructureHelper(obj)
+        data = jbeam.structure_vertex_data()
+        reducer = RedundancyReducerJbeamNodesGenerator(obj, data)
+        data_actual = reducer.reduce_redundancy()
+
+        node_data = [] #[["id", "posX", "posY", "posZ"]]
+        for item in data_actual:
+            node_data.append(item)
+        return node_data
+
+        # Convert to a JSON-like format with proper formatting
+        result = "[\n" + ",\n".join(json.dumps(entry, ensure_ascii=False) for entry in node_data) + "\n]"
+
+        print("Generated JBeam List:")
+        print(result)
+
+        return result
+
     def export_jbeam_format(self, filepath):
         obj = bpy.context.active_object
         if obj is None or obj.type != "MESH":
@@ -213,12 +234,11 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         except (KeyError, json.JSONDecodeError):
             node_names = None
 
-        fixed_vertices = self.get_fixed_vertices(obj)
-        nodes, vertex_map = self.get_nodes(obj, fixed_vertices, node_names)
-        beams = self.get_beams(mesh, vertex_map)
-        triangles = self.get_triangles(mesh, vertex_map)
-        quads = self.get_quads(mesh, vertex_map)
-        ngons = self.get_ngons(mesh, vertex_map)
+        nodes = self.generate_jbeam_node_list(obj)
+        beams = self.get_beams(mesh)
+        triangles = self.get_triangles(mesh)
+        quads = self.get_quads(mesh)
+        ngons = self.get_ngons(mesh)
         ref_nodes = self.find_reference_nodes(obj, node_names)
 
         ref_nodes_data = [
@@ -256,10 +276,10 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
             json_output += f'{t1}"manual_data_file": {{"note":"you need to manually copy these nodes to the .jbeam file"}},\n'
             json_output += f'{t1}"partname": {{\n'
             json_output += t2 + '"refNodes": ' + format_list(ref_nodes_data) + ',\n'
-            json_output += t2 + '"nodes": ' + format_list(nodes, '["id", "posX", "posY", "posZ"]') + ',\n'
-            json_output += t2 + '"beams": ' + format_list(beams, '["id1:", "id2:"]') + ',\n'
-            json_output += t2 + '"triangles": ' + format_list(triangles, '["id1:","id2:","id3:"]') + ',\n'
-            json_output += t2 + '"quads": ' + format_list(quads, '["id1:","id2:","id3:","id4:"]') + ',\n'
+            json_output += t2 + '"nodes": ' + format_list(nodes, '["id", "posX", "posY", "posZ"],') + ',\n'
+            json_output += t2 + '"beams": ' + format_list(beams, '["id1:", "id2:"],') + ',\n'
+            json_output += t2 + '"triangles": ' + format_list(triangles, '["id1:","id2:","id3:"],') + ',\n'
+            json_output += t2 + '"quads": ' + format_list(quads, '["id1:","id2:","id3:","id4:"],') + ',\n'
             json_output += t2 + '"ngons": ' + format_list(ngons, '["ngons:"]') + ',\n'
             json_output += t1 + "}\n"
             json_output += "}"
@@ -269,7 +289,8 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         else:
             print(f"Replace nodes, beams, triangles, refNodes, etc in {filepath}")
             refnodes_str = self.get_final_struct(existing_data, ref_nodes_data, "refNodes")
-            nodes_str = self.get_final_struct(existing_data, nodes, "nodes", [["id", "posX", "posY", "posZ"]])
+            nodes_str = self.generate_jbeam_node_list(obj)
+            #nodes_str = self.get_final_struct(existing_data, nodes, "nodes", [["id", "posX", "posY", "posZ"]])
             beams_str = self.get_final_struct(existing_data, beams, "beams", [["id1:", "id2:"]])
             tris_str = self.get_final_struct(existing_data, triangles, "triangles", [["id1:","id2:","id3:"]])
             if quads: quads_str = self.get_final_struct(existing_data, quads, "quads", [["id1:","id2:","id3:","id4:"]])
@@ -292,109 +313,34 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
 
         return True
 
-    def get_fixed_vertices(self, obj):
-        fixed_group = obj.vertex_groups.get("fixed")
-        fixed_vertices = set()
-        if fixed_group:
-            for vert in obj.data.vertices:
-                for g in vert.groups:
-                    if g.group == fixed_group.index:
-                        fixed_vertices.add(vert.index)
-        return fixed_vertices
+    def get_beams(self, mesh):
+        n = mesh.attributes['jbeam_node_id'].data
+        return [[n[v1].value.decode('utf-8'), n[v2].value.decode('utf-8')] for v1, v2 in (edge.vertices for edge in mesh.edges)]
 
-    def get_all_flex_group_vertex_groups(self, obj):
-        matching_groups = [vg.name for vg in obj.vertex_groups if vg.name.startswith("group_")]
-        return matching_groups
-
-    def get_nodes(self, obj, fixed_vertices, node_names):
-        nodes = []
-        vertex_map = {}
-        mesh = obj.data
-        flex_groups = self.get_all_flex_group_vertex_groups(obj)
-        grouped_vertices = {}
-
-        for group_name in flex_groups:
-            grouped_vertices[group_name] = []
-
-        ungrouped_vertices = []
-        currently_fixed = False
-
-        for i, vert in enumerate(mesh.vertices):
-            node_name = node_names.get(str(i), None) if node_names else f"b{i+1}"
-            pos = (round(vert.co.x, 4), round(vert.co.y, 4), round(vert.co.z, 4))
-
-            assigned_groups = []
-            
-            # Allow multiple group assignments per vertex
-            for group_name in flex_groups:
-                vgroup = obj.vertex_groups.get(group_name)
-                if vgroup and any(g.group == vgroup.index for g in vert.groups):
-                    assigned_groups.append(group_name)
-
-            if assigned_groups:
-                for group_name in assigned_groups:
-                    grouped_vertices[group_name].append((i, node_name, pos))
-            else:
-                ungrouped_vertices.append((i, node_name, pos))
-
-            vertex_map[i] = node_name
-
-        nodes.append(["ref", 0, 0, 0])
-
-        def process_vertex_list(vertex_list):
-            """Handles switching fixed state and appending nodes."""
-            nonlocal currently_fixed
-            for i, node_name, pos in vertex_list:
-                if i in fixed_vertices and not currently_fixed:
-                    nodes.append({"fixed": True})
-                    currently_fixed = True
-                elif i not in fixed_vertices and currently_fixed:
-                    nodes.append({"fixed": False})
-                    currently_fixed = False
-                nodes.append([node_name, *pos])
-            if currently_fixed:
-                nodes.append({"fixed": False})
-                currently_fixed = False
-
-        group_count = len(grouped_vertices)
-        for index, (group_name, verts) in enumerate(grouped_vertices.items()):
-            if verts:
-                nodes.append({"group": group_name})
-                process_vertex_list(verts)
-                if index == group_count - 1:
-                    nodes.append({"group": ""})
-
-        process_vertex_list(ungrouped_vertices)
-
-        return nodes, vertex_map
-
-
-
-
-    def get_beams(self, mesh, vertex_map):
-        return [[vertex_map[v1], vertex_map[v2]] for v1, v2 in (edge.vertices for edge in mesh.edges)]
-
-    def get_triangles(self, mesh, vertex_map):
+    def get_triangles(self, mesh):
+        n = mesh.attributes['jbeam_node_id'].data
         triangles = []
         for poly in mesh.polygons:
             if len(poly.vertices) == 3:
                 v1, v2, v3 = poly.vertices
-                triangles.append([vertex_map[v1], vertex_map[v2], vertex_map[v3]])
+                triangles.append([n[v1].value.decode('utf-8'), n[v2].value.decode('utf-8'), n[v3].value.decode('utf-8')])
         return triangles
 
-    def get_quads(self, mesh, vertex_map):
+    def get_quads(self, mesh):
+        n = mesh.attributes['jbeam_node_id'].data
         quads = []
         for poly in mesh.polygons:
             if len(poly.vertices) == 4:
                 v1, v2, v3, v4 = poly.vertices
-                quads.append([vertex_map[v1], vertex_map[v2], vertex_map[v3], vertex_map[v4]])
+                quads.append([n[v1].value.decode('utf-8'), n[v2].value.decode('utf-8'), n[v3].value.decode('utf-8'), n[v4].value.decode('utf-8')])
         return quads
 
-    def get_ngons(self, mesh, vertex_map):
+    def get_ngons(self, mesh):
+        n = mesh.attributes['jbeam_node_id'].data
         ngons = []
         for poly in mesh.polygons:
             if len(poly.vertices) > 4:
-                ngons.append([vertex_map[v] for v in poly.vertices])
+                ngons.append([n[v].value.decode('utf-8') for v in poly.vertices])
         return ngons
 
     def find_reference_nodes(self, obj, node_names):

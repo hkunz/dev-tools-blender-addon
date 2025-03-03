@@ -7,3 +7,15 @@ class NumberUtils:
     @staticmethod
     def format_decimal_2(float):
         return '{:.2f}'.format(float)
+    
+    @staticmethod
+    def is_float(string):
+        try:
+            float(string) # Attempt to convert to float
+            return True
+        except ValueError:
+            return False
+
+    @staticmethod
+    def is_int(string):
+        return string.isdigit()

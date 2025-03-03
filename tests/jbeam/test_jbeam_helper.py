@@ -2,10 +2,7 @@ import bpy
 import json
 from collections import defaultdict
 
-try:
-    from devtools.utils.jbeam_helper import PreJbeamStructureHelper, RedundancyReducerJbeamNodesGenerator # type: ignore
-except ImportError:
-    print("devtools module not found. Falling back to alternative handling.")
+from dev_tools.utils.jbeam_helper import PreJbeamStructureHelper, RedundancyReducerJbeamNodesGenerator # type: ignore
 
 class JbeamTestObject:
     def __init__(self, name="jbeam_test_object"):

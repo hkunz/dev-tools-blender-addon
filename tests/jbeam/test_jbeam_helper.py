@@ -23,7 +23,7 @@ class JbeamTestObject:
         bpy.context.view_layer.objects.active = obj
         obj.select_set(True)
 
-        vertices = [(x, 0, 0) for x in range(20)] # 20 vertices sample object
+        vertices = [(x, 0.25 * x, 0.5 * x) for x in range(20)]
         edges = [(i, i+1) for i in range(19)]
         
         faces = []
@@ -39,10 +39,26 @@ class JbeamTestObject:
         self.obj.data.attributes.new("jbeam_node_props", 'STRING', 'POINT')
 
         node_ids = {
-            5: "b9", 6: "b5", 8: "b8", 9: "b1", 15: "b2", 14: "b6",
-            0: "b3", 1: "b4", 7: "b14", 4: "b13", 2: "b12", 3: "b15",
-            16: "b11", 10: "b19", 11: "b17", 12: "b18", 13: "b16", 19: "b7",
-            17: "ref", 18: "b10"
+            0: "b3",
+            1: "b4",
+            2: "b12",
+            3: "b15",
+            4: "b13",
+            5: "b9",
+            6: "b5",
+            7: "b14",
+            8: "b8",
+            9: "b1",
+            10: "b19",
+            11: "b17",
+            12: "b18",
+            13: "b16",
+            14: "b6",
+            15: "b2",
+            16: "b11",
+            17: "ref",
+            18: "b10",
+            19: "b7",
         }
 
         node_groups = {
@@ -130,7 +146,7 @@ class TestJBeamHelper(unittest.TestCase):
         for key, value in data_actual.items():
             print(f"{key}: {value}")
 
-        data_expected = { # Expected Output
+        data_expected = {
             5: {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "1.3", "selfCollision": "true"},
             6: {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "1.3", "selfCollision": "true"},
             8: {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "true"},
@@ -158,18 +174,16 @@ class TestJBeamHelper(unittest.TestCase):
             print(f"{key}: {value}")
         print()
 
-        d1_str = json.dumps(data_actual, indent=4, sort_keys=False).splitlines()
-        d2_str = json.dumps(data_expected, indent=4, sort_keys=False).splitlines()
+        actual_str = json.dumps(data_actual, indent=4, sort_keys=False).splitlines()
+        expected_str = json.dumps(data_expected, indent=4, sort_keys=False).splitlines()
 
-        diff = difflib.unified_diff(
-            d2_str, d1_str, fromfile="Expected", tofile="Actual", lineterm=""
-        )
+        diff = difflib.unified_diff(expected_str, actual_str, fromfile="Expected", tofile="Actual", lineterm="")
         diff_list = list(diff)
         
         if diff_list:
             print("❌ TEST FAILED: test_pre_jbeam_structure\n")
             print("🔍 Differences:")
-            print("\n".join(diff_list)) # Print differences
+            print("\n".join(diff_list))
             print()
 
         self.assertEqual(data_expected, data_actual, "Data does not match expected structure")
@@ -184,7 +198,6 @@ class TestJBeamHelper(unittest.TestCase):
         reducer = RedundancyReducerJbeamNodesGenerator(bpy.context.object, data)
         data_actual = reducer.reduce_redundancy()
 
-        # Expected Output:
         data_expected = [
             {'selfCollision': 'true'},
             {'nodeWeight': '1.3'},
@@ -193,58 +206,58 @@ class TestJBeamHelper(unittest.TestCase):
             {'fixed': 'false'},
             {'collision': 'false'},
             {'group': ['group_bouncer_base', 'group_bouncer_spring']},
-            ['b9'],
-            ['b5'],
+            ['b9', 5.0, 1.25, 2.5],
+            ['b5', 6.0, 1.5, 3.0],
             {'nodeWeight': '2.3'},
             {'fixed': 'true'},
-            ['b8'],
-            ['b1'],
+            ['b8', 8.0, 2.0, 4.0],
+            ['b1', 9.0, 2.25, 4.5],
             {'selfCollision': 'false'},
             {'nodeWeight': '3.5'},
             {'nodeMaterial': '|NM_PLASTIC'},
             {'fixed': 'false'},
             {'group': ['group_bouncer_base']},
-            ['b14'],
+            ['b14', 7.0, 1.75, 3.5],
             {'collision': 'true'},
-            ['b13'],
+            ['b13', 4.0, 1.0, 2.0],
             {'nodeMaterial': '|NM_RUBBER'},
-            ['b12'],
-            ['b15'],
+            ['b12', 2.0, 0.5, 1.0],
+            ['b15', 3.0, 0.75, 1.5],
             {'nodeWeight': '2.3'},
             {'nodeMaterial': '|NM_PLASTIC'},
             {'collision': 'false'},
             {'group': ['group_bouncer_spring', 'group_bouncer_top']},
-            ['b2'],
+            ['b2', 15.0, 3.75, 7.5],
             {'nodeMaterial': '|NM_RUBBER'},
-            ['b6'],
+            ['b6', 14.0, 3.5, 7.0],
             {'fixed': 'true'},
-            ['b4'],
+            ['b4', 1.0, 0.25, 0.5],
             {'nodeWeight': '3.5'},
             {'fixed': 'false'},
             {'collision': 'true'},
-            ['b3'],
+            ['b3', 0.0, 0.0, 0.0],
             {'nodeMaterial': '|NM_PLASTIC'},
             {'collision': 'false'},
             {'group': ['group_bouncer_spring']},
-            ['b11'],
+            ['b11', 16.0, 4.0, 8.0],
             {'group': ['group_bouncer_top']},
-            ['b19'],
+            ['b19', 10.0, 2.5, 5.0],
             {'selfCollision': 'true'},
             {'nodeWeight': '10'},
             {'fixed': 'true'},
-            ['b18'],
-            ['b16'],
+            ['b18', 12.0, 3.0, 6.0],
+            ['b16', 13.0, 3.25, 6.5],
             {'selfCollision': 'false'},
             {'nodeWeight': '6.3'},
-            ['b17'],
+            ['b17', 11.0, 2.75, 5.5],
             {'selfCollision': 'true'},
             {'nodeWeight': '10'},
             {'fixed': 'false'},
             {'group': ''},
-            ['b7'],
+            ['b7', 19.0, 4.75, 9.5],
             {'fixed': 'true'},
-            ['ref'],
-            ['b10']
+            ['ref', 17.0, 4.25, 8.5],
+            ['b10', 18.0, 4.5, 9.0]
         ]
 
         pp = pprint.PrettyPrinter(indent=4)
@@ -258,7 +271,7 @@ class TestJBeamHelper(unittest.TestCase):
 
         expected_lines = [str(item) for item in data_expected]
         actual_lines = [str(item) for item in data_actual]
-        diff = difflib.unified_diff(actual_lines, expected_lines, lineterm='')
+        diff = difflib.unified_diff(expected_lines, actual_lines, lineterm='')
         diff_list = list(diff)
 
         if diff_list:

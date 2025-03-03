@@ -104,10 +104,8 @@ class RedundancyReducerJbeamNodesGenerator:
     
     def reduce_redundancy(self):
         hierarchy = []
-        
-        # Initialize a defaultdict to keep track of nodes by each property
-        property_dict = defaultdict(list)
-        
+        property_dict = defaultdict(list) # Initialize a defaultdict to keep track of nodes by each property
+
         # Iterate over the data to group nodes by their properties
         for node, properties in self.data.items():
             for key, value in properties.items():
@@ -122,7 +120,7 @@ class RedundancyReducerJbeamNodesGenerator:
         # Track the current hierarchy for each property to avoid redundancy
         current_properties = defaultdict(lambda: None)  # Default value for missing properties is None
 
-        for node in nodes:
+        for node in nodes: # node = vertex index
             properties = self.data[node]
 
             for key, value in properties.items():
@@ -137,9 +135,10 @@ class RedundancyReducerJbeamNodesGenerator:
                             processed_value = ""  # Convert empty list to empty string
                         hierarchy.append({key: processed_value})
                     current_properties[key] = value
-            
-            node_id = self.obj.data.attributes['jbeam_node_id'].data[node].value.decode("utf-8") if isinstance(node, int) else node
-            hierarchy.append([node_id])  # Append the node itself to the hierarchy
+            vertex_index = node
+            node_id = self.obj.data.attributes['jbeam_node_id'].data[vertex_index].value.decode("utf-8") if isinstance(node, int) else node
+            v = self.obj.data.vertices[vertex_index].co 
+            hierarchy.append([node_id, round(v.x, 2), round(v.y, 2), round(v.z, 2)])  # Append the node itself to the hierarchy
 
         # Add the last property values
         for key, value in current_properties.items():

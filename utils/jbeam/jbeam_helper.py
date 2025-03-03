@@ -1,4 +1,3 @@
-import bpy
 import json
 from collections import OrderedDict
 

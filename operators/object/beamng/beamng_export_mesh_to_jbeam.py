@@ -6,7 +6,7 @@ import json
 from pprint import pprint
 
 from dev_tools.utils.json_cleanup import json_cleanup # type: ignore
-from dev_tools.utils.jbeam_helper import PreJbeamStructureHelper, RedundancyReducerJbeamNodesGenerator # type: ignore
+from dev_tools.utils.jbeam.jbeam_helper import PreJbeamStructureHelper, RedundancyReducerJbeamNodesGenerator # type: ignore
 
 import io
 import json
@@ -204,6 +204,7 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
 
         node_data = [] #[["id", "posX", "posY", "posZ"]]
         for item in data_actual:
+
             node_data.append(item)
         return node_data
 

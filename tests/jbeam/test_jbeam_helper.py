@@ -4,7 +4,7 @@ import difflib
 import unittest
 
 import pprint
-from dev_tools.utils.jbeam_helper import PreJbeamStructureHelper, RedundancyReducerJbeamNodesGenerator # type: ignore
+from dev_tools.utils.jbeam.jbeam_helper import PreJbeamStructureHelper, RedundancyReducerJbeamNodesGenerator # type: ignore
 
 class JbeamTestObject:
     def __init__(self, name="jbeam_test_object"):

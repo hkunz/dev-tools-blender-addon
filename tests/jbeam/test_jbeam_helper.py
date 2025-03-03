@@ -46,49 +46,49 @@ class JbeamTestObject:
         }
 
         node_groups = {
-            5: ["group_bouncer_base", "group_bouncer_spring"],
-            6: ["group_bouncer_base", "group_bouncer_spring"],
-            8: ["group_bouncer_base", "group_bouncer_spring"],
-            9: ["group_bouncer_base", "group_bouncer_spring"],
-            15: ["group_bouncer_spring", "group_bouncer_top"],
-            14: ["group_bouncer_spring", "group_bouncer_top"],
             0: ["group_bouncer_spring", "group_bouncer_top"],
             1: ["group_bouncer_spring", "group_bouncer_top"],
-            7: ["group_bouncer_base"],
-            4: ["group_bouncer_base"],
             2: ["group_bouncer_base"],
             3: ["group_bouncer_base"],
-            16: ["group_bouncer_spring"],
+            4: ["group_bouncer_base"],
+            5: ["group_bouncer_base", "group_bouncer_spring"],
+            6: ["group_bouncer_base", "group_bouncer_spring"],
+            7: ["group_bouncer_base"],
+            8: ["group_bouncer_base", "group_bouncer_spring"],
+            9: ["group_bouncer_base", "group_bouncer_spring"],
             10: ["group_bouncer_top"],
             11: ["group_bouncer_top"],
             12: ["group_bouncer_top"],
             13: ["group_bouncer_top"],
-            19: [],
+            14: ["group_bouncer_spring", "group_bouncer_top"],
+            15: ["group_bouncer_spring", "group_bouncer_top"],
+            16: ["group_bouncer_spring"],
             17: [],
-            18: []
+            18: [],
+            19: [],
         }
 
         node_props = {
-            5: {"collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "1.3", "selfCollision": "true"},
-            6: {"collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "1.3", "selfCollision": "true"},
-            8: {"collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "true"},
-            9: {"collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "true"},
-            15: {"collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "2.3", "selfCollision": "false"},
-            14: {"collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "false"},
             0: {"collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "3.5", "selfCollision": "false"},
             1: {"collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "false"},
-            7: {"collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"},
-            4: {"collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"},
             2: {"collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "3.5", "selfCollision": "false"},
             3: {"collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "3.5", "selfCollision": "false"},
-            16: {"collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"},
+            4: {"collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"},
+            5: {"collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "1.3", "selfCollision": "true"},
+            6: {"collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "1.3", "selfCollision": "true"},
+            7: {"collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"},
+            8: {"collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "true"},
+            9: {"collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "true"},
             10: {"collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"},
             11: {"collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "6.3", "selfCollision": "false"},
             12: {"collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
             13: {"collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
-            19: {"collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
+            14: {"collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "false"},
+            15: {"collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "2.3", "selfCollision": "false"},
+            16: {"collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"},
             17: {"collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
-            18: {"collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"}
+            18: {"collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
+            19: {"collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
         }
 
         for vertex_idx in range(20):
@@ -162,7 +162,7 @@ class TestJBeamHelper(unittest.TestCase):
         d2_str = json.dumps(assert_data, indent=4, sort_keys=False).splitlines()
 
         diff = difflib.unified_diff(
-            d1_str, d2_str, fromfile="Expected", tofile="Actual", lineterm=""
+            d2_str, d1_str, fromfile="Expected", tofile="Actual", lineterm=""
         )
         diff_list = list(diff)
         
@@ -259,7 +259,7 @@ class TestJBeamHelper(unittest.TestCase):
 
         expected_lines = [str(item) for item in assert_output]
         actual_lines = [str(item) for item in reduced_hierarchy]
-        diff = difflib.unified_diff(expected_lines, actual_lines, lineterm='')
+        diff = difflib.unified_diff(actual_lines, expected_lines, lineterm='')
         diff_list = list(diff)
 
         if diff_list:

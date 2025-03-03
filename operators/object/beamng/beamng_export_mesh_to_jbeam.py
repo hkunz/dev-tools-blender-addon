@@ -204,7 +204,6 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
 
         node_data = [] #[["id", "posX", "posY", "posZ"]]
         for item in data_actual:
-
             node_data.append(item)
         return node_data
 
@@ -250,8 +249,16 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         def format_list(data, prepend=""):
             spaces = 12
             indent = " " * spaces
-            prepend = indent + prepend + '\n' if prepend else ""
-            return '[\n' + prepend + ',\n'.join(indent + str(item).replace("'", '"') for item in data) + '\n' + ' ' * (spaces - 4) + ']'
+            prepend = indent + prepend + '\n' if prepend else ""   
+            formatted_data = ',\n'.join(
+                indent + str(item)
+                .replace("'true'", "true")
+                .replace("'false'", "false")
+                .replace("'", '"')
+                for item in data
+            )
+            
+            return '[\n' + prepend + formatted_data + '\n' + ' ' * (spaces - 4) + ']'
 
         is_manual_data = True
 
@@ -310,7 +317,7 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(existing_data_str)
 
-            self.report({'INFO'}, f"{obj.name}: JBeam exported to {filepath}")
+        self.report({'INFO'}, f"{obj.name}: JBeam exported to {filepath}")
 
         return True
 

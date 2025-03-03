@@ -117,7 +117,6 @@ class TestJBeamHelper(unittest.TestCase):
         test_obj = JbeamTestObject() # bpy.context.object
         test_obj.create_vertex_groups()
         self.obj = test_obj.get_obj()
-        self.data = None
 
     def test_pre_jbeam_structure(self):
 
@@ -125,7 +124,6 @@ class TestJBeamHelper(unittest.TestCase):
         data = jbeam.structure_vertex_data()
         for key, value in data.items():
             print(f"{key}: {value}")
-        self.data = data
 
 
         # Sample Output can be node_id or index, it is currently index:
@@ -169,9 +167,9 @@ class TestJBeamHelper(unittest.TestCase):
             3: {"group": ["group_bouncer_base"], "collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "3.5", "selfCollision": "false"},
             16: {"group": ["group_bouncer_spring"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"},
             10: {"group": ["group_bouncer_top"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"},
+            11: {"group": ["group_bouncer_top"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "6.3", "selfCollision": "false"},
             12: {"group": ["group_bouncer_top"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
             13: {"group": ["group_bouncer_top"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
-            11: {"group": ["group_bouncer_top"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "6.3", "selfCollision": "false"},
             19: {"group": [], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
             17: {"group": [], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
             18: {"group": [], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"}
@@ -204,10 +202,9 @@ class TestJBeamHelper(unittest.TestCase):
         print("\n\n")
         for key, value in data.items():
             print(f"{key}: {value}")
-        self.data = data
         print("\n")
 
-        reducer = RedundancyReducerJbeamNodesGenerator(bpy.context.object, self.data)
+        reducer = RedundancyReducerJbeamNodesGenerator(bpy.context.object, data)
         reduced_hierarchy = reducer.reduce_redundancy()
 
         for item in reduced_hierarchy:

@@ -238,10 +238,10 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
             ["ref"] + [ref_nodes[key] if ref_nodes[key] is not None else "" for key in ["back", "left", "up", "leftCorner", "rightCorner"]],
         ]
 
-        def format_list(data, prepend="", enclose=True):
-            spaces = 12 if enclose else 4
+        def format_list(data, prepend="", newfile=True):
+            spaces = 12 if newfile else 4
             indent = " " * spaces
-            prepend = (indent if enclose else '') + prepend + '\n' if prepend else ""   
+            prepend = (indent if newfile else '') + prepend + '\n' if prepend else ""   
             formatted_data = ',\n'.join(
                 indent + str(item)
                 .replace("'true'", "true")
@@ -249,7 +249,7 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
                 .replace("'", '"')
                 for item in data
             )
-            return ('[\n' if enclose else '') + prepend + formatted_data + '\n' + ' ' * (spaces - 4) + (']' if enclose else '')
+            return prepend + formatted_data + '\n' + ' ' * (spaces - 4)
 
         is_manual_data = True
 
@@ -274,12 +274,12 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
             json_output = "{\n"
             json_output += f'{t1}"manual_data_file": {{"note":"you need to manually copy these nodes to the .jbeam file"}},\n'
             json_output += f'{t1}"partname": {{\n'
-            json_output += t2 + '"refNodes": ' + format_list(ref_nodes_data) + ',\n'
-            json_output += t2 + '"nodes": ' + format_list(nodes, '["id", "posX", "posY", "posZ"],') + ',\n'
-            json_output += t2 + '"beams": ' + format_list(beams, '["id1:", "id2:"],') + ',\n'
-            json_output += t2 + '"triangles": ' + format_list(triangles, '["id1:","id2:","id3:"],') + ',\n'
-            json_output += t2 + '"quads": ' + format_list(quads, '["id1:","id2:","id3:","id4:"],') + ',\n'
-            json_output += t2 + '"ngons": ' + format_list(ngons, '["ngons:"]') + ',\n'
+            json_output += t2 + '"refNodes": ' + '[\n' + format_list(ref_nodes_data) + '],\n'
+            json_output += t2 + '"nodes": ' + '[\n' + format_list(nodes, '["id", "posX", "posY", "posZ"],') + '],\n'
+            json_output += t2 + '"beams": ' + '[\n' + format_list(beams, '["id1:", "id2:"],') + '],\n'
+            json_output += t2 + '"triangles": ' + '[\n' + format_list(triangles, '["id1:","id2:","id3:"],') + '],\n'
+            json_output += t2 + '"quads": ' + '[\n' + format_list(quads, '["id1:","id2:","id3:","id4:"],') + '],\n'
+            json_output += t2 + '"ngons": ' + '[\n' + format_list(ngons, '["ngons:"]') + '],\n'
             json_output += t1 + "}\n"
             json_output += "}"
 

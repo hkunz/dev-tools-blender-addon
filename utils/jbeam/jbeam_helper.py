@@ -1,6 +1,7 @@
 import json
 from collections import OrderedDict
 
+from dev_tools.utils.number_utils import NumberUtils # type: ignore
 
 DEFAULT_SCOPE_MODIFIER_VALUES = {
     "frictionCoef": "1.0",
@@ -81,9 +82,18 @@ class PreJbeamStructureHelper:
             cleaned_node_info = {k.strip(): v for k, v in node_info.items()}
 
             # Fill in missing properties with defaults
+            
             for prop in unique_props:
                 if prop not in cleaned_node_info:
                     cleaned_node_info[prop] = DEFAULT_SCOPE_MODIFIER_VALUES.get(prop, "")
+
+            for prop, value in cleaned_node_info.items():
+                if not isinstance(value, str):
+                    continue
+                if value.isdigit():
+                    cleaned_node_info[prop] = int(value)
+                elif NumberUtils.is_float(value):
+                    cleaned_node_info[prop] = float(value)
 
             # Keep "group" first, then sort everything else alphabetically
             sorted_props = OrderedDict()

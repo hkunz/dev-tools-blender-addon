@@ -2,6 +2,7 @@ import bpy
 import json
 from collections import OrderedDict
 
+
 DEFAULT_SCOPE_MODIFIER_VALUES = {
     "frictionCoef": "1.0",
     "nodeMaterial": "|NM_METAL",
@@ -57,59 +58,41 @@ class PreJbeamStructureHelper:
 
     def structure_vertex_data(self):
         node_data_dict = {
-            #self.obj.data.attributes["jbeam_node_id"].data[v_idx].value.decode("utf-8"): { # use this if we want node_id as key in final dictionary
             v_idx: {
-                "group": groups,
+                "group": sorted(groups),  # Ensure groups are sorted
                 **self.parse_properties(self.node_props.get(v_idx, "")),
             }
             for v_idx, groups in self.vertex_to_groups.items()
         }
 
-        sorted_nodes = sorted(node_data_dict.items(), key=lambda x: (not x[1]["group"], x[0])) # x[0].lower()))
-
         unique_props = set()  # Collect all unique properties dynamically
-
-        # First pass: Find all unique properties
         for node_info in node_data_dict.values():
             unique_props.update(node_info.keys())
 
-        # Second pass: Ensure each node only has missing properties filled
         final_node_list = {}
-        for node_id, node_info in sorted_nodes:
+        for node_id, node_info in node_data_dict.items():
             cleaned_node_info = {k.strip(): v for k, v in node_info.items()}
 
-            # Add only missing properties
+            # Fill in missing properties with defaults
             for prop in unique_props:
                 if prop not in cleaned_node_info:
                     cleaned_node_info[prop] = DEFAULT_SCOPE_MODIFIER_VALUES.get(prop, "")
 
-            # Ensure group is first, rest sorted alphabetically
-            sorted_props = {"group": cleaned_node_info.pop("group")}
+            # Keep "group" first, then sort everything else alphabetically
+            sorted_props = OrderedDict()
+            sorted_props["group"] = cleaned_node_info.pop("group")
             sorted_props.update(dict(sorted(cleaned_node_info.items(), key=lambda x: x[0].lower())))
 
-            formatted_props = ", ".join(
-                f'"{k}": {json.dumps(v) if isinstance(v, (list, bool, int, float)) else json.dumps(str(v).strip())}'
-                for k, v in sorted_props.items()
-            )
+            # Convert to JSON string for stable sorting
+            formatted_json = json.dumps(sorted_props, separators=(",", ":"), sort_keys=False)
 
-            final_node_list[node_id] = f"{{{formatted_props}}}"
+            final_node_list[node_id] = formatted_json
 
-        # Sort first by 'group' length, then by group name, and then by all other properties' order
-        data_sorted = dict(sorted(final_node_list.items(), key=lambda x: (
-            -len(json.loads(x[1])['group']),
-            json.loads(x[1])['group'],
-            tuple(json.loads(x[1]).get(prop, "") for prop in unique_props)  # Sub-sort by the values of all properties in order
-        )))
+        # Sort based on JSON string to ensure determinism
+        sorted_items = sorted(final_node_list.items(), key=lambda x: x[1])
 
-        data_sorted = {
-            k: json.loads(v) for k, v in data_sorted.items()
-        }
+        return OrderedDict((k, json.loads(v)) for k, v in sorted_items)
 
-        #for key, value in data_sorted.items():
-        #    print(f"{key}: {value}")
-        #print("\n🔹 Unique Properties Used:\n", sorted(unique_props))
-
-        return data_sorted
 
 import bpy
 from collections import defaultdict

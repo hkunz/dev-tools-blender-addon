@@ -130,63 +130,36 @@ class TestJBeamHelper(unittest.TestCase):
         for key, value in data.items():
             print(f"{key}: {value}")
 
-
-        # Sample Output can be node_id or index, it is currently index:
-        '''
-        data = {
-            "b5": {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "1.3", "selfCollision": "true"},
-            "b9": {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "1.3", "selfCollision": "true"},
-            "b1": {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "true"},
-            "b8": {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "true"},
-            "b2": {"group": ["group_bouncer_spring", "group_bouncer_top"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "2.3", "selfCollision": "false"},
-            "b6": {"group": ["group_bouncer_spring", "group_bouncer_top"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "false"},
-            "b4": {"group": ["group_bouncer_spring", "group_bouncer_top"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "false"},
-            "b3": {"group": ["group_bouncer_spring", "group_bouncer_top"], "collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "3.5", "selfCollision": "false"},
-            "b14": {"group": ["group_bouncer_base"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"},
-            "b13": {"group": ["group_bouncer_base"], "collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"},
-            "b12": {"group": ["group_bouncer_base"], "collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "3.5", "selfCollision": "false"},
-            "b15": {"group": ["group_bouncer_base"], "collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "3.5", "selfCollision": "false"},
-            "b11": {"group": ["group_bouncer_spring"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"},
-            "b19": {"group": ["group_bouncer_top"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"},
-            "b17": {"group": ["group_bouncer_top"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "6.3", "selfCollision": "false"},
-            "b16": {"group": ["group_bouncer_top"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
-            "b18": {"group": ["group_bouncer_top"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
-            "b7": {"group": [], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
-            "b10": {"group": [], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
-            "ref": {"group": [], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
-        }
-        '''
-
         assert_data = { # Expected Output
             5: {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "1.3", "selfCollision": "true"},
             6: {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "1.3", "selfCollision": "true"},
             8: {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "true"},
             9: {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "true"},
-            15: {"group": ["group_bouncer_spring", "group_bouncer_top"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "2.3", "selfCollision": "false"},
-            14: {"group": ["group_bouncer_spring", "group_bouncer_top"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "false"},
-            0: {"group": ["group_bouncer_spring", "group_bouncer_top"], "collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "3.5", "selfCollision": "false"},
-            1: {"group": ["group_bouncer_spring", "group_bouncer_top"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "false"},
             7: {"group": ["group_bouncer_base"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"},
             4: {"group": ["group_bouncer_base"], "collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"},
             2: {"group": ["group_bouncer_base"], "collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "3.5", "selfCollision": "false"},
             3: {"group": ["group_bouncer_base"], "collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "3.5", "selfCollision": "false"},
+            15: {"group": ["group_bouncer_spring", "group_bouncer_top"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "2.3", "selfCollision": "false"},
+            14: {"group": ["group_bouncer_spring", "group_bouncer_top"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "false"},
+            1: {"group": ["group_bouncer_spring", "group_bouncer_top"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "false"},
+            0: {"group": ["group_bouncer_spring", "group_bouncer_top"], "collision": "true", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "3.5", "selfCollision": "false"},
             16: {"group": ["group_bouncer_spring"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"},
             10: {"group": ["group_bouncer_top"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "3.5", "selfCollision": "false"},
-            11: {"group": ["group_bouncer_top"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "6.3", "selfCollision": "false"},
             12: {"group": ["group_bouncer_top"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
             13: {"group": ["group_bouncer_top"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
+            11: {"group": ["group_bouncer_top"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "6.3", "selfCollision": "false"},
             19: {"group": [], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
             17: {"group": [], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
-            18: {"group": [], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"}
-
+            18: {"group": [], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_PLASTIC", "nodeWeight": "10", "selfCollision": "true"},
         }
         print()
         print("🔹 Expected Output:\n")
         for key, value in assert_data.items():
             print(f"{key}: {value}")
+        print()
 
-        d1_str = json.dumps(assert_data, indent=4, sort_keys=False).splitlines()
-        d2_str = json.dumps(data, indent=4, sort_keys=False).splitlines()
+        d1_str = json.dumps(data, indent=4, sort_keys=False).splitlines()
+        d2_str = json.dumps(assert_data, indent=4, sort_keys=False).splitlines()
 
         diff = difflib.unified_diff(
             d1_str, d2_str, fromfile="Expected", tofile="Actual", lineterm=""
@@ -194,7 +167,7 @@ class TestJBeamHelper(unittest.TestCase):
         diff_list = list(diff)
         
         if diff_list:
-            print()
+            print("❌ TEST FAILED: test_pre_jbeam_structure\n")
             print("🔍 Differences:")
             print("\n".join(diff_list)) # Print differences
             print()
@@ -203,7 +176,7 @@ class TestJBeamHelper(unittest.TestCase):
         self.assertFalse(diff_list, "Data does not match expected structure or order")
         
         
-        print("test_pre_jbeam_structure: Test Passed!")
+        print("✅ TEST PASSED: test_pre_jbeam_structure")
 
     def test_jbeam_structure(self):
     
@@ -228,51 +201,52 @@ class TestJBeamHelper(unittest.TestCase):
             ['b8'],
             ['b1'],
             {'selfCollision': 'false'},
-            {'nodeMaterial': '|NM_PLASTIC'},
-            {'fixed': 'false'},
-            {'group': ['group_bouncer_spring', 'group_bouncer_top']},
-            ['b2'],
-            {'nodeMaterial': '|NM_RUBBER'},
-            ['b6'],
-            {'nodeWeight': '3.5'},
-            {'collision': 'true'},
-            ['b3'],
-            {'nodeWeight': '2.3'},
-            {'fixed': 'true'},
-            {'collision': 'false'},
-            ['b4'],
             {'nodeWeight': '3.5'},
             {'nodeMaterial': '|NM_PLASTIC'},
             {'fixed': 'false'},
-            {'group': ['group_bouncer_base',]},
+            {'group': ['group_bouncer_base']},
             ['b14'],
             {'collision': 'true'},
             ['b13'],
             {'nodeMaterial': '|NM_RUBBER'},
             ['b12'],
             ['b15'],
+            {'nodeWeight': '2.3'},
             {'nodeMaterial': '|NM_PLASTIC'},
             {'collision': 'false'},
-            {'group': ['group_bouncer_spring',]},
-            ['b11'],
-            {'group': ['group_bouncer_top',]},
-            ['b19'],
-            {'nodeWeight': '6.3'},
+            {'group': ['group_bouncer_spring', 'group_bouncer_top']},
+            ['b2'],
+            {'nodeMaterial': '|NM_RUBBER'},
+            ['b6'],
             {'fixed': 'true'},
+            ['b4'],
+            {'nodeWeight': '3.5'},
+            {'fixed': 'false'},
+            {'collision': 'true'},
+            ['b3'],
+            {'nodeMaterial': '|NM_PLASTIC'},
+            {'collision': 'false'},
+            {'group': ['group_bouncer_spring']},
+            ['b11'],
+            {'group': ['group_bouncer_top']},
+            ['b19'],
+            {'selfCollision': 'true'},
+            {'nodeWeight': '10'},
+            {'fixed': 'true'},
+            ['b18'],
+            ['b16'],
+            {'selfCollision': 'false'},
+            {'nodeWeight': '6.3'},
             ['b17'],
             {'selfCollision': 'true'},
             {'nodeWeight': '10'},
-            ['b18'],
-            ['b16'],
             {'fixed': 'false'},
             {'group': ''},
             ['b7'],
             {'fixed': 'true'},
             ['ref'],
-            ['b10'],
+            ['b10']
         ]
-
-        self.assertEqual(assert_output, reduced_hierarchy, "Data does not match expected jbeam nodes list")
 
         pp = pprint.PrettyPrinter(indent=4)
         print()
@@ -281,6 +255,7 @@ class TestJBeamHelper(unittest.TestCase):
         print()
         print("🔹 Expected Output:\n")
         pp.pprint(assert_output)
+        print()
 
         expected_lines = [str(item) for item in assert_output]
         actual_lines = [str(item) for item in reduced_hierarchy]
@@ -288,14 +263,15 @@ class TestJBeamHelper(unittest.TestCase):
         diff_list = list(diff)
 
         if diff_list:
-            print()
+            print("❌ TEST FAILED: test_jbeam_structure\n")
             print("🔍 Differences:")
             print("\n".join(diff_list))
             print()
 
+        self.assertEqual(assert_output, reduced_hierarchy, "Data does not match expected jbeam nodes list")
         self.assertFalse(list(diff), "Data does not match expected JBeam nodes list")
 
-        print("test_jbeam_structure: Test Passed!")
+        print("✅ TEST PASSED: test_jbeam_structure")
 
     def tearDown(self):
         bpy.data.objects.remove(self.obj)

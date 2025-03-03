@@ -115,7 +115,7 @@ class TestJBeamHelper(unittest.TestCase):
     
     def setUp(self):
         print()
-        print(f"Start Test {self} ==================================")
+        print(f"===> Start Test {self} ==================================")
         print()
         test_obj = JbeamTestObject() # bpy.context.object
         test_obj.create_vertex_groups()
@@ -124,13 +124,13 @@ class TestJBeamHelper(unittest.TestCase):
     def test_pre_jbeam_structure(self):
 
         jbeam = PreJbeamStructureHelper(self.obj)
-        data = jbeam.structure_vertex_data()
+        data_actual = jbeam.structure_vertex_data()
         print()
         print("🔸 Actual Output:\n")
-        for key, value in data.items():
+        for key, value in data_actual.items():
             print(f"{key}: {value}")
 
-        assert_data = { # Expected Output
+        data_expected = { # Expected Output
             5: {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "1.3", "selfCollision": "true"},
             6: {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "false", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "1.3", "selfCollision": "true"},
             8: {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "true", "frictionCoef": "1.2", "nodeMaterial": "|NM_RUBBER", "nodeWeight": "2.3", "selfCollision": "true"},
@@ -154,12 +154,12 @@ class TestJBeamHelper(unittest.TestCase):
         }
         print()
         print("🔹 Expected Output:\n")
-        for key, value in assert_data.items():
+        for key, value in data_expected.items():
             print(f"{key}: {value}")
         print()
 
-        d1_str = json.dumps(data, indent=4, sort_keys=False).splitlines()
-        d2_str = json.dumps(assert_data, indent=4, sort_keys=False).splitlines()
+        d1_str = json.dumps(data_actual, indent=4, sort_keys=False).splitlines()
+        d2_str = json.dumps(data_expected, indent=4, sort_keys=False).splitlines()
 
         diff = difflib.unified_diff(
             d2_str, d1_str, fromfile="Expected", tofile="Actual", lineterm=""
@@ -172,9 +172,8 @@ class TestJBeamHelper(unittest.TestCase):
             print("\n".join(diff_list)) # Print differences
             print()
 
-        self.assertEqual(assert_data, data, "Data does not match expected structure")
+        self.assertEqual(data_expected, data_actual, "Data does not match expected structure")
         self.assertFalse(diff_list, "Data does not match expected structure or order")
-        
         
         print("✅ TEST PASSED: test_pre_jbeam_structure")
 
@@ -183,10 +182,10 @@ class TestJBeamHelper(unittest.TestCase):
         jbeam = PreJbeamStructureHelper(self.obj)
         data = jbeam.structure_vertex_data()
         reducer = RedundancyReducerJbeamNodesGenerator(bpy.context.object, data)
-        reduced_hierarchy = reducer.reduce_redundancy()
+        data_actual = reducer.reduce_redundancy()
 
         # Expected Output:
-        assert_output = [
+        data_expected = [
             {'selfCollision': 'true'},
             {'nodeWeight': '1.3'},
             {'nodeMaterial': '|NM_RUBBER'},
@@ -251,14 +250,14 @@ class TestJBeamHelper(unittest.TestCase):
         pp = pprint.PrettyPrinter(indent=4)
         print()
         print("🔸 Actual Output:\n")
-        pp.pprint(reduced_hierarchy)
+        pp.pprint(data_actual)
         print()
         print("🔹 Expected Output:\n")
-        pp.pprint(assert_output)
+        pp.pprint(data_expected)
         print()
 
-        expected_lines = [str(item) for item in assert_output]
-        actual_lines = [str(item) for item in reduced_hierarchy]
+        expected_lines = [str(item) for item in data_expected]
+        actual_lines = [str(item) for item in data_actual]
         diff = difflib.unified_diff(actual_lines, expected_lines, lineterm='')
         diff_list = list(diff)
 
@@ -268,7 +267,7 @@ class TestJBeamHelper(unittest.TestCase):
             print("\n".join(diff_list))
             print()
 
-        self.assertEqual(assert_output, reduced_hierarchy, "Data does not match expected jbeam nodes list")
+        self.assertEqual(data_expected, data_actual, "Data does not match expected jbeam nodes list")
         self.assertFalse(list(diff), "Data does not match expected JBeam nodes list")
 
         print("✅ TEST PASSED: test_jbeam_structure")

@@ -149,16 +149,22 @@ class RedundancyReducerJbeamNodesGenerator:
                 # If the property value has changed, push it up in the hierarchy
                 if current_properties[key] != value:
                     if current_properties[key] is not None:
-                        hierarchy.append({key: current_properties[key]})
+                        processed_value = list(current_properties[key]) if isinstance(current_properties[key], tuple) else current_properties[key]
+                        if key == "group" and processed_value == []:
+                            processed_value = ""  # Convert empty list to empty string
+                        hierarchy.append({key: processed_value})
                     current_properties[key] = value
             
             node_id = self.obj.data.attributes['jbeam_node_id'].data[node].value.decode("utf-8") if isinstance(node, int) else node
-            hierarchy.append([node_id]) # Append the node itself to the hierarchy
+            hierarchy.append([node_id])  # Append the node itself to the hierarchy
 
         # Add the last property values
         for key, value in current_properties.items():
             if value is not None:
-                hierarchy.append({key: value})
+                processed_value = list(value) if isinstance(value, tuple) else value
+                if key == "group" and processed_value == []:
+                    processed_value = ""  # Convert empty list to empty string
+                hierarchy.append({key: processed_value})
 
         hierarchy.reverse()  # Reverse to maintain the correct order
         

@@ -207,14 +207,6 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
             node_data.append(item)
         return node_data
 
-        # Convert to a JSON-like format with proper formatting
-        result = "[\n" + ",\n".join(json.dumps(entry, ensure_ascii=False) for entry in node_data) + "\n]"
-
-        print("Generated JBeam List:")
-        print(result)
-
-        return result
-
     def export_jbeam_format(self, filepath):
         obj = bpy.context.active_object
         if obj is None or obj.type != "MESH":
@@ -246,10 +238,10 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
             ["ref"] + [ref_nodes[key] if ref_nodes[key] is not None else "" for key in ["back", "left", "up", "leftCorner", "rightCorner"]],
         ]
 
-        def format_list(data, prepend=""):
-            spaces = 12
+        def format_list(data, prepend="", enclose=True):
+            spaces = 12 if enclose else 4
             indent = " " * spaces
-            prepend = indent + prepend + '\n' if prepend else ""   
+            prepend = (indent if enclose else '') + prepend + '\n' if prepend else ""   
             formatted_data = ',\n'.join(
                 indent + str(item)
                 .replace("'true'", "true")
@@ -257,8 +249,7 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
                 .replace("'", '"')
                 for item in data
             )
-            
-            return '[\n' + prepend + formatted_data + '\n' + ' ' * (spaces - 4) + ']'
+            return ('[\n' if enclose else '') + prepend + formatted_data + '\n' + ' ' * (spaces - 4) + (']' if enclose else '')
 
         is_manual_data = True
 
@@ -297,7 +288,7 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         else:
             print(f"Replace nodes, beams, triangles, refNodes, etc in {filepath}")
             refnodes_str = self.get_final_struct(existing_data, ref_nodes_data, "refNodes")
-            nodes_str = self.generate_jbeam_node_list(obj)
+            nodes_str = format_list(nodes, '["id", "posX", "posY", "posZ"],', False)
             #nodes_str = self.get_final_struct(existing_data, nodes, "nodes", [["id", "posX", "posY", "posZ"]])
             beams_str = self.get_final_struct(existing_data, beams, "beams", [["id1:", "id2:"]])
             tris_str = self.get_final_struct(existing_data, triangles, "triangles", [["id1:","id2:","id3:"]])

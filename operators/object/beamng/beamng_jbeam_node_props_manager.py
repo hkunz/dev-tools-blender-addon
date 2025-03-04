@@ -52,7 +52,7 @@ class OBJECT_OT_BeamngLoadJbeamNodeProps(bpy.types.Operator):
 
 
 class OBJECT_OT_BeamngSaveJbeamNodeProp(bpy.types.Operator):
-    """Save a single JBeam node property"""
+    """Save a single JBeam node property for selected vertices"""
     bl_idname = "object.devtools_beamng_save_jbeam_node_prop"
     bl_label = "DevTools: BeamNG Save JBeam Node Property"
     bl_options = {'INTERNAL', 'UNDO'}
@@ -93,30 +93,28 @@ class OBJECT_OT_BeamngSaveJbeamNodeProp(bpy.types.Operator):
 
 
 class OBJECT_OT_BeamngSaveAllJbeamNodeProps(bpy.types.Operator):
-    """Save all JBeam node properties"""
+    """Save all JBeam node properties for selected vertices"""
     bl_idname = "object.devtools_beamng_save_all_jbeam_node_props"
     bl_label = "DevTools: BeamNG Save All JBeam Node Properties"
     bl_options = {'INTERNAL', 'UNDO'}
 
-    def execute(self, context):
+    @staticmethod
+    def save_jbeam_node_props(context):
         obj = context.object
         if not obj or obj.type != 'MESH':
-            self.report({'WARNING'}, "No valid mesh object selected")
-            return {'CANCELLED'}
+            return "No valid mesh object selected", 'CANCELLED'
 
         bm = bmesh.from_edit_mesh(obj.data)
         layer = bm.verts.layers.string.get("jbeam_node_props")
         selected_verts = [v for v in bm.verts if v.select]
 
         if not selected_verts or not layer:
-            self.report({'WARNING'}, "No selected vertices or no property data found")
-            return {'CANCELLED'}
+            return "No selected vertices or no property data found", 'CANCELLED'
 
         # Get current properties in the UI
         ui_props = {prop.name: prop.value for prop in context.scene.beamng_jbeam_vertex_props}
         if any(prop_name.lower() == "group" for prop_name in ui_props):
-            self.report({'WARNING'}, "Keyword 'group' is reserved. Use vertex groups prefixed 'group_' to assign nodes to groups.")
-            return {'CANCELLED'}
+            return "Keyword 'group' is reserved. Use vertex groups prefixed 'group_' to assign nodes to groups.", 'CANCELLED'
 
         for v in selected_verts:
             try:
@@ -132,11 +130,15 @@ class OBJECT_OT_BeamngSaveAllJbeamNodeProps(bpy.types.Operator):
                 v[layer] = json.dumps(props).encode("utf-8")
 
             except Exception as e:
-                self.report({'ERROR'}, f"Failed to save properties: {e}")
+                return f"Failed to save properties: {e}", 'ERROR'
 
         bmesh.update_edit_mesh(obj.data)
-        self.report({'INFO'}, "Saved all properties")
-        return {'FINISHED'}
+        return "Saved all properties", 'FINISHED'
+
+    def execute(self, context):
+        msg, status = self.save_jbeam_node_props(context)
+        self.report({'INFO' if status == 'FINISHED' else 'WARNING'}, msg)
+        return {status}
 
 
 class OBJECT_OT_BeamngAddJbeamNodeProp(bpy.types.Operator):
@@ -167,3 +169,35 @@ class OBJECT_OT_BeamngRemoveJbeamNodeProp(bpy.types.Operator):
                 scene.beamng_jbeam_vertex_props.remove(i)
                 break
         return {'FINISHED'}
+
+'''
+class OBJECT_OT_BeamngRemoveJbeamNodeProp(bpy.types.Operator):
+    """Remove a JBeam node property (Shift+Click to also save)"""
+    bl_idname = "object.devtools_beamng_remove_jbeam_node_prop"
+    bl_label = "DevTools: BeamNG Remove JBeam Node Property"
+    bl_descrikption = "Remove JBeam Node Property (hold Shift to also directly save change)"
+    bl_options = {'INTERNAL', 'UNDO'}
+
+    prop_name: bpy.props.StringProperty() # type: ignore
+
+    def invoke(self, context, event):
+        """Detect Shift and pass it to execute"""
+        self.do_save = event.shift  # Store Shift state
+        return self.execute(context)
+
+    def execute(self, context):
+        scene = context.scene
+
+        # Remove property from UI list
+        for i, prop in enumerate(scene.beamng_jbeam_vertex_props):
+            if prop.name == self.prop_name:
+                scene.beamng_jbeam_vertex_props.remove(i)
+                break
+
+        # If Shift was held, save immediately
+        if getattr(self, "do_save", False):
+            save_jbeam_node_props(context)  # Call the function directly
+            self.report({'INFO'}, "Property removed and saved")
+
+        return {'FINISHED'}
+'''

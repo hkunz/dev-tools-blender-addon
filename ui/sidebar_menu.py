@@ -17,7 +17,7 @@ from dev_tools.operators.object.beamng.beamng_parent_to_start01_empty_operator i
 from dev_tools.operators.object.beamng.beamng_export_mesh_to_jbeam import OBJECT_OT_BeamngCreateRefnodesVertexGroups, EXPORT_OT_BeamngExportMeshToJbeam # type: ignore
 from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_mesh_v1 import OBJECT_OT_BeamngConvertJbeamToMesh_v1 # type: ignore
 from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_mesh_v2 import OBJECT_OT_BeamngConvertJbeamToMesh_v2 # type: ignore
-from dev_tools.operators.object.beamng.beamng_jbeam_node_props_manager import OBJECT_OT_BeamngSaveJbeamNodeProp, OBJECT_OT_BeamngSaveAllJbeamNodeProps, OBJECT_OT_BeamngAddJbeamNodeProp, OBJECT_OT_BeamngRemoveJbeamNodeProp, JbeamPropertyItem # type: ignore
+from dev_tools.operators.object.beamng.beamng_jbeam_node_props_manager import OBJECT_OT_BeamngSaveJbeamNodeProp, OBJECT_OT_BeamngSaveAllJbeamNodeProps, OBJECT_OT_BeamngAddJbeamNodeProp, OBJECT_OT_BeamngRemoveJbeamNodeProp, OBJECT_OT_BeamngSelectJbeamNodesByProperty, JbeamPropertyItem # type: ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_rename_selected_nodes import OBJECT_OT_BeamngJbeamRenameSelectedNodes # type:ignore
 
 from dev_tools.utils.utils import Utils # type: ignore
@@ -219,8 +219,11 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                             r = box.row()
                             r.prop(prop, "name", text="")
                             r.prop(prop, "value", text="")
-                            r.operator(OBJECT_OT_BeamngSaveJbeamNodeProp.bl_idname, text="S").prop_name = prop.name
-                            r.operator(OBJECT_OT_BeamngRemoveJbeamNodeProp.bl_idname, text="X").prop_name = prop.name
+                            button_row = r.row(align=True)
+                            button_row.scale_x = 0.4
+                            button_row.operator(OBJECT_OT_BeamngSelectJbeamNodesByProperty.bl_idname, text=" ").prop_name = prop.name
+                            button_row.operator(OBJECT_OT_BeamngSaveJbeamNodeProp.bl_idname, text="S").prop_name = prop.name
+                            button_row.operator(OBJECT_OT_BeamngRemoveJbeamNodeProp.bl_idname, text="X").prop_name = prop.name
                     else:
                         box.label(text=f"No jbeam properties in node {context.scene.beamng_jbeam_selected_nodes}")
 

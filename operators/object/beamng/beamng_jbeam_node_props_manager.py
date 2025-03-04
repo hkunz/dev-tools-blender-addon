@@ -241,3 +241,68 @@ class OBJECT_OT_BeamngRemoveJbeamNodeProp(bpy.types.Operator):
             self.report({'WARNING'}, f"Property '{self.prop_name}' not found")
 
         return {'FINISHED' if removed_from_ui else 'CANCELLED'}
+
+
+class OBJECT_OT_BeamngSelectJbeamNodesByProperty(bpy.types.Operator):
+    """Select all vertices that share the same JBeam property and value"""
+    bl_idname = "object.devtools_beamng_select_jbeam_nodes_by_property"
+    bl_label = "DevTools: BeamNG Select JBeam Nodes by Property"
+    bl_options = {'INTERNAL', 'UNDO'}
+
+    prop_name: bpy.props.StringProperty(name="Property Name") # type: ignore
+
+    def execute(self, context):
+        obj = context.object
+        if not obj or obj.type != 'MESH':
+            self.report({'WARNING'}, "No valid mesh object selected")
+            return {'CANCELLED'}
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        layer = bm.verts.layers.string.get("jbeam_node_props")
+
+        if not layer:
+            self.report({'WARNING'}, "No property data found")
+            return {'CANCELLED'}
+
+        # Retrieve the property value from the UI
+        selected_prop_value = None
+        for prop in context.scene.beamng_jbeam_vertex_props:
+            if prop.name == self.prop_name:
+                selected_prop_value = prop.value
+                break
+
+        if selected_prop_value is None:
+            self.report({'WARNING'}, f"Property '{self.prop_name}' not found in UI")
+            return {'CANCELLED'}
+
+        selected_prop_value = str(selected_prop_value).strip().lower()
+
+        print(f"\n[DEBUG] Searching for vertices with {self.prop_name} = {selected_prop_value}")
+
+        # Deselect all first
+        for v in bm.verts:
+            v.select = False
+
+        matched_count = 0
+
+        for v in bm.verts:
+            if not v[layer]:  # Skip if no data
+                continue
+
+            try:
+                stored_data = json.loads(v[layer].decode("utf-8"))  # Parse JSON
+                stored_value = stored_data.get(self.prop_name, None)  # Get the specific property
+
+                # Convert values to string for comparison
+                if stored_value is not None and str(stored_value).strip().lower() == selected_prop_value:
+                    v.select = True
+                    matched_count += 1
+                    print(f"[DEBUG] -> Selected Vertex {v.index} with {self.prop_name} = {stored_value}")
+            except Exception as e:
+                print(f"[ERROR] Failed to parse JSON for vertex {v.index}: {e}")
+
+        bmesh.update_edit_mesh(obj.data)
+
+        print(f"\n[DEBUG] Total Matched Vertices: {matched_count}")
+        self.report({'INFO'}, f"Selected {matched_count} vertices with {self.prop_name} = {selected_prop_value}")
+        return {'FINISHED'}

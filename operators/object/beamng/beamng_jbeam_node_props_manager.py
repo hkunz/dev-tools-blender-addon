@@ -170,34 +170,74 @@ class OBJECT_OT_BeamngRemoveJbeamNodeProp(bpy.types.Operator):
                 break
         return {'FINISHED'}
 
-'''
+
 class OBJECT_OT_BeamngRemoveJbeamNodeProp(bpy.types.Operator):
     """Remove a JBeam node property (Shift+Click to also save)"""
     bl_idname = "object.devtools_beamng_remove_jbeam_node_prop"
     bl_label = "DevTools: BeamNG Remove JBeam Node Property"
-    bl_descrikption = "Remove JBeam Node Property (hold Shift to also directly save change)"
     bl_options = {'INTERNAL', 'UNDO'}
 
-    prop_name: bpy.props.StringProperty() # type: ignore
+    prop_name: bpy.props.StringProperty()  # type: ignore
 
     def invoke(self, context, event):
         """Detect Shift and pass it to execute"""
-        self.do_save = event.shift  # Store Shift state
+        self.do_save = bool(event.shift)
         return self.execute(context)
 
     def execute(self, context):
         scene = context.scene
+        obj = context.object
 
-        # Remove property from UI list
+        if not obj or obj.type != 'MESH':
+            self.report({'WARNING'}, "No valid mesh object selected")
+            return {'CANCELLED'}
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        layer = bm.verts.layers.string.get("jbeam_node_props")
+
+        if not layer:
+            self.report({'WARNING'}, "No property data found")
+            return {'CANCELLED'}
+
+        selected_verts = [v for v in bm.verts if v.select]
+        if not selected_verts:
+            self.report({'WARNING'}, "No selected vertices found")
+            return {'CANCELLED'}
+
+        removed_from_ui = False
+        removed_from_mesh = False
+
+        # Always remove from the UI list
         for i, prop in enumerate(scene.beamng_jbeam_vertex_props):
             if prop.name == self.prop_name:
                 scene.beamng_jbeam_vertex_props.remove(i)
-                break
+                removed_from_ui = True
+                break  # Ensure only one instance is removed
 
-        # If Shift was held, save immediately
-        if getattr(self, "do_save", False):
-            save_jbeam_node_props(context)  # Call the function directly
-            self.report({'INFO'}, "Property removed and saved")
+        if self.do_save:
+            # Remove property from mesh (SAVE MODE)
+            for v in selected_verts:
+                if not v[layer]:
+                    continue  # Skip if no stored data
 
-        return {'FINISHED'}
-'''
+                try:
+                    props = json.loads(v[layer].decode("utf-8"))
+                    if self.prop_name in props:
+                        del props[self.prop_name]  # Remove property
+                        v[layer] = json.dumps(props).encode("utf-8") if props else b''
+                        removed_from_mesh = True
+
+                except Exception as e:
+                    self.report({'ERROR'}, f"Failed to remove property: {e}")
+                    return {'CANCELLED'}
+
+            bmesh.update_edit_mesh(obj.data) # Commit changes to mesh
+
+        if removed_from_ui and removed_from_mesh:
+            self.report({'INFO'}, f"Removed property '{self.prop_name}' from UI and saved")
+        elif removed_from_ui:
+            self.report({'INFO'}, f"Removed property '{self.prop_name}' from UI (unsaved)")
+        else:
+            self.report({'WARNING'}, f"Property '{self.prop_name}' not found")
+
+        return {'FINISHED' if removed_from_ui else 'CANCELLED'}

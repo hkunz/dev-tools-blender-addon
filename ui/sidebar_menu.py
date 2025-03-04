@@ -198,8 +198,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             row.operator(OBJECT_OT_BeamngCreateRefnodesVertexGroups.bl_idname, text="Craete refNodes Vertex Groups")
             row.separator()
             row.operator(EXPORT_OT_BeamngExportMeshToJbeam.bl_idname, text="Export JBeam")
-            col.operator(OBJECT_OT_BeamngConvertJbeamToMesh_v1.bl_idname, text="Jbeam to Mesh (v1)")
-            col.operator(OBJECT_OT_BeamngConvertJbeamToMesh_v2.bl_idname, text="Jbeam to Mesh (v2)")
+            col.operator(OBJECT_OT_BeamngConvertJbeamToMesh_v2.bl_idname, text="Jbeam to Mesh")
 
             if obj and obj.mode == 'EDIT' and obj.type == 'MESH' and "jbeam_node_id" in obj.data.attributes:
                 bm = bmesh.from_edit_mesh(obj.data)

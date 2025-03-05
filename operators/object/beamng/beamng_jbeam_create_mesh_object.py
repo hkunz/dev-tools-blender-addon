@@ -7,8 +7,12 @@ class JbeamMeshObject:
     def __init__(self, name="jbeam_mesh"):
         self.name = name
         self.obj = self.create_triangulated_cube()
+        self.setup()
         self.set_jbeam_attributes()
         self.create_vertex_groups()
+
+    def setup(self):
+        j.set_jbeam_visuals(self.obj)
 
     def get_obj(self):
         return self.obj

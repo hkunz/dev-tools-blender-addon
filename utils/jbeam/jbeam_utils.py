@@ -1,3 +1,4 @@
+import bpy
 import bmesh
 import json
 
@@ -153,3 +154,14 @@ class JbeamUtils:
     @staticmethod
     def set_node_props(obj, vertex_index, node_props: dict):
         JbeamUtils.set_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, json.dumps(node_props))
+
+    @staticmethod
+    def set_jbeam_visuals(obj):
+        obj.show_wire = True
+        obj.color = (0.0, 1.0, 0.0, 1.0)  # RGBA, Green with full opacity
+
+        for area in bpy.context.screen.areas:
+            if area.type == 'VIEW_3D':
+                for space in area.spaces:
+                    if space.type == 'VIEW_3D':
+                        space.shading.wireframe_color_type = 'OBJECT'

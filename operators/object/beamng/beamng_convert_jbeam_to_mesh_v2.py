@@ -179,6 +179,8 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
 
     def execute(self, context):
         obj = context.object
+        j.set_jbeam_visuals(obj)
+
         if not obj or obj.type != 'MESH':
             self.report({'WARNING'}, "No mesh object selected!")
             return {'CANCELLED'}

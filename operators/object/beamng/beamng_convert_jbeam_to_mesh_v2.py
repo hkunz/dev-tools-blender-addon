@@ -6,6 +6,7 @@ from pprint import pprint
 from bpy.types import Operator
 
 from dev_tools.utils.json_cleanup import json_cleanup  # type: ignore
+from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
 
 class Node:
     def __init__(self, node_id, index, position, group=None, props=None):
@@ -154,36 +155,12 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
             vg.add(vertex_indices, 1.0, 'REPLACE')
             print(f"Assigned {len(vertex_indices)} vertices to the '{group_name}' vertex group.")
 
-    def assign_fixed_nodes_to_vertex_groups(self, obj, verts_dic):
-        vg_name = "fixed"
-        vg = obj.vertex_groups.get(vg_name)
-        if vg is None:
-            vg = obj.vertex_groups.new(name=vg_name)
-        fixed_indices = [node.index for node in verts_dic.values() if node.get_fixed() and node.index != -1]
-        if fixed_indices:
-            vg.add(fixed_indices, 1.0, 'REPLACE')
 
     def store_node_props_in_vertex_attributes(self, obj, verts_dic):
-        mesh = obj.data
 
-        # Remove old jbeam attributes
-        attributes_to_remove = [attr.name for attr in mesh.attributes if attr.name.startswith("jbeam_")]
-        for attr in attributes_to_remove:
-            mesh.attributes.remove(mesh.attributes[attr])
-
-        # Create new attributes if missing
-        if "jbeam_node_id" not in mesh.attributes:
-            mesh.attributes.new(name="jbeam_node_id", type="STRING", domain="POINT")
-        if "jbeam_node_group" not in mesh.attributes:
-            mesh.attributes.new(name="jbeam_node_group", type="STRING", domain="POINT")
-        if "jbeam_node_props" not in mesh.attributes:
-            mesh.attributes.new(name="jbeam_node_props", type="STRING", domain="POINT")
-
-        attr_id = mesh.attributes["jbeam_node_id"]
-        attr_group = mesh.attributes["jbeam_node_group"]
-        attr_props = mesh.attributes["jbeam_node_props"]
-
-        node_data = {}
+        j.remove_old_jbeam_attributes(obj)
+        j.create_attribute_node_id(obj)
+        j.create_attribute_node_props(obj)
 
         for node_id, vert_props in verts_dic.items():
             if not hasattr(vert_props, "index") or vert_props.index < 0:
@@ -196,18 +173,8 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
             if hasattr(vert_props, "props") and isinstance(vert_props.props, dict):
                 flat_data.update({k: v for k, v in vert_props.props.items() if k != "group"})
 
-
-            group_str = ",".join(vert_props.group) if isinstance(vert_props.group, list) else str(vert_props.group)
-
-            node_data[idx] = flat_data
-
-            attr_id.data[idx].value = str(vert_props.node_id).encode("utf-8")  
-            attr_group.data[idx].value = group_str.encode("utf-8")
-            attr_props.data[idx].value = json.dumps(flat_data).encode("utf-8")  
-
-        # Store in object data as JSON
-        obj.data["node_data"] = json.dumps(node_data, indent=2)
-        print("Stored node data in obj.data['node_data'] and per-vertex attributes")
+            j.set_node_id(obj, idx, str(vert_props.node_id))
+            j.set_node_props(obj, idx, flat_data)
 
 
     def execute(self, context):
@@ -240,16 +207,9 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
 
         verts_dic = self.get_vertex_indices(obj, part_data)
  
-        self.assign_fixed_nodes_to_vertex_groups(obj, verts_dic)
         self.assign_ref_nodes_to_vertex_groups(obj, ref_nodes, verts_dic)
         self.assign_flex_groups_to_vertex_groups(obj, part_data, verts_dic)
-
-        reversed_verts_dic = {node.index: node.node_id for node_id, node in verts_dic.items()}
-        obj.data["node_names"] = json.dumps(reversed_verts_dic)
-
         self.store_node_props_in_vertex_attributes(obj, verts_dic)
-        # bpy.data.meshes[<partname>].attributes['jbeam_node_id'].data[<index>].value
-        # bpy.data.meshes[<partname>].attributes['jbeam_node_props'].data[<index>].value
 
         self.report({'INFO'}, f"Cleaned object and mesh data: {obj.name}")
         return {'FINISHED'}

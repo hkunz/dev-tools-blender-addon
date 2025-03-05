@@ -1,10 +1,52 @@
 import bmesh
+import json
 
 class JbeamUtils:
 
+    ATTR_NODE_ID = "jbeam_node_id"
+    ATTR_NODE_PROPS = "jbeam_node_props"
+
     @staticmethod
-    def get_node_id(obj, vertex_index) -> str:
-        attr_name = 'jbeam_node_id'
+    def has_jbeam_node_id(obj):
+        return JbeamUtils.ATTR_NODE_ID in obj.data.attributes
+
+    @staticmethod
+    def remove_old_jbeam_attributes(obj):
+        if not obj or obj.type != 'MESH':
+            print(f"Cannot remove attributes from invalid object: {repr(obj)}")
+            return
+
+        mesh = obj.data
+        attributes_to_remove = [attr.name for attr in mesh.attributes if attr.name.startswith("jbeam_")]
+
+        for attr_name in attributes_to_remove:
+            mesh.attributes.remove(mesh.attributes[attr_name])
+            print(f"Removed attribute '{attr_name}' from {repr(obj)}")
+
+    @staticmethod
+    def create_attribute(obj, attr_name):
+        if not obj or obj.type != 'MESH':
+            print(f"Cannot add attribute '{attr_name}' to invalid object: {repr(obj)}")
+            return None
+
+        mesh = obj.data
+
+        if attr_name in mesh.attributes:
+            print(f"{repr(obj)}: already has attribute '{attr_name}'")
+            return mesh.attributes[attr_name]
+
+        return mesh.attributes.new(name=attr_name, type="STRING", domain="POINT")
+
+    @staticmethod
+    def create_attribute_node_id(obj):
+        return JbeamUtils.create_attribute(obj, JbeamUtils.ATTR_NODE_ID)
+
+    @staticmethod
+    def create_attribute_node_props(obj):
+        return JbeamUtils.create_attribute(obj, "jbeam_node_props")
+
+    @staticmethod
+    def get_attribute_value(obj, vertex_index, attr_name) -> str:
 
         if not obj or obj.type != 'MESH':
             print(f"Invalid object: {repr(obj)}")
@@ -44,8 +86,15 @@ class JbeamUtils:
         return None
 
     @staticmethod
-    def set_node_id(obj, vertex_index, node_id: str):
-        attr_name = 'jbeam_node_id'
+    def get_node_id(obj, vertex_index) -> str:
+        return JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_ID)
+
+    @staticmethod
+    def get_node_props(obj, vertex_index) -> dict:
+        return json.loads(JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS))
+
+    @staticmethod
+    def set_attribute_value(obj, vertex_index: int, attr_name: str, attr_value: str):
 
         if not obj or obj.type != 'MESH':
             print(f"Invalid object: {repr(obj)}")
@@ -62,7 +111,7 @@ class JbeamUtils:
             v = bm.verts[vertex_index]
             layer = bm.verts.layers.string.get(attr_name) or bm.verts.layers.string.new(attr_name)
 
-            v[layer] = node_id.encode('utf-8')
+            v[layer] = attr_value.encode('utf-8')
             return True
 
         elif obj.mode == 'OBJECT':
@@ -75,8 +124,16 @@ class JbeamUtils:
                 print(f"{repr(obj)}: Vertex index {vertex_index} out of range in Object Mode")
                 return False
 
-            attr_data[vertex_index].value = node_id.encode('utf-8')
+            attr_data[vertex_index].value = attr_value.encode('utf-8')
             return True
 
         print(f"{repr(obj)}: Unknown object mode {obj.mode}")
         return False
+
+    @staticmethod
+    def set_node_id(obj, vertex_index, node_id: str):
+        JbeamUtils.set_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_ID, node_id)
+
+    @staticmethod
+    def set_node_props(obj, vertex_index, node_props: dict):
+        JbeamUtils.set_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, json.dumps(node_props))

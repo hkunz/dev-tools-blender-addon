@@ -2,9 +2,10 @@ import bpy
 import json
 import difflib
 import unittest
-
 import pprint
+
 from dev_tools.utils.jbeam.jbeam_helper import PreJbeamStructureHelper, RedundancyReducerJbeamNodesGenerator # type: ignore
+from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
 
 class JbeamTestObject:
     def __init__(self, name="jbeam_test_object"):
@@ -34,9 +35,8 @@ class JbeamTestObject:
 
     def set_jbeam_attributes(self):
 
-        self.obj.data.attributes.new("jbeam_node_id", 'STRING', 'POINT')
-        self.obj.data.attributes.new("jbeam_node_group", 'STRING', 'POINT')
-        self.obj.data.attributes.new("jbeam_node_props", 'STRING', 'POINT')
+        j.create_attribute_node_id(self.obj)
+        j.create_attribute_node_props(self.obj)
 
         node_ids = {
             0: "b3",
@@ -59,29 +59,6 @@ class JbeamTestObject:
             17: "ref",
             18: "b10",
             19: "b7",
-        }
-
-        node_groups = {
-            0: ["group_bouncer_spring", "group_bouncer_top"],
-            1: ["group_bouncer_spring", "group_bouncer_top"],
-            2: ["group_bouncer_base"],
-            3: ["group_bouncer_base"],
-            4: ["group_bouncer_base"],
-            5: ["group_bouncer_base", "group_bouncer_spring"],
-            6: ["group_bouncer_base", "group_bouncer_spring"],
-            7: ["group_bouncer_base"],
-            8: ["group_bouncer_base", "group_bouncer_spring"],
-            9: ["group_bouncer_base", "group_bouncer_spring"],
-            10: ["group_bouncer_top"],
-            11: ["group_bouncer_top"],
-            12: ["group_bouncer_top"],
-            13: ["group_bouncer_top"],
-            14: ["group_bouncer_spring", "group_bouncer_top"],
-            15: ["group_bouncer_spring", "group_bouncer_top"],
-            16: ["group_bouncer_spring"],
-            17: [],
-            18: [],
-            19: [],
         }
 
         node_props = {
@@ -108,9 +85,8 @@ class JbeamTestObject:
         }
 
         for vertex_idx in range(20):
-            self.obj.data.attributes['jbeam_node_id'].data[vertex_idx].value = node_ids.get(vertex_idx, "").encode('utf-8')
-            self.obj.data.attributes['jbeam_node_group'].data[vertex_idx].value = ",".join(node_groups.get(vertex_idx, [])).encode('utf-8')
-            self.obj.data.attributes['jbeam_node_props'].data[vertex_idx].value = json.dumps(node_props.get(vertex_idx, {})).encode('utf-8')
+            j.set_node_id(self.obj, vertex_idx, node_ids[vertex_idx])
+            j.set_node_props(self.obj, vertex_idx, node_props[vertex_idx])
 
     def create_vertex_groups(self):
 

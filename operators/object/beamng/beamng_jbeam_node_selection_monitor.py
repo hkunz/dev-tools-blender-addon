@@ -1,6 +1,8 @@
 import bpy
 import bmesh
 
+from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
+
 class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
     bl_idname = "wm.devtools_beamng_jbeam_node_selection_monitor"
     bl_label = "Vertex Monitor"
@@ -20,7 +22,7 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
         if not obj or obj.type != 'MESH' or obj.mode != 'EDIT':
             return {'PASS_THROUGH'}
 
-        if "jbeam_node_id" not in obj.data.attributes:
+        if not j.has_jbeam_node_id(obj):
             return {'PASS_THROUGH'}  # Ignore non-JBeam objects
 
         if event.type == 'TIMER':
@@ -71,17 +73,13 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
         if set(selected_verts) != self._last_selected_indices:
             self._last_selected_indices = set(selected_verts)
             context.scene.beamng_jbeam_active_vertex_idx = active_index
-            layer = bm.verts.layers.string.get("jbeam_node_id")
-            if layer:
-                jbeam_ids = [
-                    bm.verts[v_idx][layer].decode('utf-8') if bm.verts[v_idx][layer] else f"({v_idx})"
-                    for v_idx in selected_verts
-                ]
-                context.scene.beamng_jbeam_selected_nodes = ", ".join(jbeam_ids)
-            else:
-                context.scene.beamng_jbeam_selected_nodes = ""
-            
-            context.scene.beamng_jbeam_active_node = bm.verts[active_index][layer].decode("utf-8") if layer else ""
+            jbeam_ids = [
+                j.get_node_id(obj, v_idx) or f"({v_idx})"
+                for v_idx in selected_verts
+            ]
+            context.scene.beamng_jbeam_selected_nodes = ", ".join(jbeam_ids)
+            context.scene.beamng_jbeam_active_node = j.get_node_id(obj, active_index) or ""
+
             bpy.ops.object.devtools_beamng_load_jbeam_node_props()
             self.force_update_ui()
 

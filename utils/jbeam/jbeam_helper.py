@@ -1,7 +1,8 @@
 import json
-from collections import OrderedDict
+from collections import defaultdict, OrderedDict
 
 from dev_tools.utils.number_utils import NumberUtils # type: ignore
+from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
 
 DEFAULT_SCOPE_MODIFIER_VALUES = {
     "frictionCoef": 1.0,
@@ -34,7 +35,7 @@ class PreJbeamStructureHelper:
 
     def check(self):
         mesh = self.obj.data
-        if "jbeam_node_id" not in mesh.attributes or "jbeam_node_props" not in mesh.attributes:
+        if not j.has_jbeam_node_id(self.obj):
             raise ValueError(f"ERROR: Required attributes \"jbeam_node_id\" and \"jbeam_node_props\" not found in mesh")
         group_map = {g.index: g.name for g in self.obj.vertex_groups if g.name.startswith("group_")}
         print(f"Vertex Groups Found: {group_map}")
@@ -111,9 +112,6 @@ class PreJbeamStructureHelper:
         return OrderedDict((k, json.loads(v)) for k, v in sorted_items)
 
 
-import bpy
-from collections import defaultdict
-
 class RedundancyReducerJbeamNodesGenerator:
     def __init__(self, obj, data):
         self.obj = obj
@@ -153,7 +151,7 @@ class RedundancyReducerJbeamNodesGenerator:
                         hierarchy.append({key: processed_value})
                     current_properties[key] = value
             vertex_index = node
-            node_id = self.obj.data.attributes['jbeam_node_id'].data[vertex_index].value.decode("utf-8") if isinstance(node, int) else node
+            node_id = j.get_node_id(self.obj, vertex_index) if isinstance(node, int) else node
             v = self.obj.data.vertices[vertex_index].co 
             hierarchy.append([node_id, round(v.x, 2), round(v.y, 2), round(v.z, 2)])  # Append the node itself to the hierarchy
 
@@ -172,3 +170,4 @@ class RedundancyReducerJbeamNodesGenerator:
             hierarchy.append({key: DEFAULT_SCOPE_MODIFIER_VALUES.get(key, '')})
 
         return hierarchy
+

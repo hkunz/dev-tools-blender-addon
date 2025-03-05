@@ -15,7 +15,6 @@ from dev_tools.operators.object.beamng.beamng_create_metaball_cloud_operator imp
 from dev_tools.operators.object.beamng.beamng_parent_to_start01_empty_operator import OBJECT_OT_BeamngParentToStart01Empty, OBJECT_OT_BeamngClearChildrenStart01Empty # type: ignore
 from dev_tools.operators.object.beamng.beamng_parent_to_start01_empty_operator import OBJECT_OT_BeamngClearChildrenStart01Empty, OBJECT_OT_BeamngParentToStart01Empty # type: ignore
 from dev_tools.operators.object.beamng.beamng_export_mesh_to_jbeam import OBJECT_OT_BeamngCreateRefnodesVertexGroups, EXPORT_OT_BeamngExportMeshToJbeam # type: ignore
-from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_mesh_v1 import OBJECT_OT_BeamngConvertJbeamToMesh_v1 # type: ignore
 from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_mesh_v2 import OBJECT_OT_BeamngConvertJbeamToMesh_v2 # type: ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_node_props_manager import OBJECT_OT_BeamngSaveJbeamNodeProp, OBJECT_OT_BeamngSaveAllJbeamNodeProps, OBJECT_OT_BeamngAddJbeamNodeProp, OBJECT_OT_BeamngRemoveJbeamNodeProp, OBJECT_OT_BeamngSelectJbeamNodesByProperty, JbeamPropertyItem # type: ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_rename_selected_nodes import OBJECT_OT_BeamngJbeamRenameSelectedNodes # type:ignore
@@ -23,6 +22,7 @@ from dev_tools.operators.object.beamng.beamng_jbeam_rename_selected_nodes import
 from dev_tools.utils.utils import Utils # type: ignore
 from dev_tools.utils.object_utils import ObjectUtils # type: ignore
 from dev_tools.utils.icons_manager import IconsManager  # type: ignore
+from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
 
 IDNAME_ICONS = {
     "NodeSocketMaterial": "MATERIAL_DATA",
@@ -200,13 +200,12 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             row.operator(EXPORT_OT_BeamngExportMeshToJbeam.bl_idname, text="Export JBeam")
             col.operator(OBJECT_OT_BeamngConvertJbeamToMesh_v2.bl_idname, text="Jbeam to Mesh")
 
-            if obj and obj.mode == 'EDIT' and obj.type == 'MESH' and "jbeam_node_id" in obj.data.attributes:
+            if obj and obj.mode == 'EDIT' and obj.type == 'MESH' and j.has_jbeam_node_id(obj):
                 bm = bmesh.from_edit_mesh(obj.data)
                 bm.verts.ensure_lookup_table()
-                layer = bm.verts.layers.string.get("jbeam_node_id")
                 index = context.scene.beamng_jbeam_active_vertex_idx
-                if index > -1 and layer:
-                    beamng_jbeam_active_node_id = bm.verts[index][layer].decode("utf-8") if bm.verts[index][layer] else "None"
+                if index > -1:
+                    beamng_jbeam_active_node_id = j.get_node_id(obj, index)
                     box = col.box()
                     box.label(text=f"Active Node: {beamng_jbeam_active_node_id} ({index})")
                     box.label(text=f"Selected Nodes: {context.scene.beamng_jbeam_selected_nodes}")

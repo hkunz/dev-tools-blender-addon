@@ -7,6 +7,7 @@ from pprint import pprint
 
 from dev_tools.utils.json_cleanup import json_cleanup # type: ignore
 from dev_tools.utils.jbeam.jbeam_helper import PreJbeamStructureHelper, RedundancyReducerJbeamNodesGenerator # type: ignore
+from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
 
 import io
 import json
@@ -217,10 +218,10 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         mesh.calc_loop_triangles()
 
         nodes = self.generate_jbeam_node_list(obj)
-        beams = self.get_beams(mesh)
-        triangles = self.get_triangles(mesh)
-        quads = self.get_quads(mesh)
-        ngons = self.get_ngons(mesh)
+        beams = self.get_beams(obj)
+        triangles = self.get_triangles(obj)
+        quads = self.get_quads(obj)
+        ngons = self.get_ngons(obj)
         ref_nodes = self.find_reference_nodes(obj)
 
         ref_nodes_data = [
@@ -302,45 +303,41 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
 
         return True
 
-    def get_beams(self, mesh):
-        n = mesh.attributes['jbeam_node_id'].data
-        return [[n[v1].value.decode('utf-8'), n[v2].value.decode('utf-8')] for v1, v2 in (edge.vertices for edge in mesh.edges)]
+    def get_beams(self, o):
+        return [[j.get_node_id(o,v1), j.get_node_id(o,v2)] for v1, v2 in (edge.vertices for edge in o.data.edges)]
 
-    def get_triangles(self, mesh):
-        n = mesh.attributes['jbeam_node_id'].data
+    def get_triangles(self, o):
         triangles = []
-        for poly in mesh.polygons:
+        for poly in o.data.polygons:
             if len(poly.vertices) == 3:
                 v1, v2, v3 = poly.vertices
-                triangles.append([n[v1].value.decode('utf-8'), n[v2].value.decode('utf-8'), n[v3].value.decode('utf-8')])
+                triangles.append([j.get_node_id(o,v1), j.get_node_id(o,v2), j.get_node_id(o,v3)])
         return triangles
 
-    def get_quads(self, mesh):
-        n = mesh.attributes['jbeam_node_id'].data
+    def get_quads(self, o):
         quads = []
-        for poly in mesh.polygons:
+        for poly in o.data.polygons:
             if len(poly.vertices) == 4:
                 v1, v2, v3, v4 = poly.vertices
-                quads.append([n[v1].value.decode('utf-8'), n[v2].value.decode('utf-8'), n[v3].value.decode('utf-8'), n[v4].value.decode('utf-8')])
+                quads.append([j.get_node_id(o,v1), j.get_node_id(o,v2), j.get_node_id(o,v3), j.get_node_id(o,v4)])
         return quads
 
-    def get_ngons(self, mesh):
-        n = mesh.attributes['jbeam_node_id'].data
+    def get_ngons(self, o):
         ngons = []
-        for poly in mesh.polygons:
+        for poly in o.data.polygons:
             if len(poly.vertices) > 4:
-                ngons.append([n[v].value.decode('utf-8') for v in poly.vertices])
+                ngons.append([j.get_node_id(o,v) for v in poly.vertices])
         return ngons
 
-    def find_reference_nodes(self, obj):
+    def find_reference_nodes(self, o):
         ref_nodes = {"ref": None, "back": None, "left": None, "up": None, "leftCorner": None, "rightCorner": None}
         for group_name in ref_nodes.keys():
-            group = obj.vertex_groups.get(group_name)
+            group = o.vertex_groups.get(group_name)
             if group:
-                for vert in obj.data.vertices:
+                for vert in o.data.vertices:
                     for g in vert.groups:
                         if g.group == group.index:
-                            ref_nodes[group_name] = obj.data.attributes['jbeam_node_id'].data[vert.index].value.decode('utf-8')
+                            ref_nodes[group_name] = j.get_node_id(o,vert.index)
                             break
         return ref_nodes
 

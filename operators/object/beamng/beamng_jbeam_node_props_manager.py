@@ -224,7 +224,7 @@ class OBJECT_OT_BeamngRemoveJbeamNodeProp(bpy.types.Operator):
                     props = j.get_node_props(obj, v.index)
                     if self.prop_name in props:
                         del props[self.prop_name]  # Remove property
-                        j.set_node_props(obj, v.index, props if props else b'')
+                        j.set_node_props(obj, v.index, props if props else {})
                         removed_from_mesh = True
 
                 except Exception as e:

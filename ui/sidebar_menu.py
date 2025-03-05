@@ -18,6 +18,7 @@ from dev_tools.operators.object.beamng.beamng_export_mesh_to_jbeam import OBJECT
 from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_mesh_v2 import OBJECT_OT_BeamngConvertJbeamToMesh_v2 # type: ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_node_props_manager import OBJECT_OT_BeamngSaveJbeamNodeProp, OBJECT_OT_BeamngSaveAllJbeamNodeProps, OBJECT_OT_BeamngAddJbeamNodeProp, OBJECT_OT_BeamngRemoveJbeamNodeProp, OBJECT_OT_BeamngSelectJbeamNodesByProperty, JbeamPropertyItem # type: ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_rename_selected_nodes import OBJECT_OT_BeamngJbeamRenameSelectedNodes # type:ignore
+from dev_tools.operators.object.beamng.beamng_jbeam_create_mesh_object import OBJECT_OT_create_jbeam_mesh_object # type: ignore
 
 from dev_tools.utils.utils import Utils # type: ignore
 from dev_tools.utils.object_utils import ObjectUtils # type: ignore
@@ -198,6 +199,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             row.operator(OBJECT_OT_BeamngCreateRefnodesVertexGroups.bl_idname, text="Craete refNodes Vertex Groups")
             row.separator()
             row.operator(EXPORT_OT_BeamngExportMeshToJbeam.bl_idname, text="Export JBeam")
+            col.operator(OBJECT_OT_create_jbeam_mesh_object.bl_idname, text="Create Jbeam Mesh")
             col.operator(OBJECT_OT_BeamngConvertJbeamToMesh_v2.bl_idname, text="Jbeam to Mesh")
             box = col.box()
 
@@ -223,15 +225,15 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                             button_row.operator(OBJECT_OT_BeamngSaveJbeamNodeProp.bl_idname, text="S").prop_name = prop.name
                             button_row.operator(OBJECT_OT_BeamngRemoveJbeamNodeProp.bl_idname, text="X").prop_name = prop.name
                     else:
-                        box.label(text=f"No jbeam properties in node {context.scene.beamng_jbeam_selected_nodes}")
+                        box.label(text=f"No Scope Modifers on Node `{context.scene.beamng_jbeam_selected_nodes}`")
 
-                    box.operator(OBJECT_OT_BeamngAddJbeamNodeProp.bl_idname, text="Add Node Property")
+                    box.operator(OBJECT_OT_BeamngAddJbeamNodeProp.bl_idname, text="Add Scope Modifier")
                     box.operator(OBJECT_OT_BeamngSaveAllJbeamNodeProps.bl_idname, text="Save All")
                 else:
-                    msg = "Select node/s to view properties" if j.has_jbeam_node_id(obj) else "Convert Jbeam to Mesh"
+                    msg = "Select node/s to view Scope Modifiers" if j.has_jbeam_node_id(obj) else "Convert Jbeam to Mesh"
                     box.label(text=msg)
             else:
-                msg = "Edit nodes in 'Edit Mode'" if j.is_jbeam_mesh(obj) else ("Convert Jbeam to Mesh" if j.has_jbeam_node_id(obj) else "No jbeam object selected")
+                msg = "Edit nodes in Edit Mode" if j.is_jbeam_mesh(obj) else ("Convert Jbeam to Mesh" if j.has_jbeam_node_id(obj) else "No jbeam object selected")
                 box.label(text=msg)
 
             col.separator()

@@ -1,33 +1,41 @@
 import bpy
 import json
 
-from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
+from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
 
 class JbeamMeshObject:
     def __init__(self, name="jbeam_mesh"):
         self.name = name
-        self.obj = self.create_test_line_object()
+        self.obj = self.create_triangulated_cube()
         self.set_jbeam_attributes()
         self.create_vertex_groups()
 
     def get_obj(self):
         return self.obj
 
-    def create_test_line_object(self):
-
+    def create_triangulated_cube(self):
         mesh = bpy.data.meshes.new(f"{self.name}_mesh")
         obj = bpy.data.objects.new(self.name, mesh)
         bpy.context.collection.objects.link(obj)
         bpy.context.view_layer.objects.active = obj
         obj.select_set(True)
 
-        vertices = [(x, 0.25 * x, 0.5 * x) for x in range(8)]
-        edges = [(i, i+1) for i in range(7)]
-        
-        faces = []
-        mesh.from_pydata(vertices, edges, faces)
+        vertices = [
+            (-1, -1, -1), (1, -1, -1), (1, 1, -1), (-1, 1, -1),
+            (-1, -1, 1), (1, -1, 1), (1, 1, 1), (-1, 1, 1)
+        ]
+
+        faces = [
+            (0, 1, 2), (2, 3, 0),  # Bottom
+            (4, 5, 6), (6, 7, 4),  # Top
+            (0, 1, 5), (5, 4, 0),  # Front
+            (2, 3, 7), (7, 6, 2),  # Back
+            (0, 3, 7), (7, 4, 0),  # Left
+            (1, 2, 6), (6, 5, 1)   # Right
+        ]
+
+        mesh.from_pydata(vertices, [], faces)
         mesh.update()
-        
         return obj
 
     def set_jbeam_attributes(self):
@@ -62,7 +70,6 @@ class JbeamMeshObject:
             group.add(vertex_indices, 1.0, 'REPLACE')
 
 
-
 class OBJECT_OT_create_jbeam_mesh_object(bpy.types.Operator):
     """Create a JBeam Mesh Object"""
     bl_idname = "object.devtools_beamng_create_jbeam_mesh_object"
@@ -73,4 +80,3 @@ class OBJECT_OT_create_jbeam_mesh_object(bpy.types.Operator):
         bpy.ops.object.select_all(action='DESELECT')
         JbeamMeshObject()
         return {'FINISHED'}
-

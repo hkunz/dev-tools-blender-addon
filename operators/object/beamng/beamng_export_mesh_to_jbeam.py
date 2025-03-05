@@ -103,7 +103,7 @@ class OBJECT_OT_BeamngCreateRefnodesVertexGroups(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        group_names = ["up", "left", "back", "leftCorner", "rightCorner", "fixed"]
+        group_names = ["up", "left", "back", "leftCorner", "rightCorner"]
         obj = context.active_object
 
         if obj and obj.type == "MESH":
@@ -214,24 +214,14 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
             return False
 
         mesh = obj.data
-        num_vertices = len(mesh.vertices)
         mesh.calc_loop_triangles()
-        node_names = None
-        try:
-            node_names = json.loads(obj.data["node_names"])
-            print(f"Object total verts: {num_vertices}, node names len: {len(node_names)}")
-            if num_vertices > len(node_names):
-                print("Object vertices and node names available are not the same, default to using vertex indices as node names")
-                node_names = None
-        except (KeyError, json.JSONDecodeError):
-            node_names = None
 
         nodes = self.generate_jbeam_node_list(obj)
         beams = self.get_beams(mesh)
         triangles = self.get_triangles(mesh)
         quads = self.get_quads(mesh)
         ngons = self.get_ngons(mesh)
-        ref_nodes = self.find_reference_nodes(obj, node_names)
+        ref_nodes = self.find_reference_nodes(obj)
 
         ref_nodes_data = [
             ["ref:", "back:", "left:", "up:", "leftCorner:", "rightCorner:"],
@@ -342,7 +332,7 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
                 ngons.append([n[v].value.decode('utf-8') for v in poly.vertices])
         return ngons
 
-    def find_reference_nodes(self, obj, node_names):
+    def find_reference_nodes(self, obj):
         ref_nodes = {"ref": None, "back": None, "left": None, "up": None, "leftCorner": None, "rightCorner": None}
         for group_name in ref_nodes.keys():
             group = obj.vertex_groups.get(group_name)
@@ -350,7 +340,7 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
                 for vert in obj.data.vertices:
                     for g in vert.groups:
                         if g.group == group.index:
-                            ref_nodes[group_name] = node_names.get(str(vert.index), None) if node_names else f"b{vert.index + 1}"
+                            ref_nodes[group_name] = obj.data.attributes['jbeam_node_id'].data[vert.index].value.decode('utf-8')
                             break
         return ref_nodes
 

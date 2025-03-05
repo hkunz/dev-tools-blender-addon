@@ -24,7 +24,7 @@ class Node:
 
 
 class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
-    """Convert JBeam to mesh object by removing custom properties and merging by distance"""
+    """Convert object to Node Mesh by removing custom properties and merging by distance"""
     bl_idname = "object.devtools_beamng_convert_jbeam_to_mesh_v2"
     bl_label = "DevTools: Convert JBeam to Mesh Object (v2)"
     bl_options = {'REGISTER', 'UNDO'}
@@ -176,6 +176,15 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
             j.set_node_id(obj, idx, str(vert_props.node_id))
             j.set_node_props(obj, idx, flat_data)
 
+    def create_default_flex_group(self, obj):
+        node_group = "flexbody_mesh"
+        vertex_groups_data = {
+            f'group_{node_group}': list(range(len(obj.data.vertices)))
+        }
+
+        for group_name, vertex_indices in vertex_groups_data.items():
+            group = obj.vertex_groups.new(name=group_name)
+            group.add(vertex_indices, 1.0, 'REPLACE')
 
     def execute(self, context):
         obj = context.object
@@ -185,16 +194,27 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
             self.report({'WARNING'}, "No mesh object selected!")
             return {'CANCELLED'}
 
+        if j.is_node_mesh(obj):
+            self.report({'INFO'}, "Object is already a Node Mesh")
+            return {'CANCELLED'}
+
         jbeam_path = obj.data.get('jbeam_file_path', None)
+        ref_nodes = None
+        verts_dic = None
+        is_jbeam_part = False
+
         if not jbeam_path:
-            self.report({'WARNING'}, "Object is not a JBeam object or missing JBeam file path!")
-            return {'CANCELLED'}
-
-        json_data = self.load_jbeam(jbeam_path)
-        if not json_data:
-            return {'CANCELLED'}
-
-        ref_nodes = self.get_ref_nodes(json_data)
+            self.report({'WARNING'}, "Object is not a JBeam part or missing JBeam file path!")
+        else:
+            is_jbeam_part = True
+            json_data = self.load_jbeam(jbeam_path)
+            if json_data:
+                ref_nodes = self.get_ref_nodes(json_data)
+            for part_name, part_data in json_data.items():
+                if "nodes" in part_data: # TODO currently only handles 1 part for selected obj, the first partname in the list
+                    break
+            verts_dic = self.get_vertex_indices(obj, part_data)
+ 
         self.remove_custom_data_props(obj)
 
         bpy.context.view_layer.objects.active = obj
@@ -203,17 +223,15 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
         bpy.ops.mesh.remove_doubles(threshold=0.0005)
         bpy.ops.object.mode_set(mode='OBJECT')
 
-        for part_name, part_data in json_data.items():
-            if "nodes" in part_data: # TODO currently only handles 1 part for selected obj, the first partname in the list
-                break
-
-        verts_dic = self.get_vertex_indices(obj, part_data)
- 
-        self.assign_ref_nodes_to_vertex_groups(obj, ref_nodes, verts_dic)
-        self.assign_flex_groups_to_vertex_groups(obj, part_data, verts_dic)
-        self.store_node_props_in_vertex_attributes(obj, verts_dic)
+        if is_jbeam_part:
+            self.assign_ref_nodes_to_vertex_groups(obj, ref_nodes, verts_dic)
+            self.assign_flex_groups_to_vertex_groups(obj, part_data, verts_dic)
+            self.store_node_props_in_vertex_attributes(obj, verts_dic)
+        else:
+            self.create_default_flex_group(obj)
+            j.setup_default_scope_modifiers_and_node_ids(obj)
 
         bpy.ops.object.devtools_beamng_create_refnodes_vertex_groups()
 
-        self.report({'INFO'}, f"Cleaned object and mesh data: {obj.name}")
+        self.report({'INFO'}, f"Converted {obj.name} to Node Mesh!")
         return {'FINISHED'}

@@ -197,11 +197,11 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             col.separator()
             row = col.row(align=True)
             row.operator(EXPORT_OT_BeamngExportMeshToJbeam.bl_idname, text="Export JBeam")
-            col.operator(OBJECT_OT_create_jbeam_mesh_object.bl_idname, text="Create Jbeam Mesh")
-            col.operator(OBJECT_OT_BeamngConvertJbeamToMesh_v2.bl_idname, text="Jbeam to Mesh")
+            col.operator(OBJECT_OT_create_jbeam_mesh_object.bl_idname, text="Create Node Mesh")
+            col.operator(OBJECT_OT_BeamngConvertJbeamToMesh_v2.bl_idname, text="Convert to Node Mesh")
             box = col.box()
 
-            if obj and obj.mode == 'EDIT' and obj.type == 'MESH' and j.is_jbeam_mesh(obj):
+            if obj and obj.mode == 'EDIT' and obj.type == 'MESH' and j.is_node_mesh(obj):
                 bm = bmesh.from_edit_mesh(obj.data)
                 bm.verts.ensure_lookup_table()
                 index = context.scene.beamng_jbeam_active_vertex_idx
@@ -228,14 +228,14 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                     box.operator(OBJECT_OT_BeamngAddJbeamNodeProp.bl_idname, text="Add Scope Modifier")
                     box.operator(OBJECT_OT_BeamngSaveAllJbeamNodeProps.bl_idname, text="Save All")
                 else:
-                    msg = "Select node/s to view Scope Modifiers" if j.has_jbeam_node_id(obj) else "Convert Jbeam to Mesh"
+                    msg = "Select node/s to view Scope Modifiers" if j.has_jbeam_node_id(obj) else "Convert to Node Mesh"
                     box.label(text=msg)
             else:
-                msg = "Edit nodes in Edit Mode" if j.is_jbeam_mesh(obj) else ("Convert Jbeam to Mesh" if j.has_jbeam_node_id(obj) else "No jbeam object selected")
+                msg = "Edit Node Mesh in Edit Mode" if j.is_node_mesh(obj) else ("Convert to Node Mesh" if j.has_jbeam_node_id(obj) else "No Node Mesh selected")
                 box.label(text=msg)
 
             col.separator()
-            col.operator(OBJECT_OT_BeamngCreateMetaBallCloud.bl_idname, text="Create MetaBall Cloud")
+            #col.operator(OBJECT_OT_BeamngCreateMetaBallCloud.bl_idname, text="Create MetaBall Cloud")
 
 
     def draw_expanded_bake_options(self, context, layout):

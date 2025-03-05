@@ -15,7 +15,7 @@ class JbeamUtils:
     def has_jbeam_node_props(obj):
         return JbeamUtils.ATTR_NODE_PROPS in obj.data.attributes if obj else False
 
-    def is_jbeam_mesh(obj):
+    def is_node_mesh(obj):
         return JbeamUtils.has_jbeam_node_id(obj) and JbeamUtils.has_jbeam_node_props(obj)
 
     @staticmethod
@@ -154,6 +154,26 @@ class JbeamUtils:
     @staticmethod
     def set_node_props(obj, vertex_index, node_props: dict):
         JbeamUtils.set_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, json.dumps(node_props))
+
+    @staticmethod
+    def setup_default_scope_modifiers_and_node_ids(obj):
+        num_verts = len(obj.data.vertices)
+        node_ids = {i: f"n{i+1}" for i in range(num_verts)}
+        node_props = {
+            i: {
+                "collision": "true",
+                "selfCollision": "false",
+                "frictionCoef": 1.2,
+                "nodeMaterial": "|NM_METAL",
+                "nodeWeight": (1 + i)
+            }
+            for i in range(num_verts)
+        }
+        JbeamUtils.create_attribute_node_id(obj) 
+        JbeamUtils.create_attribute_node_props(obj)
+        for vertex_idx in range(num_verts):
+            JbeamUtils.set_node_id(obj, vertex_idx, node_ids[vertex_idx])
+            JbeamUtils.set_node_props(obj, vertex_idx, node_props[vertex_idx])
 
     @staticmethod
     def set_jbeam_visuals(obj):

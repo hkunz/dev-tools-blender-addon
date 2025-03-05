@@ -43,26 +43,8 @@ class JbeamMeshObject:
         return obj
 
     def set_jbeam_attributes(self):
-        j.create_attribute_node_id(self.obj)
-        j.create_attribute_node_props(self.obj)
-
-        node_ids = {i: f"n{i+1}" for i in range(8)}
-
-        node_props = {
-            i: {
-                "collision": "true",
-                "selfCollision": "false",
-                "frictionCoef": 1.2,
-                "nodeMaterial": "|NM_METAL",
-                "nodeWeight": (1 + i)
-            }
-            for i in range(8)
-        }
-
-        for vertex_idx in range(8):
-            j.set_node_id(self.obj, vertex_idx, node_ids[vertex_idx])
-            j.set_node_props(self.obj, vertex_idx, node_props[vertex_idx])
-
+        j.setup_default_scope_modifiers_and_node_ids(self.obj)
+        
     def create_vertex_groups(self):
         node_group = "flexbody_mesh"
         vertex_groups_data = {

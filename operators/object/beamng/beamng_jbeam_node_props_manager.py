@@ -2,6 +2,8 @@ import bpy
 import bmesh
 import json
 
+from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
+
 class JbeamPropertyItem(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Property Name") # type: ignore
     value: bpy.props.StringProperty(name="Value") # type: ignore
@@ -32,7 +34,7 @@ class OBJECT_OT_BeamngLoadJbeamNodeProps(bpy.types.Operator):
 
         for v in selected_verts:
             try:
-                props = json.loads(v[layer].decode("utf-8")) if v[layer] else {}
+                props = j.get_node_props(obj, v.index)
                 for key, value in props.items():
                     properties[key] = value
             except Exception as e:
@@ -75,7 +77,7 @@ class OBJECT_OT_BeamngSaveJbeamNodeProp(bpy.types.Operator):
 
         for v in selected_verts:
             try:
-                props = json.loads(v[layer].decode("utf-8")) if v[layer] else {}
+                props = j.get_node_props(obj, v.index)
                 if any(prop.name.lower() == "group" for prop in context.scene.beamng_jbeam_vertex_props):
                     self.report({'WARNING'}, "Keyword 'group' is reserved. Use vertex groups prefixed 'group_' to assign nodes to groups.")
                     return {'CANCELLED'}
@@ -83,7 +85,7 @@ class OBJECT_OT_BeamngSaveJbeamNodeProp(bpy.types.Operator):
                     if prop.name == self.prop_name:
                         props[prop.name] = prop.value
                         break
-                v[layer] = json.dumps(props).encode("utf-8")
+                j.set_node_props(obj, v.index, props)
             except Exception as e:
                 self.report({'ERROR'}, f"Failed to save property: {e}")
 
@@ -117,17 +119,15 @@ class OBJECT_OT_BeamngSaveAllJbeamNodeProps(bpy.types.Operator):
             return "Keyword 'group' is reserved. Use vertex groups prefixed 'group_' to assign nodes to groups.", 'CANCELLED'
 
         for v in selected_verts:
-            try:
-                props = json.loads(v[layer].decode("utf-8")) if v[layer] else {}
-
-                # Remove properties that are missing from the UI
-                props = {k: v for k, v in props.items() if k in ui_props}
+            try: 
+                props = j.get_node_props(obj, v.index)
+                props = {k: v for k, v in props.items() if k in ui_props} # Remove properties that are missing from the UI
 
                 # Update values from the UI
                 for prop_name, prop_value in ui_props.items():
                     props[prop_name] = prop_value
 
-                v[layer] = json.dumps(props).encode("utf-8")
+                j.set_node_props(obj, v.index, props)
 
             except Exception as e:
                 return f"Failed to save properties: {e}", 'ERROR'
@@ -221,10 +221,10 @@ class OBJECT_OT_BeamngRemoveJbeamNodeProp(bpy.types.Operator):
                     continue  # Skip if no stored data
 
                 try:
-                    props = json.loads(v[layer].decode("utf-8"))
+                    props = j.get_node_props(obj, v.index)
                     if self.prop_name in props:
                         del props[self.prop_name]  # Remove property
-                        v[layer] = json.dumps(props).encode("utf-8") if props else b''
+                        j.set_node_props(obj, v.index, props if props else b'')
                         removed_from_mesh = True
 
                 except Exception as e:
@@ -279,30 +279,22 @@ class OBJECT_OT_BeamngSelectJbeamNodesByProperty(bpy.types.Operator):
 
         print(f"\n[DEBUG] Searching for vertices with {self.prop_name} = {selected_prop_value}")
 
-        # Deselect all first
         for v in bm.verts:
             v.select = False
 
         matched_count = 0
 
         for v in bm.verts:
-            if not v[layer]:  # Skip if no data
-                continue
+            stored_data = j.get_node_props(obj, v.index)
+            stored_value = stored_data.get(self.prop_name, None)
 
-            try:
-                stored_data = json.loads(v[layer].decode("utf-8"))  # Parse JSON
-                stored_value = stored_data.get(self.prop_name, None)  # Get the specific property
-
-                # Convert values to string for comparison
-                if stored_value is not None and str(stored_value).strip().lower() == selected_prop_value:
-                    v.select = True
-                    matched_count += 1
-                    print(f"[DEBUG] -> Selected Vertex {v.index} with {self.prop_name} = {stored_value}")
-            except Exception as e:
-                print(f"[ERROR] Failed to parse JSON for vertex {v.index}: {e}")
+            # Convert values to string for comparison
+            if stored_value is not None and str(stored_value).strip().lower() == selected_prop_value:
+                v.select = True
+                matched_count += 1
 
         bmesh.update_edit_mesh(obj.data)
 
-        print(f"\n[DEBUG] Total Matched Vertices: {matched_count}")
+        print(f"Total Matched Vertices: {matched_count}")
         self.report({'INFO'}, f"Selected {matched_count} vertices with {self.prop_name} = {selected_prop_value}")
         return {'FINISHED'}

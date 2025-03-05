@@ -1,6 +1,5 @@
 TODO:
 
-reduce duplication of node_id = obj.data.attributes['jbeam_node_id'].data[vertex_index].value.decode('utf-8')
 on export check that only one vertex is assigned to vertex groups left, up etc
 remove node_names attribute on mesh data
 create beam mesh fix error when going into edit mode

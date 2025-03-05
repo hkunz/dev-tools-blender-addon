@@ -34,7 +34,6 @@ class PreJbeamStructureHelper:
         self.node_props = self.get_node_properties()
 
     def check(self):
-        mesh = self.obj.data
         if not j.has_jbeam_node_id(self.obj):
             raise ValueError(f"ERROR: Required attributes \"jbeam_node_id\" and \"jbeam_node_props\" not found in mesh")
         group_map = {g.index: g.name for g in self.obj.vertex_groups if g.name.startswith("group_")}
@@ -50,10 +49,7 @@ class PreJbeamStructureHelper:
         }
 
     def get_node_properties(self):
-        attr = self.obj.data.attributes.get("jbeam_node_props")
-        if attr:
-            return {i: attr.data[i].value.decode("utf-8") for i in range(len(attr.data))}
-        return {}
+        return {i: j.get_node_props(self.obj, i) for i in range(len(self.obj.data.vertices))}
 
     def parse_properties(self, properties_str):
         if not properties_str:

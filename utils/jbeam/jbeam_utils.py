@@ -90,8 +90,12 @@ class JbeamUtils:
         return JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_ID)
 
     @staticmethod
+    def get_node_props_str(obj, vertex_index) -> str:
+        return JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS)
+
+    @staticmethod
     def get_node_props(obj, vertex_index) -> dict:
-        return json.loads(JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS))
+        return json.loads(JbeamUtils.get_node_props_str(obj, vertex_index))
 
     @staticmethod
     def set_attribute_value(obj, vertex_index: int, attr_name: str, attr_value: str):

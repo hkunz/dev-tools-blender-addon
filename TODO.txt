@@ -1,7 +1,7 @@
 TODO
 
 Attribute can only be viewed using python when in Object Mode:
-node_id = obj.data.attributes['jbeam_node_id'].data[vertex_index].value.decode(utf8)
+node_id = obj.data.attributes['jbeam_node_id'].data[vertex_index].value.decode('utf-8')
 
 To view Attributes in Edit Mode:
 
@@ -12,3 +12,11 @@ layer = bm.verts.layers.string.get("jbeam_node_id")
 value = v[layer]
 v[layer] = f"<new-value>".encode("utf-8")
 
+
+
+TODO:
+
+reduce duplication of node_id = obj.data.attributes['jbeam_node_id'].data[vertex_index].value.decode('utf-8')
+on export check that only one vertex is assigned to vertex groups left, up etc
+remove node_names attribute on mesh data
+create beam mesh fix error when going into edit mode

@@ -8,7 +8,7 @@ class JbeamUtils:
 
     @staticmethod
     def has_jbeam_node_id(obj):
-        return JbeamUtils.ATTR_NODE_ID in obj.data.attributes
+        return JbeamUtils.ATTR_NODE_ID in obj.data.attributes if obj else False
 
     @staticmethod
     def remove_old_jbeam_attributes(obj):

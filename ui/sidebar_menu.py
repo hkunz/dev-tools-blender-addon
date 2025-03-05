@@ -199,6 +199,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             row.separator()
             row.operator(EXPORT_OT_BeamngExportMeshToJbeam.bl_idname, text="Export JBeam")
             col.operator(OBJECT_OT_BeamngConvertJbeamToMesh_v2.bl_idname, text="Jbeam to Mesh")
+            box = col.box()
 
             if obj and obj.mode == 'EDIT' and obj.type == 'MESH' and j.has_jbeam_node_id(obj):
                 bm = bmesh.from_edit_mesh(obj.data)
@@ -206,7 +207,6 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                 index = context.scene.beamng_jbeam_active_vertex_idx
                 if index > -1:
                     beamng_jbeam_active_node_id = j.get_node_id(obj, index)
-                    box = col.box()
                     box.label(text=f"Active Node: {beamng_jbeam_active_node_id} ({index})")
                     box.label(text=f"Selected Nodes: {context.scene.beamng_jbeam_selected_nodes}")
                     box.prop(context.scene, "beamng_jbeam_active_node", text="Active Node ID")
@@ -227,6 +227,11 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
 
                     box.operator(OBJECT_OT_BeamngAddJbeamNodeProp.bl_idname, text="Add Node Property")
                     box.operator(OBJECT_OT_BeamngSaveAllJbeamNodeProps.bl_idname, text="Save All")
+                else:
+                    box.label(text=f"Select node/s to view properties")
+            else:
+                msg = "Edit nodes in 'Edit Mode'" if j.has_jbeam_node_id(obj) else "No jbeam object selected"
+                box.label(text=msg)
 
             col.separator()
             col.operator(OBJECT_OT_BeamngCreateMetaBallCloud.bl_idname, text="Create MetaBall Cloud")

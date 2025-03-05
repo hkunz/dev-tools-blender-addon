@@ -36,7 +36,7 @@ class OBJECT_OT_BeamngJbeamRenameSelectedNodes(bpy.types.Operator):
 
         if len(selected_verts) == 1:
             # If only one vertex is selected, assign the exact input without modifications
-            j.set_node_id(obj, 0, active_id)
+            j.set_node_id(obj, selected_verts[0].index, active_id) 
         else:
             for i, v in enumerate(selected_verts, 1):
                 if "#" in active_id:

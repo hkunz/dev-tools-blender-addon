@@ -49,7 +49,7 @@ class PreJbeamStructureHelper:
         }
 
     def get_node_properties(self):
-        return {i: j.get_node_props(self.obj, i) for i in range(len(self.obj.data.vertices))}
+        return {i: j.get_node_props_str(self.obj, i) for i in range(len(self.obj.data.vertices))}
 
     def parse_properties(self, properties_str):
         if not properties_str:

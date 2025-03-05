@@ -11,6 +11,13 @@ class JbeamUtils:
         return JbeamUtils.ATTR_NODE_ID in obj.data.attributes if obj else False
 
     @staticmethod
+    def has_jbeam_node_props(obj):
+        return JbeamUtils.ATTR_NODE_PROPS in obj.data.attributes if obj else False
+
+    def is_jbeam_mesh(obj):
+        return JbeamUtils.has_jbeam_node_id(obj) and JbeamUtils.has_jbeam_node_props(obj)
+
+    @staticmethod
     def remove_old_jbeam_attributes(obj):
         if not obj or obj.type != 'MESH':
             print(f"Cannot remove attributes from invalid object: {repr(obj)}")
@@ -95,7 +102,12 @@ class JbeamUtils:
 
     @staticmethod
     def get_node_props(obj, vertex_index) -> dict:
-        return json.loads(JbeamUtils.get_node_props_str(obj, vertex_index))
+        props_str = JbeamUtils.get_node_props_str(obj, vertex_index)
+        try:
+            return json.loads(props_str) if props_str else {}
+        except json.JSONDecodeError:
+            print(f"Warning: Invalid JSON at vertex {vertex_index}")
+            return {}
 
     @staticmethod
     def set_attribute_value(obj, vertex_index: int, attr_name: str, attr_value: str):

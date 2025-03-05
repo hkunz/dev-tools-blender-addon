@@ -201,7 +201,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             col.operator(OBJECT_OT_BeamngConvertJbeamToMesh_v2.bl_idname, text="Jbeam to Mesh")
             box = col.box()
 
-            if obj and obj.mode == 'EDIT' and obj.type == 'MESH' and j.has_jbeam_node_id(obj):
+            if obj and obj.mode == 'EDIT' and obj.type == 'MESH' and j.is_jbeam_mesh(obj):
                 bm = bmesh.from_edit_mesh(obj.data)
                 bm.verts.ensure_lookup_table()
                 index = context.scene.beamng_jbeam_active_vertex_idx
@@ -228,9 +228,10 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                     box.operator(OBJECT_OT_BeamngAddJbeamNodeProp.bl_idname, text="Add Node Property")
                     box.operator(OBJECT_OT_BeamngSaveAllJbeamNodeProps.bl_idname, text="Save All")
                 else:
-                    box.label(text=f"Select node/s to view properties")
+                    msg = "Select node/s to view properties" if j.has_jbeam_node_id(obj) else "Convert Jbeam to Mesh"
+                    box.label(text=msg)
             else:
-                msg = "Edit nodes in 'Edit Mode'" if j.has_jbeam_node_id(obj) else "No jbeam object selected"
+                msg = "Edit nodes in 'Edit Mode'" if j.is_jbeam_mesh(obj) else ("Convert Jbeam to Mesh" if j.has_jbeam_node_id(obj) else "No jbeam object selected")
                 box.label(text=msg)
 
             col.separator()

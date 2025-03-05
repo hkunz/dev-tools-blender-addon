@@ -33,12 +33,9 @@ class OBJECT_OT_BeamngLoadJbeamNodeProps(bpy.types.Operator):
         properties = {}
 
         for v in selected_verts:
-            try:
-                props = j.get_node_props(obj, v.index)
-                for key, value in props.items():
-                    properties[key] = value
-            except Exception as e:
-                self.report({'ERROR'}, f"Failed to load properties: {e}")
+            props = j.get_node_props(obj, v.index)
+            for key, value in props.items():
+                properties[key] = value
 
         # Sort properties alphabetically (case-insensitive)
         sorted_props = sorted(properties.items(), key=lambda item: item[0].lower())

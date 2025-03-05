@@ -1,5 +1,5 @@
 TODO:
 
 on export check that only one vertex is assigned to vertex groups left, up etc
-remove node_names attribute on mesh data
+on export check if all nodes have a name
 create beam mesh fix error when going into edit mode

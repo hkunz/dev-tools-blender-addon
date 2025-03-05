@@ -213,5 +213,7 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
         self.assign_flex_groups_to_vertex_groups(obj, part_data, verts_dic)
         self.store_node_props_in_vertex_attributes(obj, verts_dic)
 
+        bpy.ops.object.devtools_beamng_create_refnodes_vertex_groups()
+
         self.report({'INFO'}, f"Cleaned object and mesh data: {obj.name}")
         return {'FINISHED'}

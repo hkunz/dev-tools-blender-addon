@@ -196,8 +196,6 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             row.operator(OBJECT_OT_BeamngParentToStart01Empty.bl_idname, text="Parent Empty")
             col.separator()
             row = col.row(align=True)
-            row.operator(OBJECT_OT_BeamngCreateRefnodesVertexGroups.bl_idname, text="Craete refNodes Vertex Groups")
-            row.separator()
             row.operator(EXPORT_OT_BeamngExportMeshToJbeam.bl_idname, text="Export JBeam")
             col.operator(OBJECT_OT_create_jbeam_mesh_object.bl_idname, text="Create Jbeam Mesh")
             col.operator(OBJECT_OT_BeamngConvertJbeamToMesh_v2.bl_idname, text="Jbeam to Mesh")

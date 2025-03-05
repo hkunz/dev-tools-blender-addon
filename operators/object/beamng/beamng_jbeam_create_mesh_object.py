@@ -72,6 +72,8 @@ class JbeamMeshObject:
         for group_name, vertex_indices in vertex_groups_data.items():
             group = self.obj.vertex_groups.new(name=group_name)
             group.add(vertex_indices, 1.0, 'REPLACE')
+        
+        bpy.ops.object.devtools_beamng_create_refnodes_vertex_groups()
 
 
 class OBJECT_OT_create_jbeam_mesh_object(bpy.types.Operator):

@@ -104,7 +104,7 @@ class OBJECT_OT_BeamngCreateRefnodesVertexGroups(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        group_names = ["up", "left", "back", "leftCorner", "rightCorner"]
+        group_names = j.get_required_vertex_group_names()
         obj = context.active_object
 
         if obj and obj.type == "MESH":
@@ -119,10 +119,10 @@ class OBJECT_OT_BeamngCreateRefnodesVertexGroups(bpy.types.Operator):
         else:
             self.report({'WARNING'}, "No valid mesh object selected!")
             return {'CANCELLED'}
-        
+
     @classmethod
-    def poll(cls, context: bpy_types.Context) -> bool:
-        active_object: bpy_types.Object = context.active_object
+    def poll(cls, context: bpy.types.Context) -> bool:
+        active_object: bpy.types.Object = context.active_object
         return active_object and active_object.type == "MESH"
 
 class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
@@ -133,15 +133,94 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
 
     filepath: bpy.props.StringProperty(subtype="FILE_PATH") # type: ignore
 
+    def check_unique_node_names(self, obj: bpy.types.Object) -> tuple[bool, str]:
+        """Checks if all nodes have a unique name."""
+        node_names = set()
+
+        for index in range(len(obj.data.vertices)):
+            node_name = j.get_node_id(obj, index).strip()
+
+            if not node_name:
+                return False, f"Node at index {index} has an empty name."
+
+            if node_name in node_names:
+                return False, f"Duplicate node name detected: '{node_name}' at index {index}."
+
+            node_names.add(node_name)
+
+        return True, "All nodes have unique names."
+
+
+    def check_vertex_groups(self, obj: bpy.types.Object) -> tuple[bool, str]:
+        """Checks if each required vertex group has exactly one assigned vertex 
+        and that no vertex is assigned to more than one required group.
+        """
+        required_groups = set(j.get_required_vertex_group_names(minimal=True))
+        existing_groups = {vg.name for vg in obj.vertex_groups}
+
+        # Ensure all required groups exist
+        if not required_groups.issubset(existing_groups):
+            missing = required_groups - existing_groups
+            return False, f"Missing vertex groups: {', '.join(missing)}"
+
+        vertex_assignment = {}  # {vertex_index: group_name}
+        
+        # Check vertex assignments
+        for group_name in required_groups:
+            vgroup = obj.vertex_groups.get(group_name)
+            if not vgroup:
+                continue  # Shouldn't happen due to poll, but just in case
+
+            # Get assigned vertices
+            assigned_verts = [
+                v.index for v in obj.data.vertices
+                if any(g.group == vgroup.index for g in v.groups)
+            ]
+            count = len(assigned_verts)
+
+            if count == 0:
+                return False, f"Group '{group_name}' has no vertex/node assigned."
+            elif count > 1:
+                return False, f"Group '{group_name}' has {count} vertices assigned (should be 1 only)."
+
+            # Ensure unique vertex assignment
+            vertex_index = assigned_verts[0]
+            if vertex_index in vertex_assignment:
+                return False, f"Vertex {vertex_index} is assigned to both '{vertex_assignment[vertex_index]}' and '{group_name}', which is not allowed."
+            
+            vertex_assignment[vertex_index] = group_name  # Store assigned vertex
+
+        return True, "All vertex groups are correctly assigned."
+
+    
     def execute(self, context):
-        bpy.ops.object.mode_set(mode='OBJECT')
         success = self.export_jbeam_format(self.filepath)
         return {'FINISHED'} if success else {'CANCELLED'} 
 
     def invoke(self, context, event):
+        bpy.ops.object.mode_set(mode='OBJECT')
+        active_object: bpy.types.Object = context.active_object
         if not context.active_object or not context.selected_objects:
             self.report({'WARNING'}, "No objects selected!")
             return {'CANCELLED'}
+
+        if not j.is_node_mesh(active_object):
+            self.report({'WARNING'}, f"{repr(active_object)} is not a Node Mesh")
+            return {'CANCELLED'}
+
+        # Check vertex groups
+        is_valid, message = self.check_vertex_groups(active_object)
+        if not is_valid:
+            self.report({'WARNING'}, message)
+            return {'CANCELLED'}
+
+        # Check unique node names
+        is_valid, message = self.check_unique_node_names(active_object)
+        if not is_valid:
+            self.report({'WARNING'}, message)
+            return {'CANCELLED'}
+
+        self.report({'INFO'}, message)
         context.window_manager.fileselect_add(self)
         #context.window_manager.operators[-1].bl_label = "Save JBeam File"
         return {'RUNNING_MODAL'}
@@ -344,11 +423,16 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
     @classmethod
     def poll(cls, context: bpy_types.Context) -> bool:
         active_object: bpy_types.Object = context.active_object
-        if not active_object or active_object.type != "MESH":
+
+        if not active_object or active_object.type != "MESH" or len(context.selected_objects) != 1:
             return False
-        required_groups = {"up", "left", "back", "leftCorner", "rightCorner"}
-        existing_groups = {vg.name for vg in active_object.vertex_groups}
-        return required_groups.issubset(existing_groups)
+
+        # Check if required vertex groups exist
+        #required_groups = {"up", "left", "back", "leftCorner", "rightCorner"}
+        #existing_groups = {vg.name for vg in active_object.vertex_groups}
+        
+        return True #required_groups.issubset(existing_groups)
+
 
 
 # Test

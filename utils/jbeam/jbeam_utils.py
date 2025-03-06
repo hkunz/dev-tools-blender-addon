@@ -186,3 +186,7 @@ class JbeamUtils:
                 for space in area.spaces:
                     if space.type == 'VIEW_3D':
                         space.shading.wireframe_color_type = 'OBJECT'
+
+    @staticmethod
+    def get_required_vertex_group_names(minimal=True) -> list[str]:
+        return ["up", "left", "back"] if minimal else ["up", "left", "back", "leftCorner", "rightCorner"]

@@ -195,8 +195,6 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             row.separator()
             row.operator(OBJECT_OT_BeamngParentToStart01Empty.bl_idname, text="Parent Empty")
             col.separator()
-            row = col.row(align=True)
-            row.operator(EXPORT_OT_BeamngExportMeshToJbeam.bl_idname, text="Export JBeam")
             col.operator(OBJECT_OT_create_jbeam_mesh_object.bl_idname, text="Create Node Mesh")
             col.operator(OBJECT_OT_BeamngConvertJbeamToMesh_v2.bl_idname, text="Convert to Node Mesh")
             box = col.box()
@@ -234,7 +232,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                 msg = "Edit Node Mesh in Edit Mode" if j.is_node_mesh(obj) else ("Convert to Node Mesh" if j.has_jbeam_node_id(obj) else "No Node Mesh selected")
                 box.label(text=msg)
 
-            col.separator()
+            box.operator(EXPORT_OT_BeamngExportMeshToJbeam.bl_idname, text="Export JBeam")
             #col.operator(OBJECT_OT_BeamngCreateMetaBallCloud.bl_idname, text="Create MetaBall Cloud")
 
 

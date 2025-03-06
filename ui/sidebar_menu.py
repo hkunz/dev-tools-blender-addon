@@ -195,8 +195,10 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             row.separator()
             row.operator(OBJECT_OT_BeamngParentToStart01Empty.bl_idname, text="Parent Empty")
             col.separator()
-            col.operator(OBJECT_OT_create_jbeam_mesh_object.bl_idname, text="Create Node Mesh")
-            col.operator(OBJECT_OT_BeamngConvertJbeamToMesh_v2.bl_idname, text="Convert to Node Mesh")
+            if not context.selected_objects:
+                col.operator(OBJECT_OT_create_jbeam_mesh_object.bl_idname, text="Create Node Mesh")
+            elif len(context.selected_objects) == 1:
+                col.operator(OBJECT_OT_BeamngConvertJbeamToMesh_v2.bl_idname, text="Convert to Node Mesh")
             box = col.box()
 
             if obj and obj.mode == 'EDIT' and obj.type == 'MESH' and j.is_node_mesh(obj):

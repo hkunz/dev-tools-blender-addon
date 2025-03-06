@@ -179,9 +179,9 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
             count = len(assigned_verts)
 
             if count == 0:
-                return False, f"Group '{group_name}' has no vertex/node assigned."
+                return False, f"Vertex Group '{group_name}' has no vertex/node assigned."
             elif count > 1:
-                return False, f"Group '{group_name}' has {count} vertices assigned (should be 1 only)."
+                return False, f"Vertex Group '{group_name}' has {count} vertices assigned (should be 1 only)."
 
             # Ensure unique vertex assignment
             vertex_index = assigned_verts[0]

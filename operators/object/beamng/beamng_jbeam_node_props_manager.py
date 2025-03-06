@@ -279,6 +279,9 @@ class OBJECT_OT_BeamngSelectJbeamNodesByProperty(bpy.types.Operator):
         for v in bm.verts:
             v.select = False
 
+        bm.select_flush(False)
+        bmesh.update_edit_mesh(obj.data, loop_triangles=True) 
+
         matched_count = 0
 
         for v in bm.verts:

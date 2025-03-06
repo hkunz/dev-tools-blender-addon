@@ -188,15 +188,21 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
 
     def execute(self, context):
         obj = context.object
-        j.set_jbeam_visuals(obj)
 
-        if not obj or obj.type != 'MESH':
+        if not obj:
             self.report({'WARNING'}, "No mesh object selected!")
             return {'CANCELLED'}
 
-        if j.is_node_mesh(obj):
+        if obj.type == 'CURVE':
+            bpy.ops.object.convert(target='MESH')
+        elif j.is_node_mesh(obj):
             self.report({'INFO'}, "Object is already a Node Mesh")
             return {'CANCELLED'}
+        elif obj.type != 'MESH':
+            self.report({'WARNING'}, f"{repr(obj)} is not a mesh object!")
+            return {'CANCELLED'}
+
+        j.set_jbeam_visuals(obj)
 
         jbeam_path = obj.data.get('jbeam_file_path', None)
         ref_nodes = None

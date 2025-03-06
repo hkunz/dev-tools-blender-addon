@@ -196,6 +196,7 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
         if obj.type == 'CURVE':
             bpy.ops.object.convert(target='MESH')
         elif j.is_node_mesh(obj):
+            j.add_gn_jbeam_visualizer_modifier(obj)
             self.report({'INFO'}, "Object is already a Node Mesh")
             return {'CANCELLED'}
         elif obj.type != 'MESH':
@@ -203,6 +204,7 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
             return {'CANCELLED'}
 
         j.set_jbeam_visuals(obj)
+        j.add_gn_jbeam_visualizer_modifier(obj)
 
         jbeam_path = obj.data.get('jbeam_file_path', None)
         ref_nodes = None

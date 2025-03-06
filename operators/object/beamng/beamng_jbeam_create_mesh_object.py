@@ -13,6 +13,7 @@ class JbeamMeshObject:
 
     def setup(self):
         j.set_jbeam_visuals(self.obj)
+        j.add_gn_jbeam_visualizer_modifier(self.obj)
 
     def get_obj(self):
         return self.obj

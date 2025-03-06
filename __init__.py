@@ -45,6 +45,7 @@ from bpy.app.handlers import persistent
 
 from dev_tools.ui.addon_preferences import register as register_preferences, unregister as unregister_preferences # type: ignore
 from dev_tools.utils.file_utils import FileUtils # type: ignore
+from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
 from dev_tools.utils.temp_file_manager import TempFileManager # type: ignore
 from dev_tools.utils.icons_manager import IconsManager # type: ignore
 from dev_tools.translation.translations import register as register_translations, unregister as unregister_translations # type: ignore
@@ -105,6 +106,7 @@ def on_application_load(a, b):
 @persistent
 def start_beamng_jbeam_monitor():
     bpy.ops.wm.devtools_beamng_jbeam_node_selection_monitor('INVOKE_DEFAULT')
+    j.append_gn_jbeam_visualizer()
     return None # Ensures timer system doesn't re-register unexpectedly
 
 def register() -> None:

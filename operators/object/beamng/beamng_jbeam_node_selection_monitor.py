@@ -49,7 +49,30 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
                 for region in area.regions:
                     if region.type in {'WINDOW', 'UI'}:
                         region.tag_redraw()
-    
+
+
+    def assign_selected_to_vertex_group(self, obj):
+
+        bm = bmesh.from_edit_mesh(obj.data)
+
+        group_name = "selected_vertices"
+        vgroup = obj.vertex_groups.get(group_name)
+
+        if vgroup is None:
+            vgroup = obj.vertex_groups.new(name=group_name)
+
+        selected_verts = [v.index for v in bm.verts if v.select]
+
+        if selected_verts:
+            bpy.ops.object.mode_set(mode='OBJECT')
+            vgroup.add(selected_verts, 1.0, 'REPLACE')
+            bpy.ops.object.mode_set(mode='EDIT')
+        else:
+            bm.select_flush(False)
+            bmesh.update_edit_mesh(obj.data, loop_triangles=True)
+        j.set_gn_jbeam_visualizer_selected_vertices(obj, vgroup)
+
+
     def update_vertex_data(self, context):
         obj = context.object
         if obj is None or obj.type != 'MESH' or obj.mode != 'EDIT':
@@ -81,7 +104,9 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
             context.scene.beamng_jbeam_active_node = j.get_node_id(obj, active_index) or ""
 
             bpy.ops.object.devtools_beamng_load_jbeam_node_props()
+            self.assign_selected_to_vertex_group(obj)
             self.force_update_ui()
+
 
     def cancel(self, context):
         cls = self.__class__

@@ -1,6 +1,9 @@
 import bpy
 import bmesh
 import json
+import os
+
+from dev_tools.utils.file_utils import FileUtils # type: ignore
 
 class JbeamUtils:
 
@@ -190,3 +193,47 @@ class JbeamUtils:
     @staticmethod
     def get_required_vertex_group_names(minimal=True) -> list[str]:
         return ["up", "left", "back"] if minimal else ["up", "left", "back", "leftCorner", "rightCorner"]
+
+    @staticmethod
+    def set_gn_jbeam_visualizer_selected_vertices(obj, vertex_group):
+        modifier_name = "__gn_jbeam_visualizer_modifier"
+        mod = obj.modifiers.get(modifier_name)
+        if not mod:
+            return
+        for key in mod.keys():
+            if key.endswith("_attribute_name"):
+                print(f"Found attribute name: {key}")
+                mod[key] = vertex_group
+
+    @staticmethod
+    def append_gn_jbeam_visualizer():
+
+        blend_path = os.path.join(FileUtils.get_addon_root_dir(), "resources/blend/gn.blend")
+        node_tree_name = "__gn_jbeam_visualizer"
+
+        if node_tree_name in bpy.data.node_groups:
+            print(f"Node tree '{node_tree_name}' already exists. Skipping append.")
+            return
+
+        if not os.path.exists(blend_path):
+            print(f"Blend file not found: {blend_path}")
+            return
+
+        with bpy.data.libraries.load(blend_path, link=False) as (data_from, data_to):
+            if node_tree_name in data_from.node_groups:
+                data_to.node_groups.append(node_tree_name)
+                print(f"Appended node tree: {node_tree_name}")
+            else:
+                print(f"Node tree '{node_tree_name}' not found in {blend_path}")
+
+    @staticmethod
+    def add_gn_jbeam_visualizer_modifier(obj):
+        modifier_name = "__gn_jbeam_visualizer_modifier"
+        mod = obj.modifiers.get(modifier_name)
+        if mod is None:
+            # Add a Geometry Nodes modifier
+            mod = obj.modifiers.new(name=modifier_name, type='NODES')
+
+        node_tree_name = "__gn_jbeam_visualizer"
+        mod.node_group = bpy.data.node_groups.get(node_tree_name)
+        print(f"Assigned '{node_tree_name}' to '{repr(obj)}'")

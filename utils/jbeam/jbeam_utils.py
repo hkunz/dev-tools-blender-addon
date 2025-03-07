@@ -10,6 +10,9 @@ class JbeamUtils:
     ATTR_NODE_ID = "jbeam_node_id"
     ATTR_NODE_PROPS = "jbeam_node_props"
 
+    GN_JBEAM_VISUALIZER_ATTR = "jbeam_visualizer_id"
+    GN_JBEAM_VISUALIZER_ATTR_VALUE = "__gn_jbeam_visualizer"
+
     @staticmethod
     def has_jbeam_node_id(obj):
         return JbeamUtils.ATTR_NODE_ID in obj.data.attributes if obj else False
@@ -196,10 +199,18 @@ class JbeamUtils:
 
     @staticmethod
     def set_gn_jbeam_visualizer_selected_vertices(obj, vertex_group):
-        modifier_name = "__gn_jbeam_visualizer_modifier"
-        mod = obj.modifiers.get(modifier_name)
-        if not mod:
+        # Find the node tree by attribute
+        node_tree = next((nt for nt in bpy.data.node_groups if nt.get(JbeamUtils.GN_JBEAM_VISUALIZER_ATTR) == JbeamUtils.GN_JBEAM_VISUALIZER_ATTR_VALUE), None)
+    
+        if not node_tree:
+            print("Error: Node tree not found. Cannot set selected vertices.")
             return
+
+        mod = next((m for m in obj.modifiers if m.type == 'NODES' and m.node_group == node_tree), None)
+        if not mod:
+            print("Error: Modifier using the node tree not found.")
+            return
+
         for key in mod.keys():
             if key.endswith("_attribute_name"):
                 print(f"Found attribute name: {key}")
@@ -208,10 +219,10 @@ class JbeamUtils:
     @staticmethod
     def append_gn_jbeam_visualizer():
         blend_path = os.path.join(FileUtils.get_addon_root_dir(), "resources/blend/gn.blend")
-        node_tree_name = "__gn_jbeam_visualizer"
+        existing_node_tree = next((nt for nt in bpy.data.node_groups if nt.get(JbeamUtils.GN_JBEAM_VISUALIZER_ATTR) == JbeamUtils.GN_JBEAM_VISUALIZER_ATTR_VALUE), None)
 
-        if node_tree_name in bpy.data.node_groups:
-            print(f"Node tree '{node_tree_name}' already exists. Skipping append.")
+        if existing_node_tree:
+            print(f"Node tree '{existing_node_tree.name}' already exists. Skipping append.")
             return
 
         if not os.path.exists(blend_path):
@@ -219,32 +230,42 @@ class JbeamUtils:
             return
 
         with bpy.data.libraries.load(blend_path, link=False) as (data_from, data_to):
-            if node_tree_name in data_from.node_groups:
-                data_to.node_groups.append(node_tree_name)
-                print(f"Appended node tree: {node_tree_name}")
+            if JbeamUtils.GN_JBEAM_VISUALIZER_ATTR_VALUE in data_from.node_groups:
+                data_to.node_groups.append(JbeamUtils.GN_JBEAM_VISUALIZER_ATTR_VALUE)
+                print(f"Appended node tree: {JbeamUtils.GN_JBEAM_VISUALIZER_ATTR_VALUE}")
 
-                # Ensure the node tree is not purged
-                node_tree = bpy.data.node_groups.get(node_tree_name)
-                if node_tree:
-                    node_tree.use_fake_user = True
-                    print(f"Enabled fake user for: {node_tree_name}")
-            else:
-                print(f"Node tree '{node_tree_name}' not found in {blend_path}")
+        # Find the newly appended node tree, even if renamed using custom attribute
+        appended_node_tree = next((nt for nt in bpy.data.node_groups if JbeamUtils.GN_JBEAM_VISUALIZER_ATTR_VALUE in nt.name), None)
 
+        if appended_node_tree:
+            appended_node_tree.use_fake_user = True
+            appended_node_tree[JbeamUtils.GN_JBEAM_VISUALIZER_ATTR] = JbeamUtils.GN_JBEAM_VISUALIZER_ATTR_VALUE  # Store unique ID in case node group is renamed so it can still be found
+            print(f"Enabled fake user and set attribute for: {appended_node_tree.name}")
+        else:
+            print(f"Error: Node tree '{JbeamUtils.GN_JBEAM_VISUALIZER_ATTR_VALUE}' not found after append.")
 
     @staticmethod
     def add_gn_jbeam_visualizer_modifier(obj):
-        modifier_name = "__gn_jbeam_visualizer_modifier"
-        mod = obj.modifiers.get(modifier_name)
-        if mod is None:
-            mod = obj.modifiers.new(name=modifier_name, type='NODES')
+        # Find the node tree by attribute instead of name
+        node_tree = next((nt for nt in bpy.data.node_groups if nt.get(JbeamUtils.GN_JBEAM_VISUALIZER_ATTR) == JbeamUtils.GN_JBEAM_VISUALIZER_ATTR_VALUE), None)
 
-        node_tree_name = "__gn_jbeam_visualizer"
-        node_tree = bpy.data.node_groups.get(node_tree_name)
         if not node_tree:
-            # need to re-append when Ctrl+Z was done after adding this modifier, use_fake_user does not prevent cleanup by blender from Ctrl+Z
+            # Re-append only if the node tree does not exist
             JbeamUtils.append_gn_jbeam_visualizer()
-            node_tree = bpy.data.node_groups.get(node_tree_name)
+            node_tree = next((nt for nt in bpy.data.node_groups if nt.get(JbeamUtils.GN_JBEAM_VISUALIZER_ATTR) == JbeamUtils.GN_JBEAM_VISUALIZER_ATTR_VALUE), None)
 
+        if not node_tree:
+            print("Error: Node tree could not be found or appended.")
+            return
+
+        # Check if any existing modifier is already using this node tree
+        for mod in obj.modifiers:
+            if mod.type == 'NODES' and mod.node_group == node_tree:
+                print(f"Modifier '{mod.name}' already uses '{node_tree.name}'. Skipping add.")
+                return  # Modifier already exists, exit function
+
+        modifier_name = "__gn_jbeam_visualizer_modifier"
+        mod = obj.modifiers.new(name=modifier_name, type='NODES')
         mod.node_group = node_tree
-        print(f"Assigned '{node_tree_name}' to '{repr(obj)}'")
+
+        print(f"Assigned '{node_tree.name}' to '{repr(obj)}' via modifier '{mod.name}'")

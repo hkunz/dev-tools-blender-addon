@@ -53,6 +53,8 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
 
 
     def assign_selected_to_vertex_group(self, obj):
+        return # FIXME function crashes when trying to extrude a face
+
         # Ensure we are in Edit Mode before working with BMesh
         if obj.mode != 'EDIT':
             return
@@ -86,9 +88,8 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
         if selected_verts:
             vgroup.add(selected_verts, 1.0, 'REPLACE')  
 
-        bpy.ops.object.mode_set(mode='EDIT')  # Return to Edit Mode
-
         j.set_gn_jbeam_visualizer_selected_vertices(obj, group_name)
+        bpy.ops.object.mode_set(mode='EDIT')  # Return to Edit Mode
 
 
 

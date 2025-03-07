@@ -199,7 +199,7 @@ class JbeamUtils:
         return ["up", "left", "back"] if minimal else ["up", "left", "back", "leftCorner", "rightCorner"]
 
     @staticmethod
-    def set_gn_jbeam_visualizer_selected_vertices(obj, vertex_group):
+    def set_gn_jbeam_visualizer_selected_vertices(obj, vertex_group=None):
         # Find the node tree by attribute
         node_tree = next((nt for nt in bpy.data.node_groups if nt.get(JbeamUtils.GN_JBEAM_VISUALIZER_ATTR) == JbeamUtils.GN_JBEAM_VISUALIZER_ATTR_VALUE), None)
     
@@ -216,10 +216,10 @@ class JbeamUtils:
             match = re.match(r"(.+)_attribute_name$", key)
             if match:
                 base_socket_name = match.group(1)
-                attribute_toggle_key = f"{base_socket_name}_use_attribute"
+                attribute_toggle_key = f"{base_socket_name}_use_attribute" if vertex_group else base_socket_name
 
                 if attribute_toggle_key in mod.keys():
-                    mod[attribute_toggle_key] = True
+                    mod[attribute_toggle_key] = True if vertex_group else False
 
                 mod[key] = vertex_group
 
@@ -274,5 +274,6 @@ class JbeamUtils:
         modifier_name = "__gn_jbeam_visualizer_modifier"
         mod = obj.modifiers.new(name=modifier_name, type='NODES')
         mod.node_group = node_tree
+        JbeamUtils.set_gn_jbeam_visualizer_selected_vertices(obj, None)
 
         print(f"Assigned '{node_tree.name}' to '{repr(obj)}' via modifier '{mod.name}'")

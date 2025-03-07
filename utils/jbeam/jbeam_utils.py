@@ -1,6 +1,7 @@
 import bpy
 import bmesh
 import json
+import re
 import os
 
 from dev_tools.utils.file_utils import FileUtils # type: ignore
@@ -212,8 +213,14 @@ class JbeamUtils:
             return
 
         for key in mod.keys():
-            if key.endswith("_attribute_name"):
-                print(f"Found attribute name: {key}")
+            match = re.match(r"(.+)_attribute_name$", key)
+            if match:
+                base_socket_name = match.group(1)
+                attribute_toggle_key = f"{base_socket_name}_use_attribute"
+
+                if attribute_toggle_key in mod.keys():
+                    mod[attribute_toggle_key] = True
+
                 mod[key] = vertex_group
 
     @staticmethod

@@ -207,7 +207,6 @@ class JbeamUtils:
 
     @staticmethod
     def append_gn_jbeam_visualizer():
-
         blend_path = os.path.join(FileUtils.get_addon_root_dir(), "resources/blend/gn.blend")
         node_tree_name = "__gn_jbeam_visualizer"
 
@@ -223,17 +222,29 @@ class JbeamUtils:
             if node_tree_name in data_from.node_groups:
                 data_to.node_groups.append(node_tree_name)
                 print(f"Appended node tree: {node_tree_name}")
+
+                # Ensure the node tree is not purged
+                node_tree = bpy.data.node_groups.get(node_tree_name)
+                if node_tree:
+                    node_tree.use_fake_user = True
+                    print(f"Enabled fake user for: {node_tree_name}")
             else:
                 print(f"Node tree '{node_tree_name}' not found in {blend_path}")
+
 
     @staticmethod
     def add_gn_jbeam_visualizer_modifier(obj):
         modifier_name = "__gn_jbeam_visualizer_modifier"
         mod = obj.modifiers.get(modifier_name)
         if mod is None:
-            # Add a Geometry Nodes modifier
             mod = obj.modifiers.new(name=modifier_name, type='NODES')
 
         node_tree_name = "__gn_jbeam_visualizer"
-        mod.node_group = bpy.data.node_groups.get(node_tree_name)
+        node_tree = bpy.data.node_groups.get(node_tree_name)
+        if not node_tree:
+            # need to re-append when Ctrl+Z was done after adding this modifier, use_fake_user does not prevent cleanup by blender from Ctrl+Z
+            JbeamUtils.append_gn_jbeam_visualizer()
+            node_tree = bpy.data.node_groups.get(node_tree_name)
+
+        mod.node_group = node_tree
         print(f"Assigned '{node_tree_name}' to '{repr(obj)}'")

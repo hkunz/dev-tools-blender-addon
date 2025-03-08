@@ -1,6 +1,7 @@
 import bpy
 import bmesh
 
+from dev_tools.utils.object_utils import ObjectUtils # type: ignore
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
 
 class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
@@ -12,7 +13,6 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
     _timer = None
     _handler = None
     _last_selected_indices = set()
-    _vertex_group_cleared = False
     
     @classmethod
     def is_running(cls):
@@ -52,49 +52,6 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
                         region.tag_redraw()
 
 
-    def assign_selected_to_vertex_group(self, obj):
-        return # FIXME function crashes when trying to extrude a face
-
-        # Ensure we are in Edit Mode before working with BMesh
-        if obj.mode != 'EDIT':
-            return
-
-        bm = bmesh.from_edit_mesh(obj.data)
-
-        # Ensure selection states are up to date
-        bm.select_flush(True)
-        bmesh.update_edit_mesh(obj.data, loop_triangles=True)
-
-        # Get selected vertices
-        selected_verts = [v.index for v in bm.verts if v.select]
-
-        # Free BMesh reference before switching modes
-        del bm  
-
-        group_name = "selected_vertices"
-        vgroup = obj.vertex_groups.get(group_name)
-
-        bpy.ops.object.mode_set(mode='OBJECT')  # Switch to Object Mode
-
-        if vgroup is None:
-            vgroup = obj.vertex_groups.new(name=group_name)
-
-        # Always clear all previous assignments
-        all_verts = [v.index for v in obj.data.vertices]
-        if all_verts:  # Avoid errors if the mesh has no vertices
-            vgroup.remove(all_verts)  
-
-        # Only add new selection if there are selected vertices
-        if selected_verts:
-            vgroup.add(selected_verts, 1.0, 'REPLACE')  
-
-        j.set_gn_jbeam_visualizer_selected_vertices(obj, group_name)
-        bpy.ops.object.mode_set(mode='EDIT')  # Return to Edit Mode
-
-
-
-
-
     def update_vertex_data(self, context):
         obj = context.object
         if obj is None or obj.type != 'MESH' or obj.mode != 'EDIT':
@@ -103,25 +60,8 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
         bm = bmesh.from_edit_mesh(obj.data)
         bm.verts.ensure_lookup_table()
         selected_verts = [v.index for v in bm.verts if v.select]
-
-        if not selected_verts:
-            if self._last_selected_indices:  # Only update if we had a previous selection
-                self._last_selected_indices.clear()
-                context.scene.beamng_jbeam_active_vertex_idx = -1
-                context.scene.beamng_jbeam_selected_nodes = ""
-                self.force_update_ui()
-                return
-
         active_vert = bm.select_history.active if isinstance(bm.select_history.active, bmesh.types.BMVert) else None
         active_index = active_vert.index if active_vert else (selected_verts[-1] if selected_verts else -1)
-
-        if not selected_verts:
-            if not self._vertex_group_cleared:
-                self.assign_selected_to_vertex_group(obj)
-                self._vertex_group_cleared = True
-            return
-
-        self._vertex_group_cleared = False
 
         if set(selected_verts) != self._last_selected_indices:
             self._last_selected_indices = set(selected_verts)
@@ -134,7 +74,9 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
             context.scene.beamng_jbeam_active_node = j.get_node_id(obj, active_index) or ""
 
             bpy.ops.object.devtools_beamng_load_jbeam_node_props()
-            self.assign_selected_to_vertex_group(obj)
+            group_name = "selected_vertices"
+            j.set_gn_jbeam_visualizer_selected_vertices(obj, group_name)
+            ObjectUtils.assign_vertices_to_group_in_edit_mode(obj, group_name, selected_verts)
             self.force_update_ui()
 
     def cancel(self, context):

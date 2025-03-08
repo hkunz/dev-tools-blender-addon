@@ -235,10 +235,36 @@ class ObjectUtils:
                 print(f"{obj.name} does not have its origin at the world origin. Origin is at {obj_origin}.")
                 success = False
         return success
-    
-    import bpy
 
+    @staticmethod
     def get_selected_edges(obj):
         bpy.ops.mesh.select_mode(type='EDGE')
         selected_edges = [edge for edge in obj.data.edges if edge.select]
         return selected_edges
+
+    @staticmethod
+    def assign_vertices_to_group_in_edit_mode(obj, vg_name, vertex_indices, weight=1.0):
+        if obj.mode != 'EDIT':
+            print("Warning: you must be in Edit Mode")
+            bpy.ops.object.mode_set(mode='EDIT')
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        vg = obj.vertex_groups.get(vg_name) or obj.vertex_groups.new(name=vg_name)
+
+        if not bm.verts.layers.deform:
+            deform_layer = bm.verts.layers.deform.new()
+        else:
+            deform_layer = bm.verts.layers.deform.active
+
+        # Clear all previous vertex assignments
+        for v in bm.verts:
+            if vg.index in v[deform_layer]:  
+                del v[deform_layer][vg.index]  # Remove vertex from group
+
+        # Assign only the specified vertices
+        print("assign ==== ", vertex_indices, len(bm.verts))
+        for i in vertex_indices:
+            if i < len(bm.verts):
+                bm.verts[i][deform_layer][vg.index] = weight
+
+        bmesh.update_edit_mesh(obj.data)

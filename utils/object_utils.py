@@ -268,3 +268,4 @@ class ObjectUtils:
                 bm.verts[i][deform_layer][vg.index] = weight
 
         bmesh.update_edit_mesh(obj.data)
+        obj.data.update()

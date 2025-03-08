@@ -220,8 +220,8 @@ class JbeamUtils:
 
                 if attribute_toggle_key in mod.keys():
                     mod[attribute_toggle_key] = True if vertex_group else False
-
                 mod[key] = vertex_group
+                #bpy.context.object.data.update()
 
     @staticmethod
     def append_gn_jbeam_visualizer():

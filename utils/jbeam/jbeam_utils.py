@@ -71,7 +71,8 @@ class JbeamUtils:
 
         if obj.mode == 'EDIT':
             bm = bmesh.from_edit_mesh(mesh)
-            if vertex_index >= len(bm.verts):
+            num_verts = len(bm.verts)
+            if vertex_index >= num_verts or num_verts <= 0:
                 print(f"{repr(obj)}: Vertex index {vertex_index} out of range in Edit Mode")
                 return None
 
@@ -212,14 +213,16 @@ class JbeamUtils:
             print("Error: Modifier using the node tree not found.")
             return
 
+        target_socket = "Socket_3_attribute_name"
+
         for key in mod.keys():
-            match = re.match(r"(.+)_attribute_name$", key)
-            if match:
-                base_socket_name = match.group(1)
+            if key == target_socket:
+                base_socket_name = target_socket.replace("_attribute_name", "")
                 attribute_toggle_key = f"{base_socket_name}_use_attribute" if vertex_group else base_socket_name
 
                 if attribute_toggle_key in mod.keys():
                     mod[attribute_toggle_key] = True if vertex_group else False
+
                 mod[key] = vertex_group
                 #bpy.context.object.data.update()
 

@@ -262,7 +262,6 @@ class ObjectUtils:
                 del v[deform_layer][vg.index]  # Remove vertex from group
 
         # Assign only the specified vertices
-        print("assign ==== ", vertex_indices, len(bm.verts))
         for i in vertex_indices:
             if i < len(bm.verts):
                 bm.verts[i][deform_layer][vg.index] = weight

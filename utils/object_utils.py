@@ -291,3 +291,23 @@ class ObjectUtils:
 
         print(f"Socket '{socket_name}' not found.")
         return False
+
+    @staticmethod
+    def get_gn_socket_mode(mod, socket_name):
+        node_group = mod.node_group
+        for socket in node_group.interface.items_tree:
+            if socket.name == socket_name:
+                socket_id = socket.identifier
+
+                use_attribute = mod.get(socket_id + "_use_attribute", False)
+                if use_attribute:
+                    attribute_name = mod.get(socket_id + "_attribute_name", None)
+                    #print(f"Socket '{socket_name}' is using attribute '{attribute_name}'.")
+                    return {"mode": "attribute", "attribute_name": attribute_name}
+                else:
+                    value = mod.get(socket_id, None)
+                    #print(f"Socket '{socket_name}' is using single value: {value}.")
+                    return {"mode": "single_value", "value": value}
+
+        #print(f"Socket '{socket_name}' not found.")
+        return None

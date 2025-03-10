@@ -222,6 +222,8 @@ class JbeamUtils:
     @staticmethod
     def set_gn_jbeam_visualizer_selection_mode(obj):
         mode = next(i + 1 for i, v in enumerate(bpy.context.tool_settings.mesh_select_mode) if v) # 1 (vertex), 2 (edge), or 3 (edge)
+        if JbeamUtils.get_gn_jbeam_visualizer_selection_mode(obj) == mode:
+            return
         JbeamUtils.set_gn_jbeam_socket_mode(obj, "Selection Mode", value=mode)
         #bpy.context.object.data.update()
 
@@ -231,8 +233,20 @@ class JbeamUtils:
         #bpy.context.object.data.update()
 
     @staticmethod
+    def get_gn_jbeam_visualizer_selection_mode(obj):
+        mod = JbeamUtils.get_gn_jbeam_modifier(obj)
+        socket_value = ObjectUtils.get_gn_socket_mode(mod, "Selection Mode")
+        return socket_value['value']
+
+    @staticmethod
     def append_gn_jbeam_visualizer():
-        blend_path = os.path.join(FileUtils.get_addon_root_dir(), "resources/blend/gn.blend")
+        blend_path = os.path.normpath(os.path.join(FileUtils.get_addon_root_dir(), "resources/blend/gn.blend"))
+        curr_blend = os.path.basename(bpy.data.filepath)
+
+        if os.path.basename(blend_path) == curr_blend:
+            print(f"Don't append {blend_path} because we are editing the same file!")
+            return
+
         existing_node_tree = next((nt for nt in bpy.data.node_groups if nt.get(JbeamUtils.GN_JBEAM_VISUALIZER_ATTR) == JbeamUtils.GN_JBEAM_VISUALIZER_ATTR_VALUE), None)
 
         if existing_node_tree:

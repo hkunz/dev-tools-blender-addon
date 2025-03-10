@@ -63,6 +63,8 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
         active_vert = bm.select_history.active if isinstance(bm.select_history.active, bmesh.types.BMVert) else None
         active_index = active_vert.index if active_vert else (selected_verts[-1] if selected_verts else -1)
 
+        j.set_gn_jbeam_visualizer_selection_mode(obj)
+
         if set(selected_verts) != self._last_selected_indices:
             self._last_selected_indices = set(selected_verts)
             context.scene.beamng_jbeam_active_vertex_idx = active_index

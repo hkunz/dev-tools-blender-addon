@@ -268,3 +268,26 @@ class ObjectUtils:
 
         bmesh.update_edit_mesh(obj.data)
         obj.data.update()
+
+    @staticmethod
+    def set_gn_socket_mode(mod, socket_name, value=None, attribute_name=None):
+        node_group = mod.node_group
+        for socket in node_group.interface.items_tree:
+            if socket.name == socket_name:
+                socket_id = socket.identifier
+
+                if attribute_name:
+                    # Enable attribute mode
+                    mod[socket_id + "_use_attribute"] = True
+                    mod[socket_id + "_attribute_name"] = attribute_name
+                    print(f"Socket '{socket_name}' set to use attribute '{attribute_name}'.")
+                else:
+                    # Use single value mode
+                    mod[socket_id + "_use_attribute"] = False
+                    mod[socket_id] = value
+                    print(f"Socket '{socket_name}' set to single value: {value}.")
+
+                return True
+
+        print(f"Socket '{socket_name}' not found.")
+        return False

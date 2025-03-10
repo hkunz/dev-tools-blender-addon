@@ -74,9 +74,8 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
             context.scene.beamng_jbeam_active_node = j.get_node_id(obj, active_index) or ""
 
             bpy.ops.object.devtools_beamng_load_jbeam_node_props()
-            group_name = "selected_vertices"
-            j.set_gn_jbeam_visualizer_selected_vertices(obj, group_name)
-            ObjectUtils.assign_vertices_to_group_in_edit_mode(obj, group_name, selected_verts)
+            j.set_gn_jbeam_visualizer_selected_vertices(obj)
+            ObjectUtils.assign_vertices_to_group_in_edit_mode(obj, j.VG_SELECTED_VERTICES, selected_verts)
             self.force_update_ui()
 
     def cancel(self, context):

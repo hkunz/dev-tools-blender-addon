@@ -5,11 +5,14 @@ import re
 import os
 
 from dev_tools.utils.file_utils import FileUtils # type: ignore
+from dev_tools.utils.object_utils import ObjectUtils # type: ignore
 
 class JbeamUtils:
 
     ATTR_NODE_ID = "jbeam_node_id"
     ATTR_NODE_PROPS = "jbeam_node_props"
+
+    VG_SELECTED_VERTICES = "selected_vertices"
 
     GN_JBEAM_VISUALIZER_ATTR = "jbeam_visualizer_id"
     GN_JBEAM_VISUALIZER_ATTR_VALUE = "__gn_jbeam_visualizer"
@@ -200,31 +203,32 @@ class JbeamUtils:
         return ["up", "left", "back"] if minimal else ["up", "left", "back", "leftCorner", "rightCorner"]
 
     @staticmethod
-    def set_gn_jbeam_visualizer_selected_vertices(obj, vertex_group=None):
+    def get_gn_jbeam_modifier(obj):
         # Find the node tree by attribute
         node_tree = next((nt for nt in bpy.data.node_groups if nt.get(JbeamUtils.GN_JBEAM_VISUALIZER_ATTR) == JbeamUtils.GN_JBEAM_VISUALIZER_ATTR_VALUE), None)
-    
         if not node_tree:
             print("Error: Node tree not found. Cannot set selected vertices.")
-            return
-
+            return None
         mod = next((m for m in obj.modifiers if m.type == 'NODES' and m.node_group == node_tree), None)
         if not mod:
             print("Error: Modifier using the node tree not found.")
-            return
+        return mod
 
-        target_socket = "Socket_3_attribute_name"
+    @staticmethod
+    def set_gn_jbeam_socket_mode(obj, socket_name, value=None, attribute_name=None):
+        mod = JbeamUtils.get_gn_jbeam_modifier(obj)
+        ObjectUtils.set_gn_socket_mode(mod, socket_name, value, attribute_name)
 
-        for key in mod.keys():
-            if key == target_socket:
-                base_socket_name = target_socket.replace("_attribute_name", "")
-                attribute_toggle_key = f"{base_socket_name}_use_attribute" if vertex_group else base_socket_name
+    @staticmethod
+    def set_gn_jbeam_visualizer_selection_mode(obj):
+        mode = next(i + 1 for i, v in enumerate(bpy.context.tool_settings.mesh_select_mode) if v) # 1 (vertex), 2 (edge), or 3 (edge)
+        JbeamUtils.set_gn_jbeam_socket_mode(obj, "Selection Mode", value=mode)
+        #bpy.context.object.data.update()
 
-                if attribute_toggle_key in mod.keys():
-                    mod[attribute_toggle_key] = True if vertex_group else False
-
-                mod[key] = vertex_group
-                #bpy.context.object.data.update()
+    @staticmethod
+    def set_gn_jbeam_visualizer_selected_vertices(obj):
+        JbeamUtils.set_gn_jbeam_socket_mode(obj, "Selection", attribute_name=JbeamUtils.VG_SELECTED_VERTICES)
+        #bpy.context.object.data.update()
 
     @staticmethod
     def append_gn_jbeam_visualizer():
@@ -277,6 +281,7 @@ class JbeamUtils:
         modifier_name = "__gn_jbeam_visualizer_modifier"
         mod = obj.modifiers.new(name=modifier_name, type='NODES')
         mod.node_group = node_tree
-        JbeamUtils.set_gn_jbeam_visualizer_selected_vertices(obj, None)
+        JbeamUtils.set_gn_jbeam_visualizer_selection_mode(obj)
+        JbeamUtils.set_gn_jbeam_visualizer_selected_vertices(obj)
 
         print(f"Assigned '{node_tree.name}' to '{repr(obj)}' via modifier '{mod.name}'")

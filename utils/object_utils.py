@@ -237,12 +237,32 @@ class ObjectUtils:
         return success
 
     @staticmethod
+    def is_vertex_selection_mode():
+        return bpy.context.tool_settings.mesh_select_mode[0]
+
+    @staticmethod
+    def is_edge_selection_mode():
+        return bpy.context.tool_settings.mesh_select_mode[1]
+    
+    @staticmethod
+    def is_face_selection_mode():
+        return bpy.context.tool_settings.mesh_select_mode[2]
+
+    @staticmethod
     def get_selected_edges(obj):
         bpy.ops.mesh.select_mode(type='EDGE')
         selected_edges = [edge for edge in obj.data.edges if edge.select]
         return selected_edges
 
     @staticmethod
+    def get_selected_edges_bmesh(obj):
+        if obj.mode != 'EDIT':
+            return None
+        bm = bmesh.from_edit_mesh(obj.data)
+        selected_edges = [edge.index for edge in bm.edges if edge.select]
+        return selected_edges
+
+    @staticmethod # deprecated: use generic attributes instead of vertex groups which are semi-deprecated
     def assign_vertices_to_group_in_edit_mode(obj, vg_name, vertex_indices, weight=1.0):
         if obj.mode != 'EDIT':
             print("Warning: you must be in Edit Mode")

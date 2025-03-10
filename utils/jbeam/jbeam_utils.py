@@ -11,8 +11,7 @@ class JbeamUtils:
 
     ATTR_NODE_ID = "jbeam_node_id"
     ATTR_NODE_PROPS = "jbeam_node_props"
-
-    VG_SELECTED_VERTICES = "selected_vertices"
+    ATTR_SELECTED_EDGES = "selected_edges"
 
     GN_JBEAM_VISUALIZER_ATTR = "jbeam_visualizer_id"
     GN_JBEAM_VISUALIZER_ATTR_VALUE = "__gn_jbeam_visualizer"
@@ -42,7 +41,7 @@ class JbeamUtils:
             print(f"Removed attribute '{attr_name}' from {repr(obj)}")
 
     @staticmethod
-    def create_attribute(obj, attr_name):
+    def create_attribute(obj, attr_name, type="STRING", domain="POINT"):
         if not obj or obj.type != 'MESH':
             print(f"Cannot add attribute '{attr_name}' to invalid object: {repr(obj)}")
             return None
@@ -53,7 +52,7 @@ class JbeamUtils:
             print(f"{repr(obj)}: already has attribute '{attr_name}'")
             return mesh.attributes[attr_name]
 
-        return mesh.attributes.new(name=attr_name, type="STRING", domain="POINT")
+        return mesh.attributes.new(name=attr_name, type=type, domain=domain)
 
     @staticmethod
     def create_attribute_node_id(obj):
@@ -225,12 +224,7 @@ class JbeamUtils:
         if JbeamUtils.get_gn_jbeam_visualizer_selection_mode(obj) == mode:
             return
         JbeamUtils.set_gn_jbeam_socket_mode(obj, "Selection Mode", value=mode)
-        #bpy.context.object.data.update()
-
-    @staticmethod
-    def set_gn_jbeam_visualizer_selected_vertices(obj):
-        JbeamUtils.set_gn_jbeam_socket_mode(obj, "Selection", attribute_name=JbeamUtils.VG_SELECTED_VERTICES)
-        #bpy.context.object.data.update()
+        bpy.context.object.data.update()
 
     @staticmethod
     def get_gn_jbeam_visualizer_selection_mode(obj):
@@ -296,6 +290,5 @@ class JbeamUtils:
         mod = obj.modifiers.new(name=modifier_name, type='NODES')
         mod.node_group = node_tree
         JbeamUtils.set_gn_jbeam_visualizer_selection_mode(obj)
-        JbeamUtils.set_gn_jbeam_visualizer_selected_vertices(obj)
 
         print(f"Assigned '{node_tree.name}' to '{repr(obj)}' via modifier '{mod.name}'")

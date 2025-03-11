@@ -188,7 +188,7 @@ class JbeamUtils:
     @staticmethod
     def set_jbeam_visuals(obj):
         if obj:
-            obj.show_wire = True
+            #obj.show_wire = True
             obj.color = (0.0, 1.0, 0.0, 1.0)  # RGBA, Green with full opacity
 
         for area in bpy.context.screen.areas:

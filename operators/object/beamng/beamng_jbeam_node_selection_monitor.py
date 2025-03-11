@@ -32,7 +32,7 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
         if event.type != 'TIMER':
             return {'PASS_THROUGH'}
         obj = context.object
-        if obj is None or obj.type != 'MESH' or obj.mode != 'EDIT':
+        if not j.is_node_mesh(obj) or obj.mode != 'EDIT':
             return {'PASS_THROUGH'}
         j.set_gn_jbeam_visualizer_selection_mode(obj)
         if ObjectUtils.is_vertex_selection_mode():

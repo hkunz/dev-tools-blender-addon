@@ -25,7 +25,7 @@ class JbeamUtils:
         return JbeamUtils.ATTR_NODE_PROPS in obj.data.attributes if obj else False
 
     def is_node_mesh(obj):
-        return JbeamUtils.has_jbeam_node_id(obj) and JbeamUtils.has_jbeam_node_props(obj)
+        return obj and obj.type == 'MESH' and JbeamUtils.has_jbeam_node_id(obj) and JbeamUtils.has_jbeam_node_props(obj)
 
     @staticmethod
     def remove_old_jbeam_attributes(obj):

@@ -276,18 +276,48 @@ class ObjectUtils:
         else:
             deform_layer = bm.verts.layers.deform.active
 
-        # Clear all previous vertex assignments
         for v in bm.verts:
             if vg.index in v[deform_layer]:  
                 del v[deform_layer][vg.index]  # Remove vertex from group
 
-        # Assign only the specified vertices
         for i in vertex_indices:
             if i < len(bm.verts):
                 bm.verts[i][deform_layer][vg.index] = weight
 
         bmesh.update_edit_mesh(obj.data)
         obj.data.update()
+
+    @staticmethod
+    def update_vertex_bool_attribute_for_gn(mod, obj, bm, named_attr_node_name, attr_name, values):
+        mesh = obj.data
+        node = mod.node_group.nodes.get(named_attr_node_name)
+        
+        newv = bpy.app.version >= (4, 4, 0)
+        node.data_type = attr_type = 'BOOLEAN' if newv else 'INT'
+        attribute = mesh.attributes.get(attr_name) or mesh.attributes.new(name=attr_name, type=attr_type, domain="POINT")
+        
+        layer = bm.verts.layers.bool.get(attribute.name) if newv else bm.verts.layers.int.get(attribute.name)
+        selected_value = True if newv else 1
+        unselected_value = False if newv else 0
+
+        for vert in bm.verts:
+            vert[layer] = selected_value if vert.index in values else unselected_value
+
+    @staticmethod
+    def update_edge_bool_attribute_for_gn(mod, obj, bm, named_attr_node_name, attr_name, values):
+        mesh = obj.data
+        node = mod.node_group.nodes.get(named_attr_node_name)
+
+        newv = bpy.app.version >= (4, 4, 0)
+        node.data_type = attr_type = 'BOOLEAN' if newv else 'INT'
+        attribute = mesh.attributes.get(attr_name) or mesh.attributes.new(name=attr_name, type=attr_type, domain="EDGE")
+
+        layer = bm.edges.layers.bool.get(attribute.name) if newv else bm.edges.layers.int.get(attribute.name)
+        selected_value = True if newv else 1
+        unselected_value = False if newv else 0
+
+        for edge in bm.edges:
+            edge[layer] = selected_value if edge.index in values else unselected_value
 
     @staticmethod
     def set_gn_socket_mode(mod, socket_name, value=None, attribute_name=None):

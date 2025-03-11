@@ -14,8 +14,9 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
     _timer = None
     _handler = None
 
-    previous_vertex_selection = set()
-    previous_edge_selection = set()
+    def __init__(self):
+        self.previous_vertex_selection = set()
+        self.previous_edge_selection = set()
 
     @classmethod
     def is_running(cls):
@@ -23,22 +24,9 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
 
     def modal(self, context, event):
         obj = context.object
-        if not obj or obj.type != 'MESH' or obj.mode != 'EDIT':
+        if event.type != 'TIMER' or not j.is_node_mesh(obj) or obj.mode != 'EDIT':
             return {'PASS_THROUGH'}
-
-        if not j.has_jbeam_node_id(obj):
-            return {'PASS_THROUGH'}  # Ignore non-JBeam objects
-
-        if event.type != 'TIMER':
-            return {'PASS_THROUGH'}
-        obj = context.object
-        if not j.is_node_mesh(obj) or obj.mode != 'EDIT':
-            return {'PASS_THROUGH'}
-        j.set_gn_jbeam_visualizer_selection_mode(obj)
-        if ObjectUtils.is_vertex_selection_mode():
-            self.update_vertex_data(context)
-        elif ObjectUtils.is_edge_selection_mode():
-            self.update_edge_data(context)
+        self.check_data(context)
         return {'PASS_THROUGH'}
 
     def invoke(self, context, event):
@@ -55,23 +43,32 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
 
         return {'RUNNING_MODAL'}
 
+    def check_data(self, context):
+        obj = context.object
+        j.set_gn_jbeam_visualizer_selection_mode(obj)
+        if ObjectUtils.is_vertex_selection_mode():
+            self.update_vertex_data(context)
+        elif ObjectUtils.is_edge_selection_mode():
+            self.update_edge_data(context)
+
     def update_vertex_data(self, context):
         obj = context.object
         bm = bmesh.from_edit_mesh(obj.data)
         bm.verts.ensure_lookup_table()
-
-        previous_vertex_selection = getattr(self, "previous_vertex_selection", None)
         current_selection = {v.index for v in bm.verts if v.select}
 
-        if previous_vertex_selection == current_selection:
+        if self.previous_vertex_selection == current_selection:
             return
 
-        self.update_vertex_data_attr(obj, bm, current_selection)
+        self.previous_vertex_selection = current_selection
+        mod = j.get_gn_jbeam_modifier(obj)
+        ObjectUtils.update_vertex_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_vertices", "selected_vertices", current_selection)
+        self.update_nodes_panel(context, bm, current_selection)
 
+    def update_nodes_panel(self, context, bm, current_selection):
+        obj = context.object
         active_vert = bm.select_history.active if isinstance(bm.select_history.active, bmesh.types.BMVert) else None
         active_index = active_vert.index if active_vert else (max(current_selection) if current_selection else -1)
-
-        current_selection = {v.index for v in bm.verts if v.select}
         context.scene.beamng_jbeam_active_vertex_idx = active_index
         jbeam_ids = [
             j.get_node_id(obj, v_idx) or f"({v_idx})"
@@ -79,67 +76,25 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
         ]
         context.scene.beamng_jbeam_selected_nodes = ", ".join(jbeam_ids)
         context.scene.beamng_jbeam_active_node = j.get_node_id(obj, active_index) or ""
-
         bpy.ops.object.devtools_beamng_load_jbeam_node_props()
-
         UiUtils.force_update_ui(context)
-
-    def update_vertex_data_attr(self, obj, bm, current_selection):
-        mesh = obj.data
-        self.previous_vertex_selection = current_selection
-        attr_name = "selected_vertices"
-        named_attr = "attribute_selected_vertices"
-        mod = j.get_gn_jbeam_modifier(obj)
-
-        if bpy.app.version >= (4, 4, 0):
-            mod.node_group.nodes.get(named_attr).data_type = 'BOOLEAN'
-            attribute = mesh.attributes.get(attr_name) or mesh.attributes.new(name=attr_name, type="BOOLEAN", domain="POINT")
-            layer = bm.verts.layers.bool.get(attribute.name)
-            for vert in bm.verts:
-                vert[layer] = vert.index in current_selection
-        else:
-            mod.node_group.nodes.get(named_attr).data_type = 'INT'
-            attribute = mesh.attributes.get(attr_name) or mesh.attributes.new(name=attr_name, type="INT", domain="POINT")
-            layer = bm.verts.layers.int.get(attribute.name)
-            for vert in bm.verts:
-                vert[layer] = 1 if vert.index in current_selection else 0
-
-        mesh.update()
 
     def update_edge_data(self, context):
         obj = context.object
         bm = bmesh.from_edit_mesh(obj.data)
         bm.edges.ensure_lookup_table()
-
-        previous_edge_selection = getattr(self, "previous_edge_selection", None)
         current_selection = {e.index for e in bm.edges if e.select}
-        
-        if previous_edge_selection == current_selection:
+
+        if self.previous_edge_selection == current_selection:
             return
 
-        self.update_edge_data_attr(obj, bm, current_selection)
-        
-    def update_edge_data_attr(self, obj, bm, current_selection):
-        mesh = obj.data
         self.previous_edge_selection = current_selection
-        attr_name = "selected_edges"
-        named_attr = "attribute_selected_edges"
         mod = j.get_gn_jbeam_modifier(obj)
- 
-        if bpy.app.version >= (4, 4, 0):
-            mod.node_group.nodes.get(named_attr).data_type = 'BOOLEAN'
-            attribute = mesh.attributes.get(attr_name) or mesh.attributes.new(name=attr_name, type="BOOLEAN", domain="EDGE")
-            layer = bm.edges.layers.bool.get(attribute.name)
-            for edge in bm.edges:
-                edge[layer] = edge.index in current_selection
-        else:
-            mod.node_group.nodes.get(named_attr).data_type = 'INT'
-            attribute = mesh.attributes.get(attr_name) or mesh.attributes.new(name=attr_name, type="INT", domain="EDGE")
-            layer = bm.edges.layers.int.get(attribute.name)
-            for edge in bm.edges:
-                edge[layer] = 1 if edge.index in current_selection else 0
+        ObjectUtils.update_edge_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_edges", "selected_edges", current_selection)
+        self.update_beams_panel(context, bm)
 
-        mesh.update()
+    def update_beams_panel(self, context, bm):
+        pass
 
     def cancel(self, context):
         cls = self.__class__

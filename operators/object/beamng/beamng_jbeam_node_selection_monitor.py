@@ -108,11 +108,11 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
         active_index = active_edge.index if active_edge else (max(current_selection) if current_selection else -1)
         context.scene.beamng_jbeam_active_edge_idx = active_index
         jbeam_ids = [
-            j.get_beam_id(obj, i) or f"({i})"
+            j.get_beam_id(obj, bm, i) or f"({i})"
             for i in current_selection
         ]
         context.scene.beamng_jbeam_selected_edges = ", ".join(jbeam_ids)
-        context.scene.beamng_jbeam_active_edge = j.get_beam_id(obj, active_index) or ""
+        context.scene.beamng_jbeam_active_edge = j.get_beam_id(obj, bm, active_index) or ""
         bpy.ops.object.devtools_beamng_load_jbeam_beam_props()
         UiUtils.force_update_ui(context)
 

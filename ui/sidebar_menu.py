@@ -235,10 +235,10 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                 elif o.is_edge_selection_mode():
                     index = context.scene.beamng_jbeam_active_edge_idx
                     if index > -1:
-                        beamng_jbeam_active_edge_id = j.get_beam_id(obj, index)
-                        box.label(text=f"Active Edge: {beamng_jbeam_active_edge_id} ({index})")
-                        box.label(text=f"Selected Edges: {context.scene.beamng_jbeam_selected_edges}")
-                        box.prop(context.scene, "beamng_jbeam_active_edge", text="Active Beam ID")
+                        beamng_jbeam_active_edge_id = j.get_beam_id(obj, bm, index)
+                        box.label(text=f"Active Beam: {beamng_jbeam_active_edge_id} ({index})")
+                        box.label(text=f"Selected Beams: {context.scene.beamng_jbeam_selected_edges}")
+                        box.prop(context.scene, "beamng_jbeam_active_edge", text="Active Beam")
                         #box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign JBeam ID")
 
                         if context.scene.beamng_jbeam_edge_props:

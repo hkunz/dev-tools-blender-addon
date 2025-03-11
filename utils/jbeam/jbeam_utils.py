@@ -117,16 +117,20 @@ class JbeamUtils:
         return JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_ID)
 
     @staticmethod
-    def get_beam_id(obj, edge_index) -> str:
-        return "E" + str(edge_index)
+    def get_beam_id(obj, bm, edge_index) -> str:
+        edge = bm.edges[edge_index]  # Get the edge using the index
+        v1, v2 = edge.verts  # Get the two BMVert objects
+        n1 = JbeamUtils.get_node_id(obj, v1.index)
+        n2 = JbeamUtils.get_node_id(obj, v2.index)
+        return f"[{n1 if n1 else '<?>'}|{n2 if n2 else '<?>'}]"
 
     @staticmethod
     def get_node_props_str(obj, vertex_index) -> str:
         return JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS)
 
     @staticmethod
-    def get_beam_props_str(obj, vertex_index) -> str:
-        return JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_BEAM_PROPS)
+    def get_beam_props_str(obj, edge_index) -> str:
+        return JbeamUtils.get_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS)
 
     @staticmethod
     def get_props(obj, index, props_str_func, element_type="element") -> dict:
@@ -190,6 +194,10 @@ class JbeamUtils:
     @staticmethod
     def set_node_props(obj, vertex_index, node_props: dict):
         JbeamUtils.set_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, json.dumps(node_props))
+
+    @staticmethod
+    def set_beam_props(obj, edge_index, beam_props: dict):
+        JbeamUtils.set_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, json.dumps(beam_props))
 
     @staticmethod
     def setup_default_scope_modifiers_and_node_ids(obj):

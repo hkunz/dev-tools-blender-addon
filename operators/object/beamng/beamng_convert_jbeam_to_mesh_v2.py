@@ -1,4 +1,5 @@
 import bpy
+import bmesh
 import os
 import json
 import mathutils
@@ -22,6 +23,16 @@ class Node:
     def __repr__(self):
         return (f"Node(id={self.node_id}, index={self.index}, pos={self.position}, "f"group={self.group}, props={self.props})")
 
+class Beam:
+    def __init__(self, beam_id, node_id1, node_id2, index, props=None):
+        self.beam_id = beam_id
+        self.node_id1 = node_id1
+        self.node_id2 = node_id2
+        self.index = index
+        self.props = props if props else {}
+
+    def __repr__(self):
+        return (f"Beam(id={self.beam_id}, node_id1={self.node_id1}, node_id2={self.node_id2}, index={self.index}, props={self.props})")
 
 class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
     """Convert object to Node Mesh by removing custom properties and merging by distance"""
@@ -78,13 +89,38 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
                 node_props = current_props.copy()  
                 node_group = [current_group] if isinstance(current_group, str) else current_group
                 nodes.append(Node(node_id, -1, position, node_group, node_props))
-
         return nodes
+
+    def parse_beams(self, obj, json_beams, verts_dic):
+        beams = []
+        current_props = {}
+        mesh = obj.data
+        edge_lookup = {tuple(sorted((e.vertices[0], e.vertices[1]))): e.index for e in mesh.edges} # Precompute edge lookup dictionary
+
+        def get_edge_index(i1, i2):
+            return edge_lookup.get(tuple(sorted((i1, i2))))  # Handles both directions
+
+        for i, entry in enumerate(json_beams, start=1):
+            if isinstance(entry, dict):
+                current_props.update(entry)
+            elif isinstance(entry, list) and len(entry) >= 2:
+                n1, n2 = entry[:2]
+                node1, node2 = verts_dic.get(n1), verts_dic.get(n2)
+                if node1 is None or node2 is None:
+                    print(f"Warning: Missing nodes {n1}, {n2} in verts_dic and possibly in jbeam nodes")
+                    continue
+
+                edge_index = get_edge_index(node1.index, node2.index)
+                beam_id = f"[{n1}|{n2}]"
+                beam_props = current_props.copy()
+                beams.append(Beam(beam_id, n1, n2, edge_index, beam_props))
+
+        return beams
 
     def get_vertex_indices(self, obj, part_data, epsilon=0.0005):
         verts_dic = {}
         json_nodes = part_data.get("nodes", [])
-        nodes = self.parse_nodes(json_nodes)  
+        nodes = self.parse_nodes(json_nodes)
 
         for node in nodes:
             closest_vert_idx = None
@@ -100,7 +136,7 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
 
             if closest_vert_idx is not None:
                 node.index = closest_vert_idx
-                verts_dic[node.node_id] = node 
+                verts_dic[node.node_id] = node
 
         return verts_dic
 
@@ -155,13 +191,13 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
             vg.add(vertex_indices, 1.0, 'REPLACE')
             print(f"Assigned {len(vertex_indices)} vertices to the '{group_name}' vertex group.")
 
-
-    def store_node_props_in_vertex_attributes(self, obj, verts_dic):
-
+    def create_node_mesh_attributes(self, obj):
         j.remove_old_jbeam_attributes(obj)
         j.create_attribute_node_id(obj)
         j.create_attribute_node_props(obj)
         j.create_attribute_beam_props(obj)
+
+    def store_node_props_in_vertex_attributes(self, obj, verts_dic):
 
         for node_id, vert_props in verts_dic.items():
             if not hasattr(vert_props, "index") or vert_props.index < 0:
@@ -176,6 +212,18 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
 
             j.set_node_id(obj, idx, str(vert_props.node_id))
             j.set_node_props(obj, idx, flat_data)
+
+    def store_beam_props_in_edge_attributes(self, obj, part_data, verts_dic):
+        json_beams = part_data.get("beams", [])
+        beams = self.parse_beams(obj, json_beams, verts_dic)
+        #print("beams =============\n", beams)
+
+        for beam in beams:
+            if beam.index is None:
+                self.report({'ERROR'}, f"No edge found for beam {beam.beam_id}")
+                continue
+
+            j.set_beam_props(obj, beam.index, beam.props)
 
     def create_default_flex_group(self, obj):
         node_group = "flexbody_mesh"
@@ -235,7 +283,9 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
         if is_jbeam_part:
             self.assign_ref_nodes_to_vertex_groups(obj, ref_nodes, verts_dic)
             self.assign_flex_groups_to_vertex_groups(obj, part_data, verts_dic)
+            self.create_node_mesh_attributes(obj)
             self.store_node_props_in_vertex_attributes(obj, verts_dic)
+            self.store_beam_props_in_edge_attributes(obj, part_data, verts_dic)
         else:
             self.create_default_flex_group(obj)
             j.setup_default_scope_modifiers_and_node_ids(obj)

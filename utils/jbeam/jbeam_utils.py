@@ -82,6 +82,7 @@ class JbeamUtils:
 
         if obj.mode == 'EDIT':
             bm = bmesh.from_edit_mesh(mesh)
+            bm.verts.ensure_lookup_table()
             bm_data = getattr(bm, domain)  # Access verts or edges dynamically
 
             num_elements = len(bm_data)
@@ -121,10 +122,9 @@ class JbeamUtils:
     @staticmethod
     def get_beam_id(obj, bm, edge_index) -> str:
         edge = bm.edges[edge_index]
-        v1, v2 = edge.verts
+        v1, v2 = sorted(edge.verts, key=lambda v: v.index)  # Sort vertices by index
         n1 = JbeamUtils.get_node_id(obj, v1.index) or "<?>"
         n2 = JbeamUtils.get_node_id(obj, v2.index) or "<?>"
-        n1, n2 = sorted([n1, n2])
         return f"[{n1}|{n2}]"
 
     @staticmethod

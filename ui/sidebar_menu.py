@@ -202,9 +202,6 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             box = col.box()
 
             if obj and obj.mode == 'EDIT' and obj.type == 'MESH' and j.is_node_mesh(obj):
-                bm = bmesh.from_edit_mesh(obj.data)
-                bm.verts.ensure_lookup_table()
-
                 if o.is_vertex_selection_mode():
                     index = context.scene.beamng_jbeam_active_vertex_idx
                     if index > -1:
@@ -235,6 +232,8 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                 elif o.is_edge_selection_mode():
                     index = context.scene.beamng_jbeam_active_edge_idx
                     if index > -1:
+                        bm = bmesh.from_edit_mesh(obj.data)
+                        bm.edges.ensure_lookup_table()
                         beamng_jbeam_active_edge_id = j.get_beam_id(obj, bm, index)
                         box.label(text=f"Active Beam: {beamng_jbeam_active_edge_id} ({index})")
                         box.label(text=f"Selected Beams: {context.scene.beamng_jbeam_selected_edges}")

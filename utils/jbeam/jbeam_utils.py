@@ -65,15 +65,15 @@ class JbeamUtils:
 
     @staticmethod
     def create_attribute_node_props(obj):
-        return JbeamUtils.create_attribute(obj, "jbeam_node_props")
+        return JbeamUtils.create_attribute(obj, "jbeam_node_props", domain="POINT")
 
     @staticmethod
     def create_attribute_beam_props(obj):
-        return JbeamUtils.create_attribute(obj, "jbeam_beam_props")
+        return JbeamUtils.create_attribute(obj, "jbeam_beam_props", domain="EDGE")
 
     @staticmethod
-    def get_attribute_value(obj, vertex_index, attr_name) -> str:
-
+    def get_attribute_value(obj, index, attr_name, domain="verts") -> str:
+        
         if not obj or obj.type != 'MESH':
             print(f"Invalid object: {repr(obj)}")
             return None
@@ -82,32 +82,34 @@ class JbeamUtils:
 
         if obj.mode == 'EDIT':
             bm = bmesh.from_edit_mesh(mesh)
-            num_verts = len(bm.verts)
-            if vertex_index >= num_verts or num_verts <= 0:
-                print(f"{repr(obj)}: Vertex index {vertex_index} out of range in Edit Mode")
+            bm_data = getattr(bm, domain)  # Access verts or edges dynamically
+
+            num_elements = len(bm_data)
+            if index >= num_elements or num_elements <= 0:
+                print(f"{repr(obj)}: Index {index} out of range in Edit Mode ({domain})")
                 return None
 
-            v = bm.verts[vertex_index]
-            layer = bm.verts.layers.string.get(attr_name)
+            element = bm_data[index]
+            layer = bm_data.layers.string.get(attr_name)
 
             if layer is None:
-                print(f"{repr(obj)}: Layer '{attr_name}' not found in Edit Mode")
+                print(f"{repr(obj)}: Layer '{attr_name}' not found in Edit Mode ({domain})")
                 return None
 
-            return v[layer].decode('utf-8')
+            return element[layer].decode('utf-8')
 
         elif obj.mode == 'OBJECT':
             if attr_name not in mesh.attributes:
-                print(f"{repr(obj)}: Attribute '{attr_name}' not found in Object Mode")
+                print(f"{repr(obj)}: Attribute '{attr_name}' not found in Object Mode ({domain})")
                 return None
 
             attr_data = mesh.attributes[attr_name].data
 
-            if vertex_index >= len(attr_data):
-                print(f"{repr(obj)}: Vertex index {vertex_index} out of range in Object Mode")
+            if index >= len(attr_data):
+                print(f"{repr(obj)}: Index {index} out of range in Object Mode ({domain})")
                 return None
 
-            return attr_data[vertex_index].value.decode('utf-8')
+            return attr_data[index].value.decode('utf-8')
 
         print(f"{repr(obj)}: Unknown object mode {obj.mode}")
         return None
@@ -118,11 +120,12 @@ class JbeamUtils:
 
     @staticmethod
     def get_beam_id(obj, bm, edge_index) -> str:
-        edge = bm.edges[edge_index]  # Get the edge using the index
-        v1, v2 = edge.verts  # Get the two BMVert objects
-        n1 = JbeamUtils.get_node_id(obj, v1.index)
-        n2 = JbeamUtils.get_node_id(obj, v2.index)
-        return f"[{n1 if n1 else '<?>'}|{n2 if n2 else '<?>'}]"
+        edge = bm.edges[edge_index]
+        v1, v2 = edge.verts
+        n1 = JbeamUtils.get_node_id(obj, v1.index) or "<?>"
+        n2 = JbeamUtils.get_node_id(obj, v2.index) or "<?>"
+        n1, n2 = sorted([n1, n2])
+        return f"[{n1}|{n2}]"
 
     @staticmethod
     def get_node_props_str(obj, vertex_index) -> str:
@@ -130,7 +133,7 @@ class JbeamUtils:
 
     @staticmethod
     def get_beam_props_str(obj, edge_index) -> str:
-        return JbeamUtils.get_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS)
+        return JbeamUtils.get_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, 'edges')
 
     @staticmethod
     def get_props(obj, index, props_str_func, element_type="element") -> dict:
@@ -151,8 +154,8 @@ class JbeamUtils:
 
 
     @staticmethod
-    def set_attribute_value(obj, vertex_index: int, attr_name: str, attr_value: str):
-
+    def set_attribute_value(obj, index: int, attr_name: str, attr_value: str, domain="verts"):
+        
         if not obj or obj.type != 'MESH':
             print(f"Invalid object: {repr(obj)}")
             return False
@@ -161,27 +164,29 @@ class JbeamUtils:
 
         if obj.mode == 'EDIT':
             bm = bmesh.from_edit_mesh(mesh)
-            if vertex_index >= len(bm.verts):
-                print(f"{repr(obj)}: Vertex index {vertex_index} out of range in Edit Mode")
+            bm_data = getattr(bm, domain)  # Access verts or edges dynamically
+
+            if index >= len(bm_data):
+                print(f"{repr(obj)}: Index {index} out of range in Edit Mode ({domain})")
                 return False
 
-            v = bm.verts[vertex_index]
-            layer = bm.verts.layers.string.get(attr_name) or bm.verts.layers.string.new(attr_name)
+            element = bm_data[index]
+            layer = bm_data.layers.string.get(attr_name) or bm_data.layers.string.new(attr_name)
 
-            v[layer] = attr_value.encode('utf-8')
+            element[layer] = attr_value.encode('utf-8')
             return True
 
         elif obj.mode == 'OBJECT':
             if attr_name not in mesh.attributes:
-                mesh.attributes.new(name=attr_name, type='STRING', domain='POINT')
+                mesh.attributes.new(name=attr_name, type='STRING', domain="POINT" if domain == "verts" else "EDGE")
 
             attr_data = mesh.attributes[attr_name].data
 
-            if vertex_index >= len(attr_data):
-                print(f"{repr(obj)}: Vertex index {vertex_index} out of range in Object Mode")
+            if index >= len(attr_data):
+                print(f"{repr(obj)}: Index {index} out of range in Object Mode ({domain})")
                 return False
 
-            attr_data[vertex_index].value = attr_value.encode('utf-8')
+            attr_data[index].value = attr_value.encode('utf-8')
             return True
 
         print(f"{repr(obj)}: Unknown object mode {obj.mode}")

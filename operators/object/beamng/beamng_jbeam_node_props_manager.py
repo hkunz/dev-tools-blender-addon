@@ -25,7 +25,12 @@ class OBJECT_OT_BeamngLoadJbeamPropsBase(bpy.types.Operator):
             return {'CANCELLED'}
 
         bm = bmesh.from_edit_mesh(obj.data)
-        layer = getattr(bm, self.domain).layers.string.get(self.layer_name)
+        layers = getattr(bm, self.domain).layers.string
+        if self.layer_name not in layers:
+            self.report({'WARNING'}, f"Layer '{self.layer_name}' not found in domain '{self.domain}'")
+            return {'CANCELLED'}
+
+        layer = layers[self.layer_name]
         selected_elements = [e for e in getattr(bm, self.domain) if e.select]
 
         if not layer:

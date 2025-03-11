@@ -21,7 +21,7 @@ from dev_tools.operators.object.beamng.beamng_jbeam_rename_selected_nodes import
 from dev_tools.operators.object.beamng.beamng_jbeam_create_mesh_object import OBJECT_OT_create_jbeam_mesh_object # type: ignore
 
 from dev_tools.utils.utils import Utils # type: ignore
-from dev_tools.utils.object_utils import ObjectUtils # type: ignore
+from dev_tools.utils.object_utils import ObjectUtils as o # type: ignore
 from dev_tools.utils.icons_manager import IconsManager  # type: ignore
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
 
@@ -204,32 +204,61 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             if obj and obj.mode == 'EDIT' and obj.type == 'MESH' and j.is_node_mesh(obj):
                 bm = bmesh.from_edit_mesh(obj.data)
                 bm.verts.ensure_lookup_table()
-                index = context.scene.beamng_jbeam_active_vertex_idx
-                if index > -1:
-                    beamng_jbeam_active_node_id = j.get_node_id(obj, index)
-                    box.label(text=f"Active Node: {beamng_jbeam_active_node_id} ({index})")
-                    box.label(text=f"Selected Nodes: {context.scene.beamng_jbeam_selected_nodes}")
-                    box.prop(context.scene, "beamng_jbeam_active_node", text="Active Node ID")
-                    box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign JBeam ID")
 
-                    if context.scene.beamng_jbeam_vertex_props:
-                        for prop in context.scene.beamng_jbeam_vertex_props:
-                            r = box.row()
-                            r.prop(prop, "name", text="")
-                            r.prop(prop, "value", text="")
-                            button_row = r.row(align=True)
-                            button_row.scale_x = 0.4
-                            button_row.operator(OBJECT_OT_BeamngSelectJbeamNodesByProperty.bl_idname, text=" ").prop_name = prop.name
-                            button_row.operator(OBJECT_OT_BeamngSaveJbeamNodeProp.bl_idname, text="S").prop_name = prop.name
-                            button_row.operator(OBJECT_OT_BeamngRemoveJbeamNodeProp.bl_idname, text="X").prop_name = prop.name
+                if o.is_vertex_selection_mode():
+                    index = context.scene.beamng_jbeam_active_vertex_idx
+                    if index > -1:
+                        beamng_jbeam_active_node_id = j.get_node_id(obj, index)
+                        box.label(text=f"Active Node: {beamng_jbeam_active_node_id} ({index})")
+                        box.label(text=f"Selected Nodes: {context.scene.beamng_jbeam_selected_nodes}")
+                        box.prop(context.scene, "beamng_jbeam_active_node", text="Active Node ID")
+                        box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign JBeam ID")
+
+                        if context.scene.beamng_jbeam_vertex_props:
+                            for prop in context.scene.beamng_jbeam_vertex_props:
+                                r = box.row()
+                                r.prop(prop, "name", text="")
+                                r.prop(prop, "value", text="")
+                                button_row = r.row(align=True)
+                                button_row.scale_x = 0.4
+                                button_row.operator(OBJECT_OT_BeamngSelectJbeamNodesByProperty.bl_idname, text=" ").prop_name = prop.name
+                                button_row.operator(OBJECT_OT_BeamngSaveJbeamNodeProp.bl_idname, text="S").prop_name = prop.name
+                                button_row.operator(OBJECT_OT_BeamngRemoveJbeamNodeProp.bl_idname, text="X").prop_name = prop.name
+                        else:
+                            box.label(text=f"No Scope Modifers on Selection")
+
+                        box.operator(OBJECT_OT_BeamngAddJbeamNodeProp.bl_idname, text="Add Scope Modifier")
+                        box.operator(OBJECT_OT_BeamngSaveAllJbeamNodeProps.bl_idname, text="Save All")
                     else:
-                        box.label(text=f"No Scope Modifers on Node `{context.scene.beamng_jbeam_selected_nodes}`")
+                        msg = "Select node/s to view Scope Modifiers" if j.has_jbeam_node_id(obj) else "Convert to Node Mesh"
+                        box.label(text=msg)
+                elif o.is_edge_selection_mode():
+                    index = context.scene.beamng_jbeam_active_edge_idx
+                    if index > -1:
+                        beamng_jbeam_active_edge_id = j.get_beam_id(obj, index)
+                        box.label(text=f"Active Edge: {beamng_jbeam_active_edge_id} ({index})")
+                        box.label(text=f"Selected Edges: {context.scene.beamng_jbeam_selected_edges}")
+                        box.prop(context.scene, "beamng_jbeam_active_edge", text="Active Beam ID")
+                        #box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign JBeam ID")
 
-                    box.operator(OBJECT_OT_BeamngAddJbeamNodeProp.bl_idname, text="Add Scope Modifier")
-                    box.operator(OBJECT_OT_BeamngSaveAllJbeamNodeProps.bl_idname, text="Save All")
-                else:
-                    msg = "Select node/s to view Scope Modifiers" if j.has_jbeam_node_id(obj) else "Convert to Node Mesh"
-                    box.label(text=msg)
+                        if context.scene.beamng_jbeam_edge_props:
+                            for prop in context.scene.beamng_jbeam_edge_props:
+                                r = box.row()
+                                r.prop(prop, "name", text="")
+                                r.prop(prop, "value", text="")
+                                button_row = r.row(align=True)
+                                button_row.scale_x = 0.4
+                                button_row.operator(OBJECT_OT_BeamngSelectJbeamNodesByProperty.bl_idname, text=" ").prop_name = prop.name
+                                button_row.operator(OBJECT_OT_BeamngSaveJbeamNodeProp.bl_idname, text="S").prop_name = prop.name
+                                button_row.operator(OBJECT_OT_BeamngRemoveJbeamNodeProp.bl_idname, text="X").prop_name = prop.name
+                        else:
+                            box.label(text=f"No Scope Modifers on Selection")
+
+                        box.operator(OBJECT_OT_BeamngAddJbeamNodeProp.bl_idname, text="Add Scope Modifier")
+                        box.operator(OBJECT_OT_BeamngSaveAllJbeamNodeProps.bl_idname, text="Save All")
+                    else:
+                        msg = "Select node/s to view Scope Modifiers" if j.has_jbeam_node_id(obj) else "Convert to Node Mesh"
+                        box.label(text=msg)
             else:
                 msg = "Edit Node Mesh in Edit Mode" if j.is_node_mesh(obj) else ("Convert to Node Mesh" if j.has_jbeam_node_id(obj) else "No Node Mesh selected")
                 box.label(text=msg)
@@ -269,7 +298,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
         # ob.active_material.slot_setting.rgb_controller = (1, 0, 0, 1)
 
     def add_layout_gn_prop(self, layout, modifier, prop_id):
-        name = ObjectUtils.get_modifier_prop_name(modifier, prop_id)
+        name = o.get_modifier_prop_name(modifier, prop_id)
         layout.prop(data=modifier, property=f'["{prop_id}"]', text=name)
 
     def add_layout_gn_prop_pointer(self, layout, md, rna): # Need to ensure that md and identifier are correct
@@ -300,9 +329,13 @@ def register() -> None:
     bpy.types.Scene.expanded_bake_options = bpy.props.BoolProperty(default=False)
     bpy.types.Scene.expanded_beamng_options = bpy.props.BoolProperty(default=False)
     bpy.types.Scene.beamng_jbeam_active_vertex_idx = bpy.props.IntProperty(name="Vertex Index", default=-1)
+    bpy.types.Scene.beamng_jbeam_active_edge_idx = bpy.props.IntProperty(name="Edge Index", default=-1)
     bpy.types.Scene.beamng_jbeam_active_node = bpy.props.StringProperty(name="JBeam Node ID")
+    bpy.types.Scene.beamng_jbeam_active_edge = bpy.props.StringProperty(name="JBeam Beam ID")
     bpy.types.Scene.beamng_jbeam_selected_nodes = bpy.props.StringProperty(name="Selected Nodes")
+    bpy.types.Scene.beamng_jbeam_selected_edges = bpy.props.StringProperty(name="Selected Edges")
     bpy.types.Scene.beamng_jbeam_vertex_props = bpy.props.CollectionProperty(type=JbeamPropertyItem)
+    bpy.types.Scene.beamng_jbeam_edge_props = bpy.props.CollectionProperty(type=JbeamPropertyItem)
 
     bpy.app.handlers.depsgraph_update_post.append(on_depsgraph_update)
 
@@ -317,7 +350,11 @@ def unregister() -> None:
     del bpy.types.Scene.expanded_beamng_options
     del bpy.types.Scene.my_property_group_pointer
     del bpy.types.Scene.beamng_jbeam_active_vertex_idx
+    del bpy.types.Scene.beamng_jbeam_active_edge_idx
     del bpy.types.Scene.beamng_jbeam_active_node
+    del bpy.types.Scene.beamng_jbeam_active_edge
     del bpy.types.Scene.beamng_jbeam_selected_nodes
+    del bpy.types.Scene.beamng_jbeam_selected_edges
     del bpy.types.Scene.beamng_jbeam_vertex_props
+    del bpy.types.Scene.beamng_jbeam_edge_props
     bpy.app.handlers.depsgraph_update_post.clear()

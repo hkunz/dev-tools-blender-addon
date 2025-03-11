@@ -161,6 +161,7 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
         j.remove_old_jbeam_attributes(obj)
         j.create_attribute_node_id(obj)
         j.create_attribute_node_props(obj)
+        j.create_attribute_beam_props(obj)
 
         for node_id, vert_props in verts_dic.items():
             if not hasattr(vert_props, "index") or vert_props.index < 0:

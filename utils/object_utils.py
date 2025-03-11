@@ -330,12 +330,12 @@ class ObjectUtils:
                     # Enable attribute mode
                     mod[socket_id + "_use_attribute"] = True
                     mod[socket_id + "_attribute_name"] = attribute_name
-                    print(f"Socket '{socket_name}' set to use attribute '{attribute_name}'.")
+                    #print(f"Socket '{socket_name}' set to use attribute '{attribute_name}'.")
                 else:
                     # Use single value mode
                     mod[socket_id + "_use_attribute"] = False
                     mod[socket_id] = value
-                    print(f"Socket '{socket_name}' set to single value: {value}.")
+                    #print(f"Socket '{socket_name}' set to single value: {value}.")
 
                 return True
 

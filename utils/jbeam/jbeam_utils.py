@@ -11,6 +11,7 @@ class JbeamUtils:
 
     ATTR_NODE_ID = "jbeam_node_id"
     ATTR_NODE_PROPS = "jbeam_node_props"
+    ATTR_BEAM_PROPS = "jbeam_beam_props"
     ATTR_SELECTED_EDGES = "selected_edges"
 
     GN_JBEAM_VISUALIZER_ATTR = "jbeam_visualizer_id"
@@ -24,8 +25,12 @@ class JbeamUtils:
     def has_jbeam_node_props(obj):
         return JbeamUtils.ATTR_NODE_PROPS in obj.data.attributes if obj else False
 
+    @staticmethod
+    def has_jbeam_beam_props(obj):
+        return JbeamUtils.ATTR_BEAM_PROPS in obj.data.attributes if obj else False
+
     def is_node_mesh(obj):
-        return obj and obj.type == 'MESH' and JbeamUtils.has_jbeam_node_id(obj) and JbeamUtils.has_jbeam_node_props(obj)
+        return obj and obj.type == 'MESH' and JbeamUtils.has_jbeam_node_id(obj) and JbeamUtils.has_jbeam_node_props(obj) and JbeamUtils.has_jbeam_beam_props(obj)
 
     @staticmethod
     def remove_old_jbeam_attributes(obj):
@@ -61,6 +66,10 @@ class JbeamUtils:
     @staticmethod
     def create_attribute_node_props(obj):
         return JbeamUtils.create_attribute(obj, "jbeam_node_props")
+
+    @staticmethod
+    def create_attribute_beam_props(obj):
+        return JbeamUtils.create_attribute(obj, "jbeam_beam_props")
 
     @staticmethod
     def get_attribute_value(obj, vertex_index, attr_name) -> str:
@@ -108,17 +117,34 @@ class JbeamUtils:
         return JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_ID)
 
     @staticmethod
+    def get_beam_id(obj, edge_index) -> str:
+        return "E" + str(edge_index)
+
+    @staticmethod
     def get_node_props_str(obj, vertex_index) -> str:
         return JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS)
 
     @staticmethod
-    def get_node_props(obj, vertex_index) -> dict:
-        props_str = JbeamUtils.get_node_props_str(obj, vertex_index)
+    def get_beam_props_str(obj, vertex_index) -> str:
+        return JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_BEAM_PROPS)
+
+    @staticmethod
+    def get_props(obj, index, props_str_func, element_type="element") -> dict:
+        props_str = props_str_func(obj, index)
         try:
             return json.loads(props_str) if props_str else {}
         except json.JSONDecodeError:
-            print(f"Warning: Invalid JSON at vertex {vertex_index}")
+            print(f"Warning: Invalid JSON at {element_type} {index}")
             return {}
+
+    @staticmethod
+    def get_node_props(obj, vertex_index) -> dict:
+        return JbeamUtils.get_props(obj, vertex_index, JbeamUtils.get_node_props_str, "vertex")
+
+    @staticmethod
+    def get_beam_props(obj, edge_index) -> dict:
+        return JbeamUtils.get_props(obj, edge_index, JbeamUtils.get_beam_props_str, "edge")
+
 
     @staticmethod
     def set_attribute_value(obj, vertex_index: int, attr_name: str, attr_value: str):
@@ -181,6 +207,8 @@ class JbeamUtils:
         }
         JbeamUtils.create_attribute_node_id(obj) 
         JbeamUtils.create_attribute_node_props(obj)
+        JbeamUtils.create_attribute_beam_props(obj)
+
         for vertex_idx in range(num_verts):
             JbeamUtils.set_node_id(obj, vertex_idx, node_ids[vertex_idx])
             JbeamUtils.set_node_props(obj, vertex_idx, node_props[vertex_idx])
@@ -222,9 +250,10 @@ class JbeamUtils:
     def set_gn_jbeam_visualizer_selection_mode(obj):
         mode = next(i + 1 for i, v in enumerate(bpy.context.tool_settings.mesh_select_mode) if v) # 1 (vertex), 2 (edge), or 3 (edge)
         if JbeamUtils.get_gn_jbeam_visualizer_selection_mode(obj) == mode:
-            return
+            return mode
         JbeamUtils.set_gn_jbeam_socket_mode(obj, "Selection Mode", value=mode)
         bpy.context.object.data.update()
+        return mode
 
     @staticmethod
     def get_gn_jbeam_visualizer_selection_mode(obj):

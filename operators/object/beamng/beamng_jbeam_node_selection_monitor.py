@@ -17,6 +17,7 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
     def __init__(self):
         self.previous_vertex_selection = set()
         self.previous_edge_selection = set()
+        self.previous_selection_mode = -1
 
     @classmethod
     def is_running(cls):
@@ -45,7 +46,15 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
 
     def check_data(self, context):
         obj = context.object
-        j.set_gn_jbeam_visualizer_selection_mode(obj)
+        mode = j.set_gn_jbeam_visualizer_selection_mode(obj)
+
+        if self.previous_selection_mode != mode:
+            self.previous_selection_mode = mode
+            context.scene.beamng_jbeam_active_vertex_idx = -1
+            self.previous_vertex_selection = None
+            context.scene.beamng_jbeam_active_edge_idx = -1
+            self.previous_edge_selection = None
+
         if ObjectUtils.is_vertex_selection_mode():
             self.update_vertex_data(context)
         elif ObjectUtils.is_edge_selection_mode():
@@ -71,8 +80,8 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
         active_index = active_vert.index if active_vert else (max(current_selection) if current_selection else -1)
         context.scene.beamng_jbeam_active_vertex_idx = active_index
         jbeam_ids = [
-            j.get_node_id(obj, v_idx) or f"({v_idx})"
-            for v_idx in current_selection
+            j.get_node_id(obj, i) or f"({i})"
+            for i in current_selection
         ]
         context.scene.beamng_jbeam_selected_nodes = ", ".join(jbeam_ids)
         context.scene.beamng_jbeam_active_node = j.get_node_id(obj, active_index) or ""
@@ -91,10 +100,21 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
         self.previous_edge_selection = current_selection
         mod = j.get_gn_jbeam_modifier(obj)
         ObjectUtils.update_edge_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_edges", "selected_edges", current_selection)
-        self.update_beams_panel(context, bm)
+        self.update_beams_panel(context, bm, current_selection)
 
-    def update_beams_panel(self, context, bm):
-        pass
+    def update_beams_panel(self, context, bm, current_selection):
+        obj = context.object    
+        active_edge = bm.select_history.active if isinstance(bm.select_history.active, bmesh.types.BMEdge) else None
+        active_index = active_edge.index if active_edge else (max(current_selection) if current_selection else -1)
+        context.scene.beamng_jbeam_active_edge_idx = active_index
+        jbeam_ids = [
+            j.get_beam_id(obj, i) or f"({i})"
+            for i in current_selection
+        ]
+        context.scene.beamng_jbeam_selected_edges = ", ".join(jbeam_ids)
+        context.scene.beamng_jbeam_active_edge = j.get_beam_id(obj, active_index) or ""
+        bpy.ops.object.devtools_beamng_load_jbeam_beam_props()
+        UiUtils.force_update_ui(context)
 
     def cancel(self, context):
         cls = self.__class__

@@ -1,6 +1,5 @@
 import bpy
 import bmesh
-import json
 
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
 
@@ -9,11 +8,15 @@ class JbeamPropertyItem(bpy.types.PropertyGroup):
     value: bpy.props.StringProperty(name="Value") # type: ignore
 
 
-class OBJECT_OT_BeamngLoadJbeamNodeProps(bpy.types.Operator):
-    """Load JBeam properties of the selected vertex"""
-    bl_idname = "object.devtools_beamng_load_jbeam_node_props"
-    bl_label = "DevTools: BeamNG Load JBeam Node Properties"
+class OBJECT_OT_BeamngLoadJbeamPropsBase(bpy.types.Operator):
+    """Base class for loading JBeam properties"""
+    
     bl_options = {'INTERNAL', 'UNDO'}
+    
+    domain = None  # Must be set in subclasses
+    layer_name = ""
+    scene_property_name = ""
+    get_props_function = None
 
     def execute(self, context):
         obj = context.object
@@ -22,18 +25,22 @@ class OBJECT_OT_BeamngLoadJbeamNodeProps(bpy.types.Operator):
             return {'CANCELLED'}
 
         bm = bmesh.from_edit_mesh(obj.data)
-        layer = bm.verts.layers.string.get("jbeam_node_props")
-        selected_verts = [v for v in bm.verts if v.select]
+        layer = getattr(bm, self.domain).layers.string.get(self.layer_name)
+        selected_elements = [e for e in getattr(bm, self.domain) if e.select]
 
-        if not selected_verts or not layer:
-            self.report({'WARNING'}, "No selected vertices or no property data found")
+        if not layer:
+            self.report({'WARNING'}, "No layer found")
+
+        if not selected_elements:
+            print("No selection or no property data found")
             return {'CANCELLED'}
 
-        context.scene.beamng_jbeam_vertex_props.clear()
+        scene_props = getattr(context.scene, self.scene_property_name)
+        scene_props.clear()
         properties = {}
 
-        for v in selected_verts:
-            props = j.get_node_props(obj, v.index)
+        for elem in selected_elements:
+            props = self.get_props_function(obj, elem.index)
             for key, value in props.items():
                 properties[key] = value
 
@@ -42,12 +49,33 @@ class OBJECT_OT_BeamngLoadJbeamNodeProps(bpy.types.Operator):
 
         # Add sorted properties to scene properties
         for key, value in sorted_props:
-            prop = context.scene.beamng_jbeam_vertex_props.add()
+            prop = scene_props.add()
             prop.name = key
             prop.value = str(value)
 
         return {'FINISHED'}
 
+class OBJECT_OT_BeamngLoadJbeamNodeProps(OBJECT_OT_BeamngLoadJbeamPropsBase):
+    """Load JBeam properties of the selected vertex"""
+    
+    bl_idname = "object.devtools_beamng_load_jbeam_node_props"
+    bl_label = "DevTools: BeamNG Load JBeam Node Properties"
+
+    domain = "verts"
+    layer_name = "jbeam_node_props"
+    scene_property_name = "beamng_jbeam_vertex_props"
+    get_props_function = staticmethod(j.get_node_props)  # Set function for nodes
+
+class OBJECT_OT_BeamngLoadJbeamBeamProps(OBJECT_OT_BeamngLoadJbeamPropsBase):
+    """Load JBeam properties of the selected edge beam"""
+    
+    bl_idname = "object.devtools_beamng_load_jbeam_beam_props"
+    bl_label = "DevTools: BeamNG Load JBeam Beam Properties"
+
+    domain = "edges"
+    layer_name = "jbeam_beam_props"
+    scene_property_name = "beamng_jbeam_edge_props"
+    get_props_function = staticmethod(j.get_beam_props)  # Set function for beams
 
 
 class OBJECT_OT_BeamngSaveJbeamNodeProp(bpy.types.Operator):

@@ -288,36 +288,29 @@ class ObjectUtils:
         obj.data.update()
 
     @staticmethod
-    def update_vertex_bool_attribute_for_gn(mod, obj, bm, named_attr_node_name, attr_name, values):
+    def update_bool_attribute_for_gn(mod, obj, bm, named_attr_node_name, attr_name, values, domain):
         mesh = obj.data
         node = mod.node_group.nodes.get(named_attr_node_name)
-        
+
         newv = bpy.app.version >= (4, 4, 0)
         node.data_type = attr_type = 'BOOLEAN' if newv else 'INT'
-        attribute = mesh.attributes.get(attr_name) or mesh.attributes.new(name=attr_name, type=attr_type, domain="POINT")
-        
-        layer = bm.verts.layers.bool.get(attribute.name) if newv else bm.verts.layers.int.get(attribute.name)
-        selected_value = True if newv else 1
-        unselected_value = False if newv else 0
+        attribute = mesh.attributes.get(attr_name) or mesh.attributes.new(name=attr_name, type=attr_type, domain=domain)
 
-        for vert in bm.verts:
-            vert[layer] = selected_value if vert.index in values else unselected_value
+        layers = bm.verts.layers if domain == "POINT" else bm.edges.layers
+        layer = layers.bool.get(attribute.name) if newv else layers.int.get(attribute.name)
+        selected_value, unselected_value = (True, False) if newv else (1, 0)
+
+        elements = bm.verts if domain == "POINT" else bm.edges
+        for elem in elements:
+            elem[layer] = selected_value if elem.index in values else unselected_value
+
+    @staticmethod
+    def update_vertex_bool_attribute_for_gn(mod, obj, bm, named_attr_node_name, attr_name, values):
+        ObjectUtils.update_bool_attribute_for_gn(mod, obj, bm, named_attr_node_name, attr_name, values, "POINT")
 
     @staticmethod
     def update_edge_bool_attribute_for_gn(mod, obj, bm, named_attr_node_name, attr_name, values):
-        mesh = obj.data
-        node = mod.node_group.nodes.get(named_attr_node_name)
-
-        newv = bpy.app.version >= (4, 4, 0)
-        node.data_type = attr_type = 'BOOLEAN' if newv else 'INT'
-        attribute = mesh.attributes.get(attr_name) or mesh.attributes.new(name=attr_name, type=attr_type, domain="EDGE")
-
-        layer = bm.edges.layers.bool.get(attribute.name) if newv else bm.edges.layers.int.get(attribute.name)
-        selected_value = True if newv else 1
-        unselected_value = False if newv else 0
-
-        for edge in bm.edges:
-            edge[layer] = selected_value if edge.index in values else unselected_value
+        ObjectUtils.update_bool_attribute_for_gn(mod, obj, bm, named_attr_node_name, attr_name, values, "EDGE")
 
     @staticmethod
     def set_gn_socket_mode(mod, socket_name, value=None, attribute_name=None):

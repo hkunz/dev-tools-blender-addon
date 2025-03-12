@@ -123,13 +123,13 @@ class JbeamUtils:
     def get_beam_id(obj, bm, edge_index) -> str:
         edge = bm.edges[edge_index]
         v1, v2 = sorted(edge.verts, key=lambda v: v.index)  # Sort vertices by index
-        n1 = JbeamUtils.get_node_id(obj, v1.index) or "<?>"
-        n2 = JbeamUtils.get_node_id(obj, v2.index) or "<?>"
+        n1 = JbeamUtils.get_node_id(obj, v1.index) or "?"
+        n2 = JbeamUtils.get_node_id(obj, v2.index) or "?"
         return f"[{n1}|{n2}]"
 
     @staticmethod
     def get_node_props_str(obj, vertex_index) -> str:
-        return JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS)
+        return JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, 'verts')
 
     @staticmethod
     def get_beam_props_str(obj, edge_index) -> str:
@@ -198,11 +198,11 @@ class JbeamUtils:
 
     @staticmethod
     def set_node_props(obj, vertex_index, node_props: dict):
-        JbeamUtils.set_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, json.dumps(node_props))
+        JbeamUtils.set_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, json.dumps(node_props), domain="verts")
 
     @staticmethod
     def set_beam_props(obj, edge_index, beam_props: dict):
-        JbeamUtils.set_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, json.dumps(beam_props))
+        JbeamUtils.set_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, json.dumps(beam_props), domain="edges")
 
     @staticmethod
     def setup_default_scope_modifiers_and_node_ids(obj):

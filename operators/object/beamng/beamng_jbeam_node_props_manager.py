@@ -61,34 +61,32 @@ class OBJECT_OT_BeamngLoadJbeamPropsBase(bpy.types.Operator):
         return {'FINISHED'}
 
 class OBJECT_OT_BeamngLoadJbeamNodeProps(OBJECT_OT_BeamngLoadJbeamPropsBase):
-    """Load JBeam properties of the selected vertex"""
+    """Load JBeam properties of the selected nodes"""
     
     bl_idname = "object.devtools_beamng_load_jbeam_node_props"
     bl_label = "DevTools: BeamNG Load JBeam Node Properties"
 
     domain = "verts"
-    layer_name = "jbeam_node_props"
+    layer_name = j.ATTR_NODE_PROPS
     scene_property_name = "beamng_jbeam_vertex_props"
-    get_props_function = staticmethod(j.get_node_props)  # Set function for nodes
+    get_props_function = staticmethod(j.get_node_props)
 
 class OBJECT_OT_BeamngLoadJbeamBeamProps(OBJECT_OT_BeamngLoadJbeamPropsBase):
-    """Load JBeam properties of the selected edge beam"""
+    """Load JBeam properties of the selected beams"""
     
     bl_idname = "object.devtools_beamng_load_jbeam_beam_props"
     bl_label = "DevTools: BeamNG Load JBeam Beam Properties"
 
     domain = "edges"
-    layer_name = "jbeam_beam_props"
+    layer_name = j.ATTR_BEAM_PROPS
     scene_property_name = "beamng_jbeam_edge_props"
-    get_props_function = staticmethod(j.get_beam_props)  # Set function for beams
+    get_props_function = staticmethod(j.get_beam_props)
 
-
-class OBJECT_OT_BeamngSaveJbeamNodeProp(bpy.types.Operator):
-    """Save a single JBeam node property for selected vertices"""
-    bl_idname = "object.devtools_beamng_save_jbeam_node_prop"
-    bl_label = "DevTools: BeamNG Save JBeam Node Property"
+class OBJECT_OT_BeamngSaveJbeamProp(bpy.types.Operator):
+    """Base class for saving JBeam properties"""
     bl_options = {'INTERNAL', 'UNDO'}
 
+    prop_type: bpy.props.StringProperty() # type: ignore
     prop_name: bpy.props.StringProperty() # type: ignore
 
     def execute(self, context):
@@ -98,24 +96,48 @@ class OBJECT_OT_BeamngSaveJbeamNodeProp(bpy.types.Operator):
             return {'CANCELLED'}
 
         bm = bmesh.from_edit_mesh(obj.data)
-        layer = bm.verts.layers.string.get("jbeam_node_props")
-        selected_verts = [v for v in bm.verts if v.select]
 
-        if not selected_verts or not layer:
-            self.report({'WARNING'}, "No selected vertices or no property data found")
+        # Select appropriate layer, elements, and property functions
+        if self.prop_type == 'NODE':
+            layer = bm.verts.layers.string.get(j.ATTR_NODE_PROPS)
+            elements = [v for v in bm.verts if v.select]
+            prop_collection = context.scene.beamng_jbeam_vertex_props
+            get_props = j.get_node_props
+            set_props = j.set_node_props
+        elif self.prop_type == 'BEAM':
+            layer = bm.edges.layers.string.get(j.ATTR_BEAM_PROPS)
+            elements = [e for e in bm.edges if e.select]
+            prop_collection = context.scene.beamng_jbeam_edge_props
+            get_props = j.get_beam_props
+            set_props = j.set_beam_props
+        else:
+            self.report({'ERROR'}, f"Unknown property type: {self.prop_type}")
             return {'CANCELLED'}
 
-        for v in selected_verts:
+        if not elements:
+            self.report({'WARNING'}, "No selected elements")
+            return {'CANCELLED'}
+        if not layer:
+            self.report({'WARNING'}, "No property data found")
+            return {'CANCELLED'}
+
+        # Reserved keyword check
+        if any(prop.name.lower() == "group" for prop in prop_collection):
+            self.report({'WARNING'}, "Keyword 'group' is reserved. Use vertex groups prefixed 'group_' to assign nodes to groups.")
+            return {'CANCELLED'}
+
+        # Find the property to apply
+        prop_to_save = next((prop for prop in prop_collection if prop.name == self.prop_name), None)
+        if not prop_to_save:
+            self.report({'WARNING'}, f"Property '{self.prop_name}' not found in scene properties")
+            return {'CANCELLED'}
+
+        # Apply property to selected elements
+        for element in elements:
             try:
-                props = j.get_node_props(obj, v.index)
-                if any(prop.name.lower() == "group" for prop in context.scene.beamng_jbeam_vertex_props):
-                    self.report({'WARNING'}, "Keyword 'group' is reserved. Use vertex groups prefixed 'group_' to assign nodes to groups.")
-                    return {'CANCELLED'}
-                for prop in context.scene.beamng_jbeam_vertex_props:
-                    if prop.name == self.prop_name:
-                        props[prop.name] = prop.value
-                        break
-                j.set_node_props(obj, v.index, props)
+                props = get_props(obj, element.index)
+                props[self.prop_name] = prop_to_save.value
+                set_props(obj, element.index, props)
             except Exception as e:
                 self.report({'ERROR'}, f"Failed to save property: {e}")
 
@@ -123,6 +145,23 @@ class OBJECT_OT_BeamngSaveJbeamNodeProp(bpy.types.Operator):
         self.report({'INFO'}, f"Saved property: {self.prop_name}")
         return {'FINISHED'}
 
+class OBJECT_OT_BeamngSaveJbeamNodeProp(OBJECT_OT_BeamngSaveJbeamProp):
+    """Save a single JBeam node property for selected nodes"""
+    bl_idname = "object.devtools_beamng_save_jbeam_node_prop"
+    bl_label = "DevTools: BeamNG Save JBeam Node Property"
+
+    def __init__(self):
+        super().__init__()
+        self.prop_type = 'NODE'
+
+class OBJECT_OT_BeamngSaveJbeamBeamProp(OBJECT_OT_BeamngSaveJbeamProp):
+    """Save a single JBeam edge property for selected beams"""
+    bl_idname = "object.devtools_beamng_save_jbeam_beam_prop"
+    bl_label = "DevTools: BeamNG Save JBeam Beam Property"
+
+    def __init__(self):
+        super().__init__()
+        self.prop_type = 'BEAM'
 
 class OBJECT_OT_BeamngSaveAllJbeamNodeProps(bpy.types.Operator):
     """Save all JBeam node properties for selected vertices"""
@@ -137,7 +176,7 @@ class OBJECT_OT_BeamngSaveAllJbeamNodeProps(bpy.types.Operator):
             return "No valid mesh object selected", 'CANCELLED'
 
         bm = bmesh.from_edit_mesh(obj.data)
-        layer = bm.verts.layers.string.get("jbeam_node_props")
+        layer = bm.verts.layers.string.get(j.ATTR_NODE_PROPS)
         selected_verts = [v for v in bm.verts if v.select]
 
         if not selected_verts or not layer:
@@ -171,34 +210,83 @@ class OBJECT_OT_BeamngSaveAllJbeamNodeProps(bpy.types.Operator):
         return {status}
 
 
-class OBJECT_OT_BeamngAddJbeamNodeProp(bpy.types.Operator):
-    """Add a new JBeam node property"""
-    bl_idname = "object.devtools_beamng_add_jbeam_node_prop"
-    bl_label = "DevTools: BeamNG Add JBeam Node Property"
+class OBJECT_OT_BeamngAddJbeamProp(bpy.types.Operator):
+    """Base class for adding JBeam properties"""
     bl_options = {'INTERNAL', 'UNDO'}
 
+    prop_type: bpy.props.StringProperty() # type: ignore
+
     def execute(self, context):
-        prop = context.scene.beamng_jbeam_vertex_props.add()
+        if self.prop_type == 'NODE':
+            prop = context.scene.beamng_jbeam_vertex_props.add()
+        elif self.prop_type == 'BEAM':
+            prop = context.scene.beamng_jbeam_edge_props.add()
+        else:
+            self.report({'ERROR'}, f"Unknown property type: {self.prop_type}")
+            return {'CANCELLED'}
+        
         prop.name = "NewProp"
         prop.value = "0"
         return {'FINISHED'}
 
+class OBJECT_OT_BeamngAddJbeamNodeProp(OBJECT_OT_BeamngAddJbeamProp):
+    """Add a new JBeam node property"""
+    bl_idname = "object.devtools_beamng_add_jbeam_node_prop"
+    bl_label = "DevTools: BeamNG Add JBeam Node Property"
 
-class OBJECT_OT_BeamngRemoveJbeamNodeProp(bpy.types.Operator):
-    """Remove a JBeam node property"""
-    bl_idname = "object.devtools_beamng_remove_jbeam_node_prop"
-    bl_label = "DevTools: BeamNG Remove JBeam Node Property"
+    def __init__(self):
+        self.prop_type = 'NODE'
+
+class OBJECT_OT_BeamngAddJbeamBeamProp(OBJECT_OT_BeamngAddJbeamProp):
+    """Add a new JBeam Beam property"""
+    bl_idname = "object.devtools_beamng_add_jbeam_edge_prop"
+    bl_label = "DevTools: BeamNG Add JBeam Beam Property"
+
+    def __init__(self):
+        self.prop_type = 'BEAM'
+
+
+class OBJECT_OT_BeamngRemoveJbeamProp(bpy.types.Operator):
+    """Base class for removing JBeam properties"""
     bl_options = {'INTERNAL', 'UNDO'}
 
+    prop_type: bpy.props.StringProperty() # type: ignore
     prop_name: bpy.props.StringProperty() # type: ignore
 
     def execute(self, context):
         scene = context.scene
-        for i, prop in enumerate(scene.beamng_jbeam_vertex_props):
+
+        if self.prop_type == 'NODE':
+            props = scene.beamng_jbeam_vertex_props
+        elif self.prop_type == 'BEAM':
+            props = scene.beamng_jbeam_edge_props
+        else:
+            self.report({'ERROR'}, f"Unknown property type: {self.prop_type}")
+            return {'CANCELLED'}
+
+        # Find and remove the matching property
+        for i, prop in enumerate(props):
             if prop.name == self.prop_name:
-                scene.beamng_jbeam_vertex_props.remove(i)
+                props.remove(i)
                 break
+
         return {'FINISHED'}
+
+class OBJECT_OT_BeamngRemoveJbeamNodeProp(OBJECT_OT_BeamngRemoveJbeamProp):
+    """Remove a JBeam node property"""
+    bl_idname = "object.devtools_beamng_remove_jbeam_node_prop"
+    bl_label = "DevTools: BeamNG Remove JBeam Node Property"
+
+    def __init__(self):
+        self.prop_type = 'NODE'
+
+class OBJECT_OT_BeamngRemoveJbeamBeamProp(OBJECT_OT_BeamngRemoveJbeamProp):
+    """Remove a JBeam beam property"""
+    bl_idname = "object.devtools_beamng_remove_jbeam_beam_prop"
+    bl_label = "DevTools: BeamNG Remove JBeam Beam Property"
+
+    def __init__(self):
+        self.prop_type = 'BEAM'
 
 
 class OBJECT_OT_BeamngRemoveJbeamNodeProp(bpy.types.Operator):
@@ -223,7 +311,7 @@ class OBJECT_OT_BeamngRemoveJbeamNodeProp(bpy.types.Operator):
             return {'CANCELLED'}
 
         bm = bmesh.from_edit_mesh(obj.data)
-        layer = bm.verts.layers.string.get("jbeam_node_props")
+        layer = bm.verts.layers.string.get(j.ATTR_NODE_PROPS)
 
         if not layer:
             self.report({'WARNING'}, "No property data found")
@@ -288,7 +376,7 @@ class OBJECT_OT_BeamngSelectJbeamNodesByProperty(bpy.types.Operator):
             return {'CANCELLED'}
 
         bm = bmesh.from_edit_mesh(obj.data)
-        layer = bm.verts.layers.string.get("jbeam_node_props")
+        layer = bm.verts.layers.string.get(j.ATTR_NODE_PROPS)
 
         if not layer:
             self.report({'WARNING'}, "No property data found")

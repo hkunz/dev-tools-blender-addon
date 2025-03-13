@@ -13,7 +13,7 @@ class OBJECT_OT_BeamngLoadJbeamPropsBase(bpy.types.Operator):
     
     bl_options = {'INTERNAL', 'UNDO'}
     
-    domain = None  # Must be set in subclasses
+    domain = None
     layer_name = ""
     scene_property_name = ""
     get_props_function = None
@@ -49,10 +49,9 @@ class OBJECT_OT_BeamngLoadJbeamPropsBase(bpy.types.Operator):
             for key, value in props.items():
                 properties[key] = value
 
-        # Sort properties alphabetically (case-insensitive)
-        sorted_props = sorted(properties.items(), key=lambda item: item[0].lower())
+        
+        sorted_props = sorted(properties.items(), key=lambda item: item[0].lower()) # Sort properties alphabetically (case-insensitive)
 
-        # Add sorted properties to scene properties
         for key, value in sorted_props:
             prop = scene_props.add()
             prop.name = key
@@ -97,7 +96,6 @@ class OBJECT_OT_BeamngSaveJbeamProp(bpy.types.Operator):
 
         bm = bmesh.from_edit_mesh(obj.data)
 
-        # Select appropriate layer, elements, and property functions
         if self.prop_type == 'NODE':
             layer = bm.verts.layers.string.get(j.ATTR_NODE_PROPS)
             elements = [v for v in bm.verts if v.select]
@@ -163,52 +161,73 @@ class OBJECT_OT_BeamngSaveJbeamBeamProp(OBJECT_OT_BeamngSaveJbeamProp):
         super().__init__()
         self.prop_type = 'BEAM'
 
-class OBJECT_OT_BeamngSaveAllJbeamNodeProps(bpy.types.Operator):
-    """Save all JBeam node properties for selected vertices"""
-    bl_idname = "object.devtools_beamng_save_all_jbeam_node_props"
-    bl_label = "DevTools: BeamNG Save All JBeam Node Properties"
+class OBJECT_OT_BeamngSaveAllJbeamProps(bpy.types.Operator):
+    """Base class for saving JBeam properties"""
     bl_options = {'INTERNAL', 'UNDO'}
+    
+    prop_type = "vertex"  # This will now be accessed via cls.prop_type
 
-    @staticmethod
-    def save_jbeam_node_props(context):
+    @classmethod
+    def get_bmesh_layer(cls, bm):
+        return bm.verts.layers.string.get(j.ATTR_NODE_PROPS) if cls.prop_type == "vertex" else bm.edges.layers.string.get(j.ATTR_BEAM_PROPS)
+    
+    @classmethod
+    def get_selected_elements(cls, bm):
+        return [v for v in bm.verts if v.select] if cls.prop_type == "vertex" else [e for e in bm.edges if e.select]
+    
+    @classmethod
+    def get_props(cls, obj, index):
+        return j.get_node_props(obj, index) if cls.prop_type == "vertex" else j.get_beam_props(obj, index)
+    
+    @classmethod
+    def set_props(cls, obj, index, props):
+        return j.set_node_props(obj, index, props) if cls.prop_type == "vertex" else j.set_beam_props(obj, index, props)
+    
+    def save_jbeam_props(self, context):
         obj = context.object
         if not obj or obj.type != 'MESH':
-            return "No valid mesh object selected", 'CANCELLED'
-
+            return f"No valid mesh object selected", 'CANCELLED'
+        
         bm = bmesh.from_edit_mesh(obj.data)
-        layer = bm.verts.layers.string.get(j.ATTR_NODE_PROPS)
-        selected_verts = [v for v in bm.verts if v.select]
+        layer = self.get_bmesh_layer(bm)
+        selected_elements = self.get_selected_elements(bm)
 
-        if not selected_verts or not layer:
-            return "No selected vertices or no property data found", 'CANCELLED'
-
-        # Get current properties in the UI
-        ui_props = {prop.name: prop.value for prop in context.scene.beamng_jbeam_vertex_props}
+        if not selected_elements or not layer:
+            return f"No selected {self.prop_type}s or no property data found", 'CANCELLED'
+        
+        ui_props = {prop.name: prop.value for prop in getattr(context.scene, f'beamng_jbeam_{self.prop_type}_props')}
         if any(prop_name.lower() == "group" for prop_name in ui_props):
             return "Keyword 'group' is reserved. Use vertex groups prefixed 'group_' to assign nodes to groups.", 'CANCELLED'
-
-        for v in selected_verts:
-            try: 
-                props = j.get_node_props(obj, v.index)
-                props = {k: v for k, v in props.items() if k in ui_props} # Remove properties that are missing from the UI
-
-                # Update values from the UI
+        
+        for element in selected_elements:
+            try:
+                props = self.get_props(obj, element.index)
+                props = {k: v for k, v in props.items() if k in ui_props}  # Remove missing properties
                 for prop_name, prop_value in ui_props.items():
                     props[prop_name] = prop_value
-
-                j.set_node_props(obj, v.index, props)
-
+                self.set_props(obj, element.index, props)
             except Exception as e:
                 return f"Failed to save properties: {e}", 'ERROR'
-
+        
         bmesh.update_edit_mesh(obj.data)
-        return "Saved all properties", 'FINISHED'
-
+        return f"Saved all {self.prop_type} properties", 'FINISHED'
+    
     def execute(self, context):
-        msg, status = self.save_jbeam_node_props(context)
+        msg, status = self.save_jbeam_props(context)
         self.report({'INFO' if status == 'FINISHED' else 'WARNING'}, msg)
         return {status}
 
+class OBJECT_OT_BeamngSaveAllJbeamNodeProps(OBJECT_OT_BeamngSaveAllJbeamProps):
+    """Save all JBeam node properties for selected vertices"""
+    bl_idname = "object.devtools_beamng_save_all_jbeam_node_props"
+    bl_label = "DevTools: BeamNG Save All JBeam Node Properties"
+    prop_type = "vertex"
+
+class OBJECT_OT_BeamngSaveAllJbeamBeamProps(OBJECT_OT_BeamngSaveAllJbeamProps):
+    """Save all JBeam beam properties for selected edges"""
+    bl_idname = "object.devtools_beamng_save_all_jbeam_beam_props"
+    bl_label = "DevTools: BeamNG Save All JBeam Beam Properties"
+    prop_type = "edge"
 
 class OBJECT_OT_BeamngAddJbeamProp(bpy.types.Operator):
     """Base class for adding JBeam properties"""

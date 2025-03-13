@@ -3,6 +3,7 @@ import sys
 import traceback
 import bpy_types
 import bmesh
+import os
 
 from math import radians
 from mathutils import Euler, Matrix
@@ -262,6 +263,59 @@ class ObjectUtils:
         selected_edges = [edge.index for edge in bm.edges if edge.select]
         return selected_edges
 
+    @staticmethod
+    def _import_node_group(blend_path, group_node_name, link=True):
+        """Helper function to either link or append a node group."""
+        
+        curr_blend = os.path.basename(bpy.data.filepath)
+        if os.path.basename(blend_path) == curr_blend:
+            print(f"Skipping {blend_path} (same file is being edited).")
+            return None
+
+        existing_node_tree = bpy.data.node_groups.get(group_node_name)
+        if existing_node_tree:
+            print(f"Node tree '{existing_node_tree.name}' already exists. Skipping import.")
+            return existing_node_tree
+
+        if not os.path.exists(blend_path):
+            print(f"Blend file not found: {blend_path}")
+            return None
+
+        if link:
+            # Linking the node group (keeps it external)
+            bpy.ops.wm.link(
+                filepath=f"{blend_path}/NodeTree/{group_node_name}",
+                directory=f"{blend_path}/NodeTree/",
+                filename=group_node_name
+            )
+        else:
+            # Appending the node group (makes a local copy)
+            with bpy.data.libraries.load(blend_path, link=False) as (data_from, data_to):
+                if group_node_name in data_from.node_groups:
+                    data_to.node_groups.append(group_node_name)
+
+        # Find the imported node tree
+        ng = bpy.data.node_groups.get(group_node_name)
+
+        if ng:
+            ng.use_fake_user = True  # Prevent deletion on exit
+            ng[group_node_name] = group_node_name  # Store an attribute for tracking
+            print(f"{'Linked' if link else 'Appended'} node tree: {ng.name}")
+        else:
+            print(f"Error: Node tree '{group_node_name}' not found after {'linking' if link else 'appending'}.")
+
+        return ng
+
+    @staticmethod
+    def gn_link_node_group(blend_path, group_node_name):
+        """Links a node group from an external blend file."""
+        return ObjectUtils._import_node_group(blend_path, group_node_name, link=True)
+
+    @staticmethod
+    def gn_append_node_group(blend_path, group_node_name):
+        """Appends a node group from an external blend file."""
+        return ObjectUtils._import_node_group(blend_path, group_node_name, link=False)
+
     @staticmethod # deprecated: use generic attributes instead of vertex groups which are semi-deprecated
     def assign_vertices_to_group_in_edit_mode(obj, vg_name, vertex_indices, weight=1.0):
         if obj.mode != 'EDIT':
@@ -354,3 +408,13 @@ class ObjectUtils:
 
         #print(f"Socket '{socket_name}' not found.")
         return None
+
+    @staticmethod
+    def gn_hide_modifier_input_by_name(node_group, input_name, hide=True):
+        for item in node_group.interface.items_tree:
+            # Only process sockets (ignore panels, categories, etc.)
+            if isinstance(item, bpy.types.NodeTreeInterfaceSocket):
+                if item.in_out == 'INPUT':  # Only input sockets
+                    #print(f"Input: {item.name}, Socket Type: {item.socket_type}")
+                    if item.name == input_name:
+                        item.hide_in_modifier = hide

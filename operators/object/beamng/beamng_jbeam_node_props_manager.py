@@ -264,56 +264,12 @@ class OBJECT_OT_BeamngAddJbeamBeamProp(OBJECT_OT_BeamngAddJbeamProp):
     def __init__(self):
         self.prop_type = 'BEAM'
 
-
 class OBJECT_OT_BeamngRemoveJbeamProp(bpy.types.Operator):
-    """Base class for removing JBeam properties"""
+    """Remove a JBeam property (Shift+Click to also save)"""
     bl_options = {'INTERNAL', 'UNDO'}
 
-    prop_type: bpy.props.StringProperty() # type: ignore
-    prop_name: bpy.props.StringProperty() # type: ignore
-
-    def execute(self, context):
-        scene = context.scene
-
-        if self.prop_type == 'NODE':
-            props = scene.beamng_jbeam_vertex_props
-        elif self.prop_type == 'BEAM':
-            props = scene.beamng_jbeam_edge_props
-        else:
-            self.report({'ERROR'}, f"Unknown property type: {self.prop_type}")
-            return {'CANCELLED'}
-
-        # Find and remove the matching property
-        for i, prop in enumerate(props):
-            if prop.name == self.prop_name:
-                props.remove(i)
-                break
-
-        return {'FINISHED'}
-
-class OBJECT_OT_BeamngRemoveJbeamNodeProp(OBJECT_OT_BeamngRemoveJbeamProp):
-    """Remove a JBeam node property"""
-    bl_idname = "object.devtools_beamng_remove_jbeam_node_prop"
-    bl_label = "DevTools: BeamNG Remove JBeam Node Property"
-
-    def __init__(self):
-        self.prop_type = 'NODE'
-
-class OBJECT_OT_BeamngRemoveJbeamBeamProp(OBJECT_OT_BeamngRemoveJbeamProp):
-    """Remove a JBeam beam property"""
-    bl_idname = "object.devtools_beamng_remove_jbeam_beam_prop"
-    bl_label = "DevTools: BeamNG Remove JBeam Beam Property"
-
-    def __init__(self):
-        self.prop_type = 'BEAM'
-
-
-class OBJECT_OT_BeamngRemoveJbeamNodeProp(bpy.types.Operator):
-    """Remove a JBeam node property (Shift+Click to also save)"""
-    bl_idname = "object.devtools_beamng_remove_jbeam_node_prop"
-    bl_label = "DevTools: BeamNG Remove JBeam Node Property"
-    bl_options = {'INTERNAL', 'UNDO'}
-
+    prop_type = "vertex"  # Can be "vertex" (node) or "edge" (beam)
+    
     prop_name: bpy.props.StringProperty()  # type: ignore
 
     def invoke(self, context, event):
@@ -322,6 +278,8 @@ class OBJECT_OT_BeamngRemoveJbeamNodeProp(bpy.types.Operator):
         return self.execute(context)
 
     def execute(self, context):
+        self.do_save = getattr(self, "do_save", False)  # Ensure `do_save` exists
+
         scene = context.scene
         obj = context.object
 
@@ -330,45 +288,54 @@ class OBJECT_OT_BeamngRemoveJbeamNodeProp(bpy.types.Operator):
             return {'CANCELLED'}
 
         bm = bmesh.from_edit_mesh(obj.data)
-        layer = bm.verts.layers.string.get(j.ATTR_NODE_PROPS)
 
-        if not layer:
+        # Get correct layer and elements based on prop_type
+        if self.prop_type == "vertex":
+            layer = bm.verts.layers.string.get(j.ATTR_NODE_PROPS)
+            selected_elements = [v for v in bm.verts if v.select]
+            ui_list = scene.beamng_jbeam_vertex_props
+            get_props = j.get_node_props
+            set_props = j.set_node_props
+        else:  # Edge (beam)
+            layer = bm.edges.layers.string.get(j.ATTR_BEAM_PROPS)
+            selected_elements = [e for e in bm.edges if e.select]
+            ui_list = scene.beamng_jbeam_edge_props
+            get_props = j.get_beam_props
+            set_props = j.set_beam_props
+
+        if layer is None:
             self.report({'WARNING'}, "No property data found")
             return {'CANCELLED'}
 
-        selected_verts = [v for v in bm.verts if v.select]
-        if not selected_verts:
-            self.report({'WARNING'}, "No selected vertices found")
+        if not selected_elements:
+            self.report({'WARNING'}, f"No selected {self.prop_type}s found")
             return {'CANCELLED'}
 
         removed_from_ui = False
         removed_from_mesh = False
 
         # Always remove from the UI list
-        for i, prop in enumerate(scene.beamng_jbeam_vertex_props):
+        for i, prop in enumerate(ui_list):
             if prop.name == self.prop_name:
-                scene.beamng_jbeam_vertex_props.remove(i)
+                ui_list.remove(i)
                 removed_from_ui = True
                 break  # Ensure only one instance is removed
 
         if self.do_save:
             # Remove property from mesh (SAVE MODE)
-            for v in selected_verts:
-                if not v[layer]:
-                    continue  # Skip if no stored data
+            for element in selected_elements:
+                if element[layer]:  # Ensure there's data before proceeding
+                    try:
+                        props = get_props(obj, element.index)
+                        if self.prop_name in props:
+                            del props[self.prop_name]  # Remove property
+                            set_props(obj, element.index, props)  # Update stored properties
+                            removed_from_mesh = True
+                    except Exception as e:
+                        self.report({'ERROR'}, f"Failed to remove property: {e}")
+                        return {'CANCELLED'}
 
-                try:
-                    props = j.get_node_props(obj, v.index)
-                    if self.prop_name in props:
-                        del props[self.prop_name]  # Remove property
-                        j.set_node_props(obj, v.index, props if props else {})
-                        removed_from_mesh = True
-
-                except Exception as e:
-                    self.report({'ERROR'}, f"Failed to remove property: {e}")
-                    return {'CANCELLED'}
-
-            bmesh.update_edit_mesh(obj.data) # Commit changes to mesh
+            bmesh.update_edit_mesh(obj.data)  # Commit changes to mesh
 
         if removed_from_ui and removed_from_mesh:
             self.report({'INFO'}, f"Removed property '{self.prop_name}' from UI and saved")
@@ -378,6 +345,18 @@ class OBJECT_OT_BeamngRemoveJbeamNodeProp(bpy.types.Operator):
             self.report({'WARNING'}, f"Property '{self.prop_name}' not found")
 
         return {'FINISHED' if removed_from_ui else 'CANCELLED'}
+
+class OBJECT_OT_BeamngRemoveJbeamNodeProp(OBJECT_OT_BeamngRemoveJbeamProp):
+    """Remove a JBeam node property (Shift+Click to also save)"""
+    bl_idname = "object.devtools_beamng_remove_jbeam_node_prop"
+    bl_label = "DevTools: BeamNG Remove JBeam Node Property"
+    prop_type = "vertex"
+
+class OBJECT_OT_BeamngRemoveJbeamBeamProp(OBJECT_OT_BeamngRemoveJbeamProp):
+    """Remove a JBeam beam property (Shift+Click to also save)"""
+    bl_idname = "object.devtools_beamng_remove_jbeam_beam_prop"
+    bl_label = "DevTools: BeamNG Remove JBeam Beam Property"
+    prop_type = "edge"
 
 
 class OBJECT_OT_BeamngSelectJbeamNodesByProperty(bpy.types.Operator):

@@ -279,8 +279,8 @@ class JbeamUtils:
         #ng = ObjectUtils.gn_append_node_group(blend_path, JbeamUtils.GN_JBEAM_VISUALIZER_GROUP_NODE_NAME)
         ng = ObjectUtils.gn_link_node_group(blend_path, JbeamUtils.GN_JBEAM_VISUALIZER_GROUP_NODE_NAME)
         # mute Split Edges nodes due to bug https://projects.blender.org/blender/blender/issues/121619
-        ng.nodes.get('gn_beams_unselected_split_edges_node').mute = True
-        ng.nodes.get('gn_beams_selected_split_edges_node').mute = True
+        #ng.nodes.get('gn_beams_unselected_split_edges_node').mute = False
+        #ng.nodes.get('gn_beams_selected_split_edges_node').mute = False
 
     @staticmethod
     def add_gn_jbeam_visualizer_modifier(obj):
@@ -302,7 +302,7 @@ class JbeamUtils:
                 print(f"Modifier '{mod.name}' already uses '{node_tree.name}'. Skipping add.")
                 return  # Modifier already exists, exit function
 
-        modifier_name = "__gn_jbeam_visualizer_modifier"
+        modifier_name = JbeamUtils.GN_JBEAM_VISUALIZER_GROUP_NODE_NAME + "_modifier"
         mod = obj.modifiers.new(name=modifier_name, type='NODES')
         mod.node_group = node_tree
         ObjectUtils.gn_hide_modifier_input_by_name(node_tree, "Selection Mode")

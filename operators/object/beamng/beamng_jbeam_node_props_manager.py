@@ -358,14 +358,23 @@ class OBJECT_OT_BeamngRemoveJbeamBeamProp(OBJECT_OT_BeamngRemoveJbeamProp):
     bl_label = "DevTools: BeamNG Remove JBeam Beam Property"
     prop_type = "edge"
 
-
-class OBJECT_OT_BeamngSelectJbeamNodesByProperty(bpy.types.Operator):
-    """Select all vertices that share the same JBeam property and value"""
-    bl_idname = "object.devtools_beamng_select_jbeam_nodes_by_property"
-    bl_label = "DevTools: BeamNG Select JBeam Nodes by Property"
+class OBJECT_OT_BeamngSelectByPropertyBase(bpy.types.Operator):
+    """Base class for selecting elements based on JBeam property"""
     bl_options = {'INTERNAL', 'UNDO'}
 
-    prop_name: bpy.props.StringProperty(name="Property Name") # type: ignore
+    prop_name: bpy.props.StringProperty(name="Property Name")  # type: ignore
+
+    def get_elements(self, bm):
+        """Return the elements to iterate over (verts for nodes, edges for beams)."""
+        pass
+
+    def get_property_data(self, obj, element):
+        """Retrieve property data for the given element."""
+        pass
+
+    def get_property_collection(self, context):
+        """Determine the correct property collection based on element type."""
+        pass
 
     def execute(self, context):
         obj = context.object
@@ -374,46 +383,69 @@ class OBJECT_OT_BeamngSelectJbeamNodesByProperty(bpy.types.Operator):
             return {'CANCELLED'}
 
         bm = bmesh.from_edit_mesh(obj.data)
-        layer = bm.verts.layers.string.get(j.ATTR_NODE_PROPS)
-
-        if not layer:
-            self.report({'WARNING'}, "No property data found")
-            return {'CANCELLED'}
+        prop_collection = self.get_property_collection(context)
 
         # Retrieve the property value from the UI
         selected_prop_value = None
-        for prop in context.scene.beamng_jbeam_vertex_props:
+        for prop in prop_collection:
             if prop.name == self.prop_name:
-                selected_prop_value = prop.value
+                selected_prop_value = str(prop.value).strip().lower()
                 break
 
         if selected_prop_value is None:
             self.report({'WARNING'}, f"Property '{self.prop_name}' not found in UI")
             return {'CANCELLED'}
 
-        selected_prop_value = str(selected_prop_value).strip().lower()
+        print(f"\n[DEBUG] Searching for elements with {self.prop_name} = {selected_prop_value}")
 
-        print(f"\n[DEBUG] Searching for vertices with {self.prop_name} = {selected_prop_value}")
-
-        for v in bm.verts:
-            v.select = False
+        # Deselect all elements first
+        for elem in self.get_elements(bm):
+            elem.select = False
 
         bm.select_flush(False)
-        bmesh.update_edit_mesh(obj.data, loop_triangles=True) 
+        bmesh.update_edit_mesh(obj.data, loop_triangles=True)
 
         matched_count = 0
 
-        for v in bm.verts:
-            stored_data = j.get_node_props(obj, v.index)
+        for elem in self.get_elements(bm):
+            stored_data = self.get_property_data(obj, elem)
             stored_value = stored_data.get(self.prop_name, None)
 
-            # Convert values to string for comparison
             if stored_value is not None and str(stored_value).strip().lower() == selected_prop_value:
-                v.select = True
+                elem.select = True
                 matched_count += 1
 
         bmesh.update_edit_mesh(obj.data)
 
-        print(f"Total Matched Vertices: {matched_count}")
-        self.report({'INFO'}, f"Selected {matched_count} vertices with {self.prop_name} = {selected_prop_value}")
+        print(f"Total Matched Elements: {matched_count}")
+        self.report({'INFO'}, f"Selected {matched_count} elements with {self.prop_name} = {selected_prop_value}")
         return {'FINISHED'}
+
+class OBJECT_OT_BeamngSelectJbeamNodesByProperty(OBJECT_OT_BeamngSelectByPropertyBase):
+    """Select all vertices (nodes) that share the same JBeam property and value"""
+    bl_idname = "object.devtools_beamng_select_jbeam_nodes_by_property"
+    bl_label = "DevTools: BeamNG Select JBeam Nodes by Property"
+
+    def get_elements(self, bm):
+        return bm.verts
+
+    def get_property_data(self, obj, element):
+        return j.get_node_props(obj, element.index)
+
+    def get_property_collection(self, context):
+        return context.scene.beamng_jbeam_vertex_props
+
+class OBJECT_OT_BeamngSelectJbeamBeamsByProperty(OBJECT_OT_BeamngSelectByPropertyBase):
+    """Select all edges (beams) that share the same JBeam property and value"""
+    bl_idname = "object.devtools_beamng_select_jbeam_beams_by_property"
+    bl_label = "DevTools: BeamNG Select JBeam Beams by Property"
+
+    def get_elements(self, bm):
+        return bm.edges
+
+    def get_property_data(self, obj, element):
+        return j.get_beam_props(obj, element.index)
+
+    def get_property_collection(self, context):
+        return context.scene.beamng_jbeam_edge_props
+

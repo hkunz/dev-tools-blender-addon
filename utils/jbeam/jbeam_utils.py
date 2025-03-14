@@ -126,6 +126,13 @@ class JbeamUtils:
         n2 = JbeamUtils.get_node_id(obj, v2.index) or "?"
         return f"[{n1}|{n2}]"
 
+    def get_beam_node_ids(obj, edge_index) -> tuple[str, str]:
+        edge = obj.data.edges[edge_index]
+        v1_idx, v2_idx = sorted(edge.vertices)
+        n1 = JbeamUtils.get_node_id(obj, v1_idx) or "?"
+        n2 = JbeamUtils.get_node_id(obj, v2_idx) or "?"
+        return n1, n2
+
     @staticmethod
     def get_node_props_str(obj, vertex_index) -> str:
         return JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, 'verts')

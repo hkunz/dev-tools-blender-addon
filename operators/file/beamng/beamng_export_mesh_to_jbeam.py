@@ -225,67 +225,37 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         #context.window_manager.operators[-1].bl_label = "Save JBeam File"
         return {'RUNNING_MODAL'}
 
-    def get_starting_props(self, data, jbeam_prop):  # jbeam_prop i.e. "nodes", "beams", "triangles", "quads", etc
-        partnames = [key for key in data]
-        if not partnames:
-            self.report({'WARNING'}, "No partname-like property found!")
-            return []
-        last_partname = partnames[-1]
-        part_data = data[last_partname]
-        if jbeam_prop not in part_data:
-            self.report({'WARNING'}, f"No jbeam prop named \"{jbeam_prop}\" found!")
-            return []
-        starting_props = []
-        for item in part_data[jbeam_prop][1:]:
-            if isinstance(item, dict):
-                starting_props.append(item)
-            elif isinstance(item, list):
-                break
-        return starting_props
-
-    def get_ending_props(self, data, jbeam_prop):  # jbeam_prop i.e. "nodes", "beams", "triangles", "quads", etc
-        partnames = [key for key in data]
-        if not partnames:
-            self.report({'ERROR'}, "No partname-like property found!")
-            return []
-        last_partname = partnames[-1]
-        part_data = data[last_partname]
-        if jbeam_prop not in part_data:
-            self.report({'ERROR'}, f"No jbeam prop named \"{jbeam_prop}\" found!")
-            return []
-        ending_props = []
-        for item in reversed(part_data[jbeam_prop]):
-            if isinstance(item, dict):
-                ending_props.append(item)
-            elif isinstance(item, list):
-                break
-        ending_props.reverse()
-        return ending_props
-
     def get_final_struct(self, json, items, jbeam_prop, prepend=[]):
-        starting_props = self.get_starting_props(json, jbeam_prop)
-        ending_props = self.get_ending_props(json, jbeam_prop)
-        if starting_props == ending_props:
-            ending_props = []
-        arr = prepend + starting_props + items + ending_props
+        arr = prepend + items
         formatted_str = ',\n    '.join(
             str(item).replace("'", '"')
             for item in arr
         )
-        formatted_str = formatted_str.replace('True', 'true').replace('False', 'false')
         return formatted_str
 
     def generate_jbeam_node_list(self, obj):
 
-        jbeam = PreJbeamStructureHelper(obj)
-        data = jbeam.structure_vertex_data()
-        reducer = RedundancyReducerJbeamNodesGenerator(obj, data)
+        jbeam = PreJbeamStructureHelper(obj, domain="vertex")
+        data = jbeam.structure_data()
+        reducer = RedundancyReducerJbeamNodesGenerator(obj, data, domain="vertex")
         data_actual = reducer.reduce_redundancy()
 
         node_data = [] #[["id", "posX", "posY", "posZ"]]
         for item in data_actual:
             node_data.append(item)
         return node_data
+
+    def generate_jbeam_beam_list(self, obj):
+
+        jbeam = PreJbeamStructureHelper(obj, domain="edge")
+        data = jbeam.structure_data()
+        reducer = RedundancyReducerJbeamNodesGenerator(obj, data, domain="edge")
+        data_actual = reducer.reduce_redundancy()
+
+        beam_data = [] #[["id1:", "id2:"]]
+        for item in data_actual:
+            beam_data.append(item)
+        return beam_data
 
     def export_jbeam_format(self, filepath):
         obj = bpy.context.active_object
@@ -297,7 +267,7 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
         mesh.calc_loop_triangles()
 
         nodes = self.generate_jbeam_node_list(obj)
-        beams = self.get_beams(obj)
+        beams = self.generate_jbeam_beam_list(obj)
         triangles = self.get_triangles(obj)
         quads = self.get_quads(obj)
         ngons = self.get_ngons(obj)
@@ -359,11 +329,12 @@ class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
             print(f"Replace nodes, beams, triangles, refNodes, etc in {filepath}")
             refnodes_str = self.get_final_struct(existing_data, ref_nodes_data, "refNodes")
             nodes_str = format_list(nodes, '["id", "posX", "posY", "posZ"],', False)
+            beams_str = format_list(beams, '["id1:","id2:"],', False)
             #nodes_str = self.get_final_struct(existing_data, nodes, "nodes", [["id", "posX", "posY", "posZ"]])
-            beams_str = self.get_final_struct(existing_data, beams, "beams", [["id1:", "id2:"]])
-            tris_str = self.get_final_struct(existing_data, triangles, "triangles", [["id1:","id2:","id3:"]])
-            if quads: quads_str = self.get_final_struct(existing_data, quads, "quads", [["id1:","id2:","id3:","id4:"]])
-            if ngons: ngons_str = self.get_final_struct(existing_data, ngons, "ngons", [["ngons:"]])
+            #beams_str = self.get_final_struct(existing_data, beams, "beams", [["id1:", "id2:"]])
+            tris_str = "" #self.get_final_struct(existing_data, triangles, "triangles", [["id1:","id2:","id3:"]])
+            if quads: quads_str = "" #self.get_final_struct(existing_data, quads, "quads", [["id1:","id2:","id3:","id4:"]])
+            if ngons: ngons_str = "" #self.get_final_struct(existing_data, ngons, "ngons", [["ngons:"]])
             
             processor = JBeamProcessor(existing_data_str)
 

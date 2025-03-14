@@ -116,8 +116,8 @@ class TestJBeamHelper(unittest.TestCase):
 
     def test_pre_jbeam_structure(self):
 
-        jbeam = PreJbeamStructureHelper(self.obj)
-        data_actual = jbeam.structure_vertex_data()
+        jbeam = PreJbeamStructureHelper(self.obj, domain="vertex")
+        data_actual = jbeam.structure_data()
         print()
         print("🔸 Actual Output:\n")
         for key, value in data_actual.items():
@@ -171,9 +171,9 @@ class TestJBeamHelper(unittest.TestCase):
 
     def test_jbeam_structure(self):
     
-        jbeam = PreJbeamStructureHelper(self.obj)
+        jbeam = PreJbeamStructureHelper(self.obj, domain="vertex")
         data = jbeam.structure_vertex_data()
-        reducer = RedundancyReducerJbeamNodesGenerator(bpy.context.object, data)
+        reducer = RedundancyReducerJbeamNodesGenerator(bpy.context.object, data, domain="vertex")
         data_actual = reducer.reduce_redundancy()
 
         data_expected = [

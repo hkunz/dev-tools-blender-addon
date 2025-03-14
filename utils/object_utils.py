@@ -238,6 +238,16 @@ class ObjectUtils:
         return success
 
     @staticmethod
+    def get_vertex_position_by_index(obj, bm, index):
+        if obj.mode != 'EDIT':  
+            print("Must be in Edit Mode!")
+            return (0, 0, 0)
+        if index < 0 or index >= len(bm.verts):
+            return (0, 0, 0)
+        vert = bm.verts[index]
+        return (vert.co.x, vert.co.y, vert.co.z)  # Local coordinates
+
+    @staticmethod
     def is_vertex_selection_mode():
         return bpy.context.tool_settings.mesh_select_mode[0]
 

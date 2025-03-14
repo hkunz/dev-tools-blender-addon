@@ -3,10 +3,28 @@ import bmesh
 
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
 
+class JbeamNode(bpy.types.PropertyGroup):
+    node_id: bpy.props.StringProperty(
+        name="Node ID",
+        default=""
+    )  # type: ignore
+
+    position: bpy.props.FloatVectorProperty(
+        name="Node Position",
+        description="3D position of the node",
+        default=(0.0, 0.0, 0.0),
+        subtype="TRANSLATION"
+    )  # type: ignore
+
+    vertex_index: bpy.props.IntProperty(
+        name="Vertex Index",
+        description="Index of the associated vertex",
+        default=-1
+    )  # type: ignore
+
 class JbeamPropertyItem(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Property Name") # type: ignore
     value: bpy.props.StringProperty(name="Value") # type: ignore
-
 
 class OBJECT_OT_BeamngLoadJbeamPropsBase(bpy.types.Operator):
     """Base class for loading JBeam properties"""
@@ -37,7 +55,7 @@ class OBJECT_OT_BeamngLoadJbeamPropsBase(bpy.types.Operator):
             self.report({'WARNING'}, "No layer found")
 
         if not selected_elements:
-            print("No selection or no property data found")
+            #print("No selection or no property data found")
             return {'CANCELLED'}
 
         scene_props = getattr(context.scene, self.scene_property_name)

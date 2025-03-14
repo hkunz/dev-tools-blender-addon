@@ -1,7 +1,7 @@
 import bpy
 import bmesh
 
-from dev_tools.utils.object_utils import ObjectUtils # type: ignore
+from dev_tools.utils.object_utils import ObjectUtils as o# type: ignore
 from dev_tools.utils.ui_utils import UiUtils # type: ignore
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
 
@@ -50,14 +50,14 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
 
         if self.previous_selection_mode != mode:
             self.previous_selection_mode = mode
-            context.scene.beamng_jbeam_active_vertex_idx = -1
+            context.scene.beamng_jbeam_active_node.vertex_index = -1
             self.previous_vertex_selection = None
             context.scene.beamng_jbeam_active_edge_idx = -1
             self.previous_edge_selection = None
 
-        if ObjectUtils.is_vertex_selection_mode():
+        if o.is_vertex_selection_mode():
             self.update_vertex_data(context)
-        elif ObjectUtils.is_edge_selection_mode():
+        elif o.is_edge_selection_mode():
             self.update_edge_data(context)
 
     def update_vertex_data(self, context):
@@ -71,20 +71,21 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
 
         self.previous_vertex_selection = current_selection
         mod = j.get_gn_jbeam_modifier(obj)
-        ObjectUtils.update_vertex_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_vertices", "selected_vertices", current_selection)
+        o.update_vertex_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_vertices", "selected_vertices", current_selection)
         self.update_nodes_panel(context, bm, current_selection)
 
     def update_nodes_panel(self, context, bm, current_selection):
         obj = context.object
         active_vert = bm.select_history.active if isinstance(bm.select_history.active, bmesh.types.BMVert) else None
         active_index = active_vert.index if active_vert else (max(current_selection) if current_selection else -1)
-        context.scene.beamng_jbeam_active_vertex_idx = active_index
+        context.scene.beamng_jbeam_active_node.vertex_index = active_index
+        context.scene.beamng_jbeam_active_node.position = o.get_vertex_position_by_index(obj, bm, active_index)
         jbeam_ids = [
             j.get_node_id(obj, i) or f"({i})"
             for i in current_selection
         ]
         context.scene.beamng_jbeam_selected_nodes = ", ".join(jbeam_ids)
-        context.scene.beamng_jbeam_active_node = j.get_node_id(obj, active_index) or ""
+        context.scene.beamng_jbeam_active_node.node_id = j.get_node_id(obj, active_index) or ""
         bpy.ops.object.devtools_beamng_load_jbeam_node_props()
         UiUtils.force_update_ui(context)
 
@@ -99,7 +100,7 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
 
         self.previous_edge_selection = current_selection
         mod = j.get_gn_jbeam_modifier(obj)
-        ObjectUtils.update_edge_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_edges", "selected_edges", current_selection)
+        o.update_edge_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_edges", "selected_edges", current_selection)
         self.update_beams_panel(context, bm, current_selection)
 
     def update_beams_panel(self, context, bm, current_selection):

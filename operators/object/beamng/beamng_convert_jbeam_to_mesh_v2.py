@@ -130,13 +130,17 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
                 vert_pos = obj.matrix_world @ vert.co  
                 dist_sq = (vert_pos - node.position).length_squared
 
-                if dist_sq < epsilon ** 2 and dist_sq < closest_dist_sq:
+                if dist_sq < closest_dist_sq:
                     closest_dist_sq = dist_sq
                     closest_vert_idx = vert.index
 
             if closest_vert_idx is not None:
-                node.index = closest_vert_idx
-                verts_dic[node.node_id] = node
+                if closest_dist_sq < epsilon ** 2:  # Check if closest vertex is within range
+                    node.index = closest_vert_idx
+                    verts_dic[node.node_id] = node
+                else:
+                    self.report({'ERROR'}, f"No vertex found within proximity of {node.node_id}")
+                    node.index = None # Explicitly mark nodes with no close vertex
 
         return verts_dic
 
@@ -257,7 +261,6 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
 
         jbeam_path = obj.data.get('jbeam_file_path', None)
         ref_nodes = None
-        verts_dic = None
         is_jbeam_part = False
 
         if not jbeam_path:
@@ -270,7 +273,6 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
             for part_name, part_data in json_data.items():
                 if "nodes" in part_data: # TODO currently only handles 1 part for selected obj, the first partname in the list
                     break
-            verts_dic = self.get_vertex_indices(obj, part_data)
  
         self.remove_custom_data_props(obj)
 
@@ -281,6 +283,7 @@ class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
         bpy.ops.object.mode_set(mode='OBJECT')
 
         if is_jbeam_part:
+            verts_dic = self.get_vertex_indices(obj, part_data)
             self.assign_ref_nodes_to_vertex_groups(obj, ref_nodes, verts_dic)
             self.assign_flex_groups_to_vertex_groups(obj, part_data, verts_dic)
             self.create_node_mesh_attributes(obj)

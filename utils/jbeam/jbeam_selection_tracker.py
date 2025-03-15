@@ -43,18 +43,21 @@ class JbeamSelectionTracker:
     def check_selection_change(self, scene):
         obj = bpy.context.object
         mode = j.set_gn_jbeam_visualizer_selection_mode(obj)
-
+        reset = False
         if self.previous_selection_mode != mode:
             self.previous_selection_mode = mode
             scene.beamng_jbeam_active_node.vertex_index = -1
             self.previous_vertex_selection = None
             scene.beamng_jbeam_active_edge_idx = -1
             self.previous_edge_selection = None
+            reset = True
 
         if o.is_vertex_selection_mode():
             self.update_vertex_data(scene, obj)
         elif o.is_edge_selection_mode():
             self.update_edge_data(scene, obj)
+        elif reset:
+            obj.data.update()
 
     def update_vertex_data(self, scene, obj):
         bm = bmesh.from_edit_mesh(obj.data)

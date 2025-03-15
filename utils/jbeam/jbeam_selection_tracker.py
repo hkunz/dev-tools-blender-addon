@@ -68,10 +68,12 @@ class JbeamSelectionTracker:
         mod = j.get_gn_jbeam_modifier(obj)
         o.update_vertex_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_vertices", "selected_vertices", current_selection)
         self.update_nodes_panel(scene, obj, bm, current_selection)
+        obj.data.update()
 
     def update_nodes_panel(self, scene, obj, bm, current_selection):
         active_vert = bm.select_history.active if isinstance(bm.select_history.active, bmesh.types.BMVert) else None
         active_index = active_vert.index if active_vert else (max(current_selection) if current_selection else -1)
+        j.set_gn_jbeam_active_node_index(obj, active_index)
         scene.beamng_jbeam_active_node.vertex_index = active_index
         x, y, z = o.get_vertex_position_by_index(obj, bm, active_index)
         scene.beamng_jbeam_active_node.position.x = x
@@ -98,6 +100,7 @@ class JbeamSelectionTracker:
         mod = j.get_gn_jbeam_modifier(obj)
         o.update_edge_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_edges", "selected_edges", current_selection)
         self.update_beams_panel(scene, obj, bm, current_selection)
+        obj.data.update()
 
     def update_beams_panel(self, scene, obj, bm, current_selection): 
         active_edge = bm.select_history.active if isinstance(bm.select_history.active, bmesh.types.BMEdge) else None

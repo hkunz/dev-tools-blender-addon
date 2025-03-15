@@ -261,6 +261,11 @@ class JbeamUtils:
         return mod
 
     @staticmethod
+    def set_gn_jbeam_active_node_index(obj, vertex_index):
+        JbeamUtils.set_gn_jbeam_socket_mode(obj, "Active Node Vertex Index", value=vertex_index)
+        
+
+    @staticmethod
     def set_gn_jbeam_socket_mode(obj, socket_name, value=None, attribute_name=None):
         mod = JbeamUtils.get_gn_jbeam_modifier(obj)
         ObjectUtils.set_gn_socket_mode(mod, socket_name, value, attribute_name)
@@ -271,7 +276,6 @@ class JbeamUtils:
         if JbeamUtils.get_gn_jbeam_visualizer_selection_mode(obj) == mode:
             return mode
         JbeamUtils.set_gn_jbeam_socket_mode(obj, "Selection Mode", value=mode)
-        bpy.context.object.data.update()
         return mode
 
     @staticmethod
@@ -288,6 +292,10 @@ class JbeamUtils:
         # mute Split Edges nodes due to bug https://projects.blender.org/blender/blender/issues/121619
         #ng.nodes.get('gn_beams_unselected_split_edges_node').mute = False
         #ng.nodes.get('gn_beams_selected_split_edges_node').mute = False
+
+        for mat in bpy.data.materials:
+            if mat.name.startswith("mat_jbeam_"):
+                mat.use_backface_culling = True
 
     @staticmethod
     def add_gn_jbeam_visualizer_modifier(obj):
@@ -313,6 +321,7 @@ class JbeamUtils:
         mod = obj.modifiers.new(name=modifier_name, type='NODES')
         mod.node_group = node_tree
         ObjectUtils.gn_hide_modifier_input_by_name(node_tree, "Selection Mode")
+        ObjectUtils.gn_hide_modifier_input_by_name(node_tree, "Active Node Vertex Index")
         JbeamUtils.set_gn_jbeam_visualizer_selection_mode(obj)
 
         print(f"Assigned '{node_tree.name}' to '{repr(obj)}' via modifier '{mod.name}'")

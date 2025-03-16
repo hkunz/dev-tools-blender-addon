@@ -208,8 +208,10 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                         node_id = j.get_node_id(obj, index)
                         pos = context.scene.beamng_jbeam_active_node.position
                         row = box.row()
-                        row.label(text=f"Active Node: {node_id} ({index})")
-                        row.label(text=f"({pos.x:.2f}, {pos.y:.2f}, {pos.z:.2f})")
+                        split = row.split(factor=0.5)
+                        split.label(text=f"Active Node: {node_id} ({index})")
+                        split.alignment = 'RIGHT'
+                        split.label(text=f"({pos.x:.2f}, {pos.y:.2f}, {pos.z:.2f})")
                         box.label(text=f"Selected Nodes: {context.scene.beamng_jbeam_selected_nodes}")
                         box.prop(context.scene.beamng_jbeam_active_node, "node_id", text="Active Node ID")
                         box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign JBeam ID")
@@ -238,7 +240,13 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                         bm = bmesh.from_edit_mesh(obj.data)
                         bm.edges.ensure_lookup_table()
                         beamng_jbeam_active_edge_id = j.get_beam_id(obj, bm, index)
-                        box.label(text=f"Active Beam: {beamng_jbeam_active_edge_id} ({index})")
+                        edge = bm.edges[index]
+                        edge_length = edge.calc_length()
+                        row = box.row()
+                        split = row.split(factor=0.67)
+                        split.label(text=f"Active Beam: {beamng_jbeam_active_edge_id} ({index})")
+                        split.alignment = 'RIGHT'
+                        split.label(text=f"({edge_length:.2f})")
                         box.label(text=f"Selected Beams: {context.scene.beamng_jbeam_selected_edges}")
                         box.prop(context.scene, "beamng_jbeam_active_edge", text="Active Beam")
                         #box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign JBeam ID")

@@ -18,7 +18,7 @@ from dev_tools.operators.object.beamng.beamng_parent_to_start01_empty_operator i
 from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_mesh_v2 import OBJECT_OT_BeamngConvertJbeamToMesh_v2 # type: ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_node_props_manager import OBJECT_OT_BeamngSaveJbeamNodeProp, OBJECT_OT_BeamngSaveJbeamBeamProp, OBJECT_OT_BeamngSaveAllJbeamNodeProps, OBJECT_OT_BeamngSaveAllJbeamBeamProps, OBJECT_OT_BeamngAddJbeamNodeProp, OBJECT_OT_BeamngAddJbeamBeamProp, OBJECT_OT_BeamngRemoveJbeamNodeProp, OBJECT_OT_BeamngRemoveJbeamBeamProp, OBJECT_OT_BeamngSelectJbeamNodesByProperty, OBJECT_OT_BeamngSelectJbeamBeamsByProperty, JbeamPropertyItem, JbeamNode  # type: ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_rename_selected_nodes import OBJECT_OT_BeamngJbeamRenameSelectedNodes # type:ignore
-from dev_tools.operators.object.beamng.beamng_jbeam_create_node_mesh import OBJECT_OT_BeamngJbbeamCreateNodeMesh # type: ignore
+from dev_tools.operators.object.beamng.beamng_jbeam_create_node_mesh import OBJECT_OT_BeamngJbeamCreateNodeMesh # type: ignore
 
 from dev_tools.utils.utils import Utils # type: ignore
 from dev_tools.utils.object_utils import ObjectUtils as o # type: ignore
@@ -196,7 +196,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             row.operator(OBJECT_OT_BeamngParentToStart01Empty.bl_idname, text="Parent Empty")
             col.separator()
             if not context.selected_objects:
-                col.operator(OBJECT_OT_BeamngJbbeamCreateNodeMesh.bl_idname, text="Create Node Mesh")
+                col.operator(OBJECT_OT_BeamngJbeamCreateNodeMesh.bl_idname, text="Create Node Mesh")
             elif len(context.selected_objects) == 1:
                 col.operator(OBJECT_OT_BeamngConvertJbeamToMesh_v2.bl_idname, text="Convert to Node Mesh")
             box = col.box()

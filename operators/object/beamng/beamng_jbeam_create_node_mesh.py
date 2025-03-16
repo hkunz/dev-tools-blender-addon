@@ -59,7 +59,7 @@ class JbeamNodeMesh:
         bpy.ops.object.devtools_beamng_create_refnodes_vertex_groups()
 
 
-class OBJECT_OT_BeamngJbbeamCreateNodeMesh(bpy.types.Operator):
+class OBJECT_OT_BeamngJbeamCreateNodeMesh(bpy.types.Operator):
     """Create a JBeam Node Mesh Object"""
     bl_idname = "object.devtools_beamng_jbeam_create_node_mesh"
     bl_label = "Create JBeam Node Mesh"

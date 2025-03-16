@@ -3,7 +3,7 @@ import json
 
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
 
-class JbeamMeshObject:
+class JbeamNodeMesh:
     def __init__(self, name="jbeam_mesh"):
         self.name = name
         self.obj = self.create_triangulated_cube()
@@ -59,13 +59,13 @@ class JbeamMeshObject:
         bpy.ops.object.devtools_beamng_create_refnodes_vertex_groups()
 
 
-class OBJECT_OT_create_jbeam_mesh_object(bpy.types.Operator):
-    """Create a JBeam Mesh Object"""
-    bl_idname = "object.devtools_beamng_create_jbeam_mesh_object"
-    bl_label = "Create JBeam Mesh Object"
+class OBJECT_OT_BeamngJbbeamCreateNodeMesh(bpy.types.Operator):
+    """Create a JBeam Node Mesh Object"""
+    bl_idname = "object.devtools_beamng_jbeam_create_node_mesh"
+    bl_label = "Create JBeam Node Mesh"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
         bpy.ops.object.select_all(action='DESELECT')
-        JbeamMeshObject()
+        JbeamNodeMesh()
         return {'FINISHED'}

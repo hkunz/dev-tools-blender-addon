@@ -367,4 +367,4 @@ def unregister() -> None:
     del bpy.types.Scene.beamng_jbeam_selected_edges
     del bpy.types.Scene.beamng_jbeam_vertex_props
     del bpy.types.Scene.beamng_jbeam_edge_props
-    bpy.app.handlers.depsgraph_update_post.clear()
+    bpy.app.handlers.depsgraph_update_post.remove(on_depsgraph_update)

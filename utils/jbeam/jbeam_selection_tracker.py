@@ -108,6 +108,7 @@ class JbeamSelectionTracker:
     def update_beams_panel(self, scene, obj, bm, current_selection): 
         active_edge = bm.select_history.active if isinstance(bm.select_history.active, bmesh.types.BMEdge) else None
         active_index = active_edge.index if active_edge else (max(current_selection) if current_selection else -1)
+        j.set_gn_jbeam_active_beam_index(obj, active_index)
         scene.beamng_jbeam_active_edge_idx = active_index
         jbeam_ids = [
             j.get_beam_id(obj, bm, i) or f"({i})"

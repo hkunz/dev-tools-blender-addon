@@ -263,7 +263,10 @@ class JbeamUtils:
     @staticmethod
     def set_gn_jbeam_active_node_index(obj, vertex_index):
         JbeamUtils.set_gn_jbeam_socket_mode(obj, "Active Node Vertex Index", value=vertex_index)
-        
+
+    @staticmethod
+    def set_gn_jbeam_active_beam_index(obj, edge_index):
+        JbeamUtils.set_gn_jbeam_socket_mode(obj, "Active Beam Edge Index", value=edge_index)
 
     @staticmethod
     def set_gn_jbeam_socket_mode(obj, socket_name, value=None, attribute_name=None):
@@ -322,6 +325,7 @@ class JbeamUtils:
         mod.node_group = node_tree
         ObjectUtils.gn_hide_modifier_input_by_name(node_tree, "Selection Mode")
         ObjectUtils.gn_hide_modifier_input_by_name(node_tree, "Active Node Vertex Index")
+        ObjectUtils.gn_hide_modifier_input_by_name(node_tree, "Active Beam Edge Index")
         JbeamUtils.set_gn_jbeam_visualizer_selection_mode(obj)
 
         print(f"Assigned '{node_tree.name}' to '{repr(obj)}' via modifier '{mod.name}'")

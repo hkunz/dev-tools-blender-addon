@@ -125,9 +125,9 @@ class OBJECT_OT_BeamngCreateRefnodesVertexGroups(bpy.types.Operator):
         active_object: bpy.types.Object = context.active_object
         return active_object and active_object.type == "MESH"
 
-class EXPORT_OT_BeamngExportMeshToJbeam(bpy.types.Operator):
-    """Export mesh to JBeam format"""
-    bl_idname = "export.dev_tools_beamng_export_mesh_to_jbeam"
+class EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Operator):
+    """Export Node Mesh to JBeam format"""
+    bl_idname = "export.dev_tools_beamng_export_node_mesh_to_jbeam"
     bl_label = "DevTools: Export Mesh to JBeam Format"
     bl_options = {'REGISTER'}
 

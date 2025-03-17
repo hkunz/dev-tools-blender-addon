@@ -16,7 +16,7 @@ from dev_tools.operators.object.beamng.beamng_create_metaball_cloud_operator imp
 from dev_tools.operators.object.beamng.beamng_parent_to_start01_empty_operator import OBJECT_OT_BeamngParentToStart01Empty, OBJECT_OT_BeamngClearChildrenStart01Empty # type: ignore
 from dev_tools.operators.object.beamng.beamng_parent_to_start01_empty_operator import OBJECT_OT_BeamngClearChildrenStart01Empty, OBJECT_OT_BeamngParentToStart01Empty # type: ignore
 from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_node_mesh import OBJECT_OT_BeamngConvertJbeamToNodeMesh # type: ignore
-from dev_tools.operators.object.beamng.beamng_jbeam_node_props_manager import OBJECT_OT_BeamngSaveJbeamNodeProp, OBJECT_OT_BeamngSaveJbeamBeamProp, OBJECT_OT_BeamngSaveAllJbeamNodeProps, OBJECT_OT_BeamngSaveAllJbeamBeamProps, OBJECT_OT_BeamngAddJbeamNodeProp, OBJECT_OT_BeamngAddJbeamBeamProp, OBJECT_OT_BeamngRemoveJbeamNodeProp, OBJECT_OT_BeamngRemoveJbeamBeamProp, OBJECT_OT_BeamngSelectJbeamNodesByProperty, OBJECT_OT_BeamngSelectJbeamBeamsByProperty, JbeamPropertyItem, JbeamNode  # type: ignore
+from dev_tools.operators.object.beamng.beamng_jbeam_node_props_manager import OBJECT_OT_BeamngSaveJbeamNodeProp, OBJECT_OT_BeamngSaveJbeamBeamProp, OBJECT_OT_BeamngSaveAllJbeamNodeProps, OBJECT_OT_BeamngSaveAllJbeamBeamProps, OBJECT_OT_BeamngAddJbeamNodeProp, OBJECT_OT_BeamngAddJbeamBeamProp, OBJECT_OT_BeamngRemoveJbeamNodeProp, OBJECT_OT_BeamngRemoveJbeamBeamProp, OBJECT_OT_BeamngSelectJbeamNodesByProperty, OBJECT_OT_BeamngSelectJbeamBeamsByProperty, JbeamPropertyItem, JbeamElement  # type: ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_rename_selected_nodes import OBJECT_OT_BeamngJbeamRenameSelectedNodes # type:ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_create_node_mesh import OBJECT_OT_BeamngJbeamCreateNodeMesh # type: ignore
 
@@ -164,30 +164,32 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                     self.add_layout_gn_prop_pointer(layout, md, rna)
 
     def draw_expanded_armature_options(self, context, layout):
+        s = context.scene
         ebox = layout.box()
         row = ebox.box().row()
         row.prop(
-            context.scene, "expanded_armature_options",
-            icon=IconsManager.BUILTIN_ICON_DOWN if context.scene.expanded_bake_options else IconsManager.BUILTIN_ICON_RIGHT,
+            s, "expanded_armature_options",
+            icon=IconsManager.BUILTIN_ICON_DOWN if s.expanded_bake_options else IconsManager.BUILTIN_ICON_RIGHT,
             icon_only=True, emboss=False
         )
         row.label(text="Armature Options")
-        if context.scene.expanded_armature_options:
+        if s.expanded_armature_options:
             col = layout.column()
             col.operator(OBJECT_OT_ArmatureCreateBonesRandomVertices.bl_idname, text="Create Bones Random Vertices")
             col.operator(OBJECT_OT_ArmatureCreateBonesFromEdgeSelection.bl_idname, text="Create Edge Bones")
             col.operator(OBJECT_OT_ArmatureAssignClosestVertexToBoneTails.bl_idname, text="Assign Vertex to Bone Tails")
 
     def draw_expanded_beamng_options(self, context, layout, obj):
+        s = context.scene
         ebox = layout.box()
         row = ebox.box().row()
         row.prop(
-            context.scene, "expanded_beamng_options",
-            icon=IconsManager.BUILTIN_ICON_DOWN if context.scene.expanded_beamng_options else IconsManager.BUILTIN_ICON_RIGHT,
+            s, "expanded_beamng_options",
+            icon=IconsManager.BUILTIN_ICON_DOWN if s.expanded_beamng_options else IconsManager.BUILTIN_ICON_RIGHT,
             icon_only=True, emboss=False
         )
         row.label(text="BeamNG Options")
-        if context.scene.expanded_beamng_options:
+        if s.expanded_beamng_options:
             col = layout.column()
             col.operator(OBJECT_OT_BeamngCreateEmptiesBase.bl_idname, text="Create Empties")
             row = col.row(align=True)
@@ -203,21 +205,21 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
 
             if obj and obj.mode == 'EDIT' and obj.type == 'MESH' and j.is_node_mesh(obj):
                 if o.is_vertex_selection_mode():
-                    index = context.scene.beamng_jbeam_active_node.vertex_index
+                    index = s.beamng_jbeam_active_node.index
                     if index > -1:
-                        node_id = j.get_node_id(obj, index)
-                        pos = context.scene.beamng_jbeam_active_node.position
+                        node_id = s.beamng_jbeam_active_node.id
+                        pos = s.beamng_jbeam_active_node.position
                         row = box.row()
                         split = row.split(factor=0.5)
                         split.label(text=f"Active Node: {node_id} ({index})")
                         split.alignment = 'RIGHT'
                         split.label(text=f"({pos.x:.2f}, {pos.y:.2f}, {pos.z:.2f})")
-                        box.label(text=f"Selected: {context.scene.beamng_jbeam_selected_nodes}")
-                        box.prop(context.scene.beamng_jbeam_active_node, "node_id", text="Active Node ID")
+                        box.label(text=f"Selected: {s.beamng_jbeam_selected_nodes}")
+                        box.prop(s.beamng_jbeam_active_node, "id", text="Active Node ID")
                         box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign JBeam ID")
 
-                        if context.scene.beamng_jbeam_vertex_props:
-                            for prop in context.scene.beamng_jbeam_vertex_props:
+                        if s.beamng_jbeam_vertex_props:
+                            for prop in s.beamng_jbeam_vertex_props:
                                 r = box.row()
                                 r.prop(prop, "name", text="")
                                 r.prop(prop, "value", text="")
@@ -236,24 +238,23 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                         box.label(text=msg)
 
                 elif o.is_edge_selection_mode():
-                    index = context.scene.beamng_jbeam_active_edge_idx
+                    index = s.beamng_jbeam_active_beam.index
                     if index > -1:
                         bm = bmesh.from_edit_mesh(obj.data)
                         bm.edges.ensure_lookup_table()
-                        beamng_jbeam_active_edge_id = j.get_beam_id(obj, bm, index)
                         edge = bm.edges[index]
                         edge_length = edge.calc_length()
                         row = box.row()
                         split = row.split(factor=0.67)
-                        split.label(text=f"Active Beam: {beamng_jbeam_active_edge_id} ({index})")
+                        split.label(text=f"Active Beam: {s.beamng_jbeam_active_beam.id} ({index})")
                         split.alignment = 'RIGHT'
                         split.label(text=f"({edge_length:.2f})")
-                        box.label(text=f"Selected: {context.scene.beamng_jbeam_selected_edges}")
-                        box.prop(context.scene, "beamng_jbeam_active_edge", text="Active Beam")
+                        box.label(text=f"Selected: {s.beamng_jbeam_selected_edges}")
+                        box.prop(s.beamng_jbeam_active_beam, "id", text="Active Beam ID")
                         #box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign JBeam ID")
 
-                        if context.scene.beamng_jbeam_edge_props:
-                            for prop in context.scene.beamng_jbeam_edge_props:
+                        if s.beamng_jbeam_edge_props:
+                            for prop in s.beamng_jbeam_edge_props:
                                 r = box.row()
                                 r.prop(prop, "name", text="")
                                 r.prop(prop, "value", text="")
@@ -272,7 +273,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                         box.label(text=msg)
 
                 elif o.is_face_selection_mode():
-                    index = context.scene.beamng_jbeam_active_node.vertex_index
+                    index = s.beamng_jbeam_active_node.index
                     if index > -1:
                         node_id = j.get_triangle_id(obj, index)
                         row = box.row()
@@ -280,12 +281,12 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                         split.label(text=f"Active Triangle: {node_id} ({index})")
                         split.alignment = 'RIGHT'
                         split.label(text=f"(area)")
-                        box.label(text=f"Selected: {context.scene.beamng_jbeam_selected_nodes}")
-                        box.prop(context.scene.beamng_jbeam_active_node, "node_id", text="Active Node ID")
-                        box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign JBeam ID")
+                        box.label(text=f"Selected: {s.beamng_jbeam_selected_nodes}")
+                        box.prop(s.beamng_jbeam_active_triangle, "id", text="Active Triangle ID")
+                        box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign Node ID")
 
-                        if context.scene.beamng_jbeam_vertex_props:
-                            for prop in context.scene.beamng_jbeam_vertex_props:
+                        if s.beamng_jbeam_vertex_props:
+                            for prop in s.beamng_jbeam_vertex_props:
                                 r = box.row()
                                 r.prop(prop, "name", text="")
                                 r.prop(prop, "value", text="")
@@ -367,15 +368,15 @@ def register() -> None:
     bpy.utils.register_class(MyPropertyGroup1)
     bpy.utils.register_class(MyPropertyGroup2)
     bpy.utils.register_class(JbeamPropertyItem)
-    bpy.utils.register_class(JbeamNode)
+    bpy.utils.register_class(JbeamElement)
     bpy.types.Material.my_slot_setting = bpy.props.PointerProperty(type=MyPropertyGroup2)
     bpy.types.Scene.my_property_group_pointer = bpy.props.PointerProperty(type=MyPropertyGroup1)
     bpy.types.Scene.expanded_armature_options = bpy.props.BoolProperty(default=False)
     bpy.types.Scene.expanded_bake_options = bpy.props.BoolProperty(default=False)
     bpy.types.Scene.expanded_beamng_options = bpy.props.BoolProperty(default=False)
-    bpy.types.Scene.beamng_jbeam_active_node = bpy.props.PointerProperty(type=JbeamNode)
-    bpy.types.Scene.beamng_jbeam_active_edge_idx = bpy.props.IntProperty(name="Edge Index", default=-1)
-    bpy.types.Scene.beamng_jbeam_active_edge = bpy.props.StringProperty(name="JBeam Beam ID")
+    bpy.types.Scene.beamng_jbeam_active_node = bpy.props.PointerProperty(type=JbeamElement)
+    bpy.types.Scene.beamng_jbeam_active_beam = bpy.props.PointerProperty(type=JbeamElement)
+    bpy.types.Scene.beamng_jbeam_active_triangle = bpy.props.PointerProperty(type=JbeamElement)
     bpy.types.Scene.beamng_jbeam_selected_nodes = bpy.props.StringProperty(name="Selected Nodes")
     bpy.types.Scene.beamng_jbeam_selected_edges = bpy.props.StringProperty(name="Selected Edges")
     bpy.types.Scene.beamng_jbeam_vertex_props = bpy.props.CollectionProperty(type=JbeamPropertyItem)
@@ -389,15 +390,15 @@ def unregister() -> None:
     bpy.utils.unregister_class(MyPropertyGroup1)
     bpy.utils.unregister_class(MyPropertyGroup2)
     bpy.utils.unregister_class(JbeamPropertyItem)
-    bpy.utils.unregister_class(JbeamNode)
+    bpy.utils.unregister_class(JbeamElement)
     del bpy.types.Material.my_slot_setting
     del bpy.types.Scene.expanded_armature_options
     del bpy.types.Scene.expanded_bake_options
     del bpy.types.Scene.expanded_beamng_options
     del bpy.types.Scene.my_property_group_pointer
-    del bpy.types.Scene.beamng_jbeam_active_edge_idx
     del bpy.types.Scene.beamng_jbeam_active_node
-    del bpy.types.Scene.beamng_jbeam_active_edge
+    del bpy.types.Scene.beamng_jbeam_active_beam
+    del bpy.types.Scene.beamng_jbeam_active_triangle
     del bpy.types.Scene.beamng_jbeam_selected_nodes
     del bpy.types.Scene.beamng_jbeam_selected_edges
     del bpy.types.Scene.beamng_jbeam_vertex_props

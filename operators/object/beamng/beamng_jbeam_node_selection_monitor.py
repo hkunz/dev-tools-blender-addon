@@ -50,9 +50,9 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
 
         if self.previous_selection_mode != mode:
             self.previous_selection_mode = mode
-            context.scene.beamng_jbeam_active_node.vertex_index = -1
+            context.scene.beamng_jbeam_active_node.index = -1
             self.previous_vertex_selection = None
-            context.scene.beamng_jbeam_active_edge_idx = -1
+            context.scene.beamng_jbeam_active_beam.index = -1
             self.previous_edge_selection = None
 
         if o.is_vertex_selection_mode():
@@ -78,14 +78,14 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
         obj = context.object
         active_vert = bm.select_history.active if isinstance(bm.select_history.active, bmesh.types.BMVert) else None
         active_index = active_vert.index if active_vert else (max(current_selection) if current_selection else -1)
-        context.scene.beamng_jbeam_active_node.vertex_index = active_index
+        context.scene.beamng_jbeam_active_node.index = active_index
         context.scene.beamng_jbeam_active_node.position = o.get_vertex_position_by_index(obj, bm, active_index)
         jbeam_ids = [
             j.get_node_id(obj, i) or f"({i})"
             for i in current_selection
         ]
         context.scene.beamng_jbeam_selected_nodes = ", ".join(jbeam_ids)
-        context.scene.beamng_jbeam_active_node.node_id = j.get_node_id(obj, active_index) or ""
+        context.scene.beamng_jbeam_active_node.id = j.get_node_id(obj, active_index) or ""
         bpy.ops.object.devtools_beamng_load_jbeam_node_props()
         UiUtils.force_update_ui(context)
 
@@ -107,13 +107,13 @@ class OBJECT_OT_BeamngJbeamNodeSelectionMonitor(bpy.types.Operator):
         obj = context.object    
         active_edge = bm.select_history.active if isinstance(bm.select_history.active, bmesh.types.BMEdge) else None
         active_index = active_edge.index if active_edge else (max(current_selection) if current_selection else -1)
-        context.scene.beamng_jbeam_active_edge_idx = active_index
+        context.scene.beamng_jbeam_active_beam.index = active_index
         jbeam_ids = [
             j.get_beam_id(obj, bm, i) or f"({i})"
             for i in current_selection
         ]
         context.scene.beamng_jbeam_selected_edges = ", ".join(jbeam_ids)
-        context.scene.beamng_jbeam_active_edge = j.get_beam_id(obj, bm, active_index) or ""
+        context.scene.beamng_jbeam_active_beam.id = j.get_beam_id(obj, bm, active_index) or ""
         bpy.ops.object.devtools_beamng_load_jbeam_beam_props()
         UiUtils.force_update_ui(context)
 

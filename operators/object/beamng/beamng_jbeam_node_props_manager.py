@@ -3,23 +3,23 @@ import bmesh
 
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
 
-class JbeamNode(bpy.types.PropertyGroup):
-    node_id: bpy.props.StringProperty(
-        name="Node ID",
+class JbeamElement(bpy.types.PropertyGroup):
+    id: bpy.props.StringProperty(
+        name="Element ID",
         default=""
     )  # type: ignore
 
-    position: bpy.props.FloatVectorProperty(
-        name="Node Position",
-        description="3D position of the node",
-        default=(0.0, 0.0, 0.0),
-        subtype="TRANSLATION"
+    index: bpy.props.IntProperty(
+        name="Element Index",
+        description="Index of the associated vertex/edge/face",
+        default=-1
     )  # type: ignore
 
-    vertex_index: bpy.props.IntProperty(
-        name="Vertex Index",
-        description="Index of the associated vertex",
-        default=-1
+    position: bpy.props.FloatVectorProperty(
+        name="Position",
+        description="3D position of the element",
+        default=(0.0, 0.0, 0.0),
+        subtype="TRANSLATION"
     )  # type: ignore
 
 class JbeamPropertyItem(bpy.types.PropertyGroup):

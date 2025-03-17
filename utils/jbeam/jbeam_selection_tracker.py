@@ -41,11 +41,11 @@ class JbeamSelectionTracker:
         reset = False
         if self.previous_selection_mode != mode:
             self.previous_selection_mode = mode
-            scene.beamng_jbeam_active_node.vertex_index = -1
+            scene.beamng_jbeam_active_node.index = -1
             self.previous_vertex_selection = None
-            scene.beamng_jbeam_active_edge_idx = -1
+            scene.beamng_jbeam_active_beam.index = -1
             self.previous_edge_selection = None
-            # Todo face = -1
+            scene.beamng_jbeam_active_triangle.index = -1
             self.previous_face_selection = None
             reset = True
 
@@ -74,7 +74,7 @@ class JbeamSelectionTracker:
         active_vert = bm.select_history.active if isinstance(bm.select_history.active, bmesh.types.BMVert) else None
         active_index = active_vert.index if active_vert else (max(current_selection) if current_selection else -1)
         j.set_gn_jbeam_active_node_index(obj, active_index)
-        scene.beamng_jbeam_active_node.vertex_index = active_index
+        scene.beamng_jbeam_active_node.index = active_index
         x, y, z = o.get_vertex_position_by_index(obj, bm, active_index)
         scene.beamng_jbeam_active_node.position.x = x
         scene.beamng_jbeam_active_node.position.y = y
@@ -84,7 +84,7 @@ class JbeamSelectionTracker:
             for i in current_selection
         ]
         scene.beamng_jbeam_selected_nodes = ", ".join(jbeam_ids)
-        scene.beamng_jbeam_active_node.node_id = j.get_node_id(obj, active_index) or ""
+        scene.beamng_jbeam_active_node.id = j.get_node_id(obj, active_index) or ""
         bpy.ops.object.devtools_beamng_load_jbeam_node_props()
         UiUtils.force_update_ui(bpy.context)
 
@@ -106,13 +106,13 @@ class JbeamSelectionTracker:
         active_edge = bm.select_history.active if isinstance(bm.select_history.active, bmesh.types.BMEdge) else None
         active_index = active_edge.index if active_edge else (max(current_selection) if current_selection else -1)
         j.set_gn_jbeam_active_beam_index(obj, active_index)
-        scene.beamng_jbeam_active_edge_idx = active_index
+        scene.beamng_jbeam_active_beam.index = active_index
         jbeam_ids = [
             j.get_beam_id(obj, bm, i) or f"({i})"
             for i in current_selection
         ]
         scene.beamng_jbeam_selected_edges = ", ".join(jbeam_ids)
-        scene.beamng_jbeam_active_edge = j.get_beam_id(obj, bm, active_index) or ""
+        scene.beamng_jbeam_active_beam.id = j.get_beam_id(obj, bm, active_index) or ""
         bpy.ops.object.devtools_beamng_load_jbeam_beam_props()
         UiUtils.force_update_ui(bpy.context)
 
@@ -140,7 +140,7 @@ class JbeamSelectionTracker:
             for i in current_selection
         ]
         #scene.beamng_jbeam_selected_nodes = ", ".join(jbeam_ids)
-        #scene.beamng_jbeam_active_node.node_id = j.get_node_id(obj, active_index) or ""
+        #scene.beamng_jbeam_active_node.id = j.get_node_id(obj, active_index) or ""
         bpy.ops.object.devtools_beamng_load_jbeam_triangle_props()
         UiUtils.force_update_ui(bpy.context)
 

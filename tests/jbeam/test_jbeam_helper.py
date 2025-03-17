@@ -170,7 +170,7 @@ class TestJBeamHelper(unittest.TestCase):
     def test_jbeam_structure(self):
     
         jbeam = PreJbeamStructureHelper(self.obj, domain="vertex")
-        data = jbeam.structure_vertex_data()
+        data = jbeam.structure_data()
         reducer = RedundancyReducerJbeamNodesGenerator(bpy.context.object, data, domain="vertex")
         data_actual = reducer.reduce_redundancy()
 

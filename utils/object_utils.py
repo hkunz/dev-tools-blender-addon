@@ -352,33 +352,38 @@ class ObjectUtils:
         obj.data.update()
 
     @staticmethod
-    def update_bool_attribute_for_gn(mod, obj, bm, named_attr_node_name, attr_name, values, domain):
+    def update_bool_attribute_for_gn(mod, obj, bm, named_attr_node_name, attr_name, values, bm_domain, attr_domain):
         mesh = obj.data
         node = mod.node_group.nodes.get(named_attr_node_name)
 
         newv = bpy.app.version >= (4, 4, 0)
         node.data_type = attr_type = 'BOOLEAN' if newv else 'INT'
-        attribute = mesh.attributes.get(attr_name) or mesh.attributes.new(name=attr_name, type=attr_type, domain=domain)
+        attribute = mesh.attributes.get(attr_name) or mesh.attributes.new(name=attr_name, type=attr_type, domain=attr_domain)
 
-        layers = bm.verts.layers if domain == "POINT" else bm.edges.layers
+        try:
+            layers = getattr(bm, bm_domain).layers
+            elements = getattr(bm, bm_domain)
+        except AttributeError:
+            raise ValueError(f"Unsupported domain: {bm_domain}")
+
         layer = layers.bool.get(attribute.name) if newv else layers.int.get(attribute.name)
         selected_value, unselected_value = (True, False) if newv else (1, 0)
 
-        elements = bm.verts if domain == "POINT" else bm.edges
         for elem in elements:
             elem[layer] = selected_value if elem.index in values else unselected_value
 
     @staticmethod
     def update_vertex_bool_attribute_for_gn(mod, obj, bm, named_attr_node_name, attr_name, values):
-        ObjectUtils.update_bool_attribute_for_gn(mod, obj, bm, named_attr_node_name, attr_name, values, "POINT")
+        ObjectUtils.update_bool_attribute_for_gn(mod, obj, bm, named_attr_node_name, attr_name, values, "verts", "POINT")
 
     @staticmethod
     def update_edge_bool_attribute_for_gn(mod, obj, bm, named_attr_node_name, attr_name, values):
-        ObjectUtils.update_bool_attribute_for_gn(mod, obj, bm, named_attr_node_name, attr_name, values, "EDGE")
+        ObjectUtils.update_bool_attribute_for_gn(mod, obj, bm, named_attr_node_name, attr_name, values, "edges", "EDGE")
 
     @staticmethod
     def update_face_bool_attribute_for_gn(mod, obj, bm, named_attr_node_name, attr_name, values):
-        ObjectUtils.update_bool_attribute_for_gn(mod, obj, bm, named_attr_node_name, attr_name, values, "FACE")
+        return # TODO: not sure if we want dynamically changing colored faces for selected faces. if yes, then we have to add a "Named Attribute" node to the GN
+        ObjectUtils.update_bool_attribute_for_gn(mod, obj, bm, named_attr_node_name, attr_name, values, "faces", "FACE")
 
     @staticmethod
     def set_gn_socket_mode(mod, socket_name, value=None, attribute_name=None):

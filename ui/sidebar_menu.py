@@ -214,7 +214,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                         split.label(text=f"Active Node: {node_id} ({index})")
                         split.alignment = 'RIGHT'
                         split.label(text=f"({pos.x:.2f}, {pos.y:.2f}, {pos.z:.2f})")
-                        box.label(text=f"Selected: {s.beamng_jbeam_selected_nodes}")
+                        box.label(text=f"Selected: {s.beamng_jbeam_active_node.selection}")
                         box.prop(s.beamng_jbeam_active_node, "id", text="Active Node ID")
                         box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign JBeam ID")
 
@@ -234,7 +234,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                         box.operator(OBJECT_OT_BeamngAddJbeamNodeProp.bl_idname, text="Add Scope Modifier")
                         box.operator(OBJECT_OT_BeamngSaveAllJbeamNodeProps.bl_idname, text="Save All")
                     else:
-                        msg = "Select node/s to view Scope Modifiers" if j.has_jbeam_node_id(obj) else "Convert to Node Mesh"
+                        msg = "Select elements to view Scope Modifiers" if j.is_node_mesh(obj) else "Convert to Node Mesh"
                         box.label(text=msg)
 
                 elif o.is_edge_selection_mode():
@@ -249,12 +249,12 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                         split.label(text=f"Active Beam: {s.beamng_jbeam_active_beam.id} ({index})")
                         split.alignment = 'RIGHT'
                         split.label(text=f"({edge_length:.2f})")
-                        box.label(text=f"Selected: {s.beamng_jbeam_selected_edges}")
+                        box.label(text=f"Selected: {s.beamng_jbeam_active_beam.selection}")
                         box.prop(s.beamng_jbeam_active_beam, "id", text="Active Beam ID")
                         #box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign JBeam ID")
 
                         if s.beamng_jbeam_edge_props:
-                            for prop in s.beamng_jbeam_edge_props:
+                            for prop in s.beamng_jbeam_edge_props:  
                                 r = box.row()
                                 r.prop(prop, "name", text="")
                                 r.prop(prop, "value", text="")
@@ -269,11 +269,11 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                         box.operator(OBJECT_OT_BeamngAddJbeamBeamProp.bl_idname, text="Add Scope Modifier")
                         box.operator(OBJECT_OT_BeamngSaveAllJbeamBeamProps.bl_idname, text="Save All")
                     else:
-                        msg = "Select node/s to view Scope Modifiers" if j.has_jbeam_node_id(obj) else "Convert to Node Mesh"
+                        msg = "Select elements to view Scope Modifiers" if j.is_node_mesh(obj) else "Convert to Node Mesh"
                         box.label(text=msg)
 
                 elif o.is_face_selection_mode():
-                    index = s.beamng_jbeam_active_node.index
+                    index = s.beamng_jbeam_active_triangle.index
                     if index > -1:
                         node_id = j.get_triangle_id(obj, index)
                         row = box.row()
@@ -281,27 +281,27 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                         split.label(text=f"Active Triangle: {node_id} ({index})")
                         split.alignment = 'RIGHT'
                         split.label(text=f"(area)")
-                        box.label(text=f"Selected: {s.beamng_jbeam_selected_nodes}")
+                        box.label(text=f"Selected: {s.beamng_jbeam_active_triangle.selection}")
                         box.prop(s.beamng_jbeam_active_triangle, "id", text="Active Triangle ID")
-                        box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign Node ID")
+                        #box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign Node ID")
 
-                        if s.beamng_jbeam_vertex_props:
-                            for prop in s.beamng_jbeam_vertex_props:
+                        if s.beamng_jbeam_face_props:
+                            for prop in s.beamng_jbeam_face_props:
                                 r = box.row()
                                 r.prop(prop, "name", text="")
                                 r.prop(prop, "value", text="")
                                 button_row = r.row(align=True)
                                 button_row.scale_x = 0.4
-                                button_row.operator(OBJECT_OT_BeamngSelectJbeamNodesByProperty.bl_idname, text=" ").prop_name = prop.name
-                                button_row.operator(OBJECT_OT_BeamngSaveJbeamNodeProp.bl_idname, text="S").prop_name = prop.name
-                                button_row.operator(OBJECT_OT_BeamngRemoveJbeamNodeProp.bl_idname, text="X").prop_name = prop.name
+                                #button_row.operator(OBJECT_OT_BeamngSelectJbeamNodesByProperty.bl_idname, text=" ").prop_name = prop.name
+                                #button_row.operator(OBJECT_OT_BeamngSaveJbeamNodeProp.bl_idname, text="S").prop_name = prop.name
+                                #button_row.operator(OBJECT_OT_BeamngRemoveJbeamNodeProp.bl_idname, text="X").prop_name = prop.name
                         else:
                             box.label(text=f"No Scope Modifers on Selection")
 
-                        box.operator(OBJECT_OT_BeamngAddJbeamNodeProp.bl_idname, text="Add Scope Modifier")
-                        box.operator(OBJECT_OT_BeamngSaveAllJbeamNodeProps.bl_idname, text="Save All")
+                        #box.operator(OBJECT_OT_BeamngAddJbeamNodeProp.bl_idname, text="Add Scope Modifier")
+                        #box.operator(OBJECT_OT_BeamngSaveAllJbeamNodeProps.bl_idname, text="Save All")
                     else:
-                        msg = "Select node/s to view Scope Modifiers" if j.has_jbeam_node_id(obj) else "Convert to Node Mesh"
+                        msg = "Select elements to view Scope Modifiers" if j.is_node_mesh(obj) else "Convert to Node Mesh"
                         box.label(text=msg)
 
             else:
@@ -377,8 +377,6 @@ def register() -> None:
     bpy.types.Scene.beamng_jbeam_active_node = bpy.props.PointerProperty(type=JbeamElement)
     bpy.types.Scene.beamng_jbeam_active_beam = bpy.props.PointerProperty(type=JbeamElement)
     bpy.types.Scene.beamng_jbeam_active_triangle = bpy.props.PointerProperty(type=JbeamElement)
-    bpy.types.Scene.beamng_jbeam_selected_nodes = bpy.props.StringProperty(name="Selected Nodes")
-    bpy.types.Scene.beamng_jbeam_selected_edges = bpy.props.StringProperty(name="Selected Edges")
     bpy.types.Scene.beamng_jbeam_vertex_props = bpy.props.CollectionProperty(type=JbeamPropertyItem)
     bpy.types.Scene.beamng_jbeam_edge_props = bpy.props.CollectionProperty(type=JbeamPropertyItem)
     bpy.types.Scene.beamng_jbeam_face_props = bpy.props.CollectionProperty(type=JbeamPropertyItem)
@@ -399,8 +397,6 @@ def unregister() -> None:
     del bpy.types.Scene.beamng_jbeam_active_node
     del bpy.types.Scene.beamng_jbeam_active_beam
     del bpy.types.Scene.beamng_jbeam_active_triangle
-    del bpy.types.Scene.beamng_jbeam_selected_nodes
-    del bpy.types.Scene.beamng_jbeam_selected_edges
     del bpy.types.Scene.beamng_jbeam_vertex_props
     del bpy.types.Scene.beamng_jbeam_edge_props
     del bpy.types.Scene.beamng_jbeam_face_props

@@ -197,9 +197,7 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
 
     def create_node_mesh_attributes(self, obj):
         j.remove_old_jbeam_attributes(obj)
-        j.create_attribute_node_id(obj)
-        j.create_attribute_node_props(obj)
-        j.create_attribute_beam_props(obj)
+        j.create_node_mesh_attributes(obj)
 
     def store_node_props_in_vertex_attributes(self, obj, verts_dic):
 

@@ -9,6 +9,7 @@ class JbeamSelectionTracker:
     def __init__(self):
         self.previous_vertex_selection = None
         self.previous_edge_selection = None
+        self.previous_face_selection = None
         self.previous_selection_mode = -1
 
     @classmethod
@@ -49,15 +50,18 @@ class JbeamSelectionTracker:
             self.previous_selection_mode = mode
             self.previous_vertex_selection = None
             self.previous_edge_selection = None
+            self.previous_face_selection = None
             remove_selected_attributes(obj)
             self.check_selection_change(scene) #FIXME: should not do this but setup corrupts attributes when switching modes
 
         if bpy.context.tool_settings.mesh_select_mode[0]:
-            self.update_vertex_data(scene, obj)
+            self.update_vertex_data(obj)
         elif bpy.context.tool_settings.mesh_select_mode[1]:
-            self.update_edge_data(scene, obj)
+            self.update_edge_data(obj)
+        elif bpy.context.tool_settings.mesh_select_mode[2]:
+            self.update_face_data(obj)
 
-    def update_vertex_data(self, scene, obj):
+    def update_vertex_data(self, obj):
         bm = bmesh.from_edit_mesh(obj.data)
         bm.verts.ensure_lookup_table()
         current_selection = {v.index for v in bm.verts if v.select}
@@ -69,7 +73,7 @@ class JbeamSelectionTracker:
         mod = self.get_modifier(obj)
         self.update_vertex_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_vertices", "selected_vertices", current_selection)
 
-    def update_edge_data(self, scene, obj):
+    def update_edge_data(self, obj):
         bm = bmesh.from_edit_mesh(obj.data)
         bm.edges.ensure_lookup_table()
         current_selection = {e.index for e in bm.edges if e.select}
@@ -80,6 +84,18 @@ class JbeamSelectionTracker:
         self.previous_edge_selection = current_selection
         mod = self.get_modifier(obj)
         self.update_edge_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_edges", "selected_edges", current_selection)
+
+    def update_face_data(self, obj):
+        bm = bmesh.from_edit_mesh(obj.data)
+        bm.faces.ensure_lookup_table()
+        current_selection = {v.index for v in bm.faces if v.select}
+
+        if self.previous_face_selection == current_selection:
+            return
+
+        self.previous_face_selection = current_selection
+        mod = self.get_modifier(obj)
+        self.update_face_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_faces", "selected_faces", current_selection)
 
     def update_bool_attribute_for_gn(self, mod, obj, bm, named_attr_node_name, attr_name, values, domain):
         mesh = obj.data
@@ -97,22 +113,27 @@ class JbeamSelectionTracker:
         for elem in elements:
             elem[layer] = selected_value if elem.index in values else unselected_value
 
+
     def update_vertex_bool_attribute_for_gn(self, mod, obj, bm, named_attr_node_name, attr_name, values):
         self.update_bool_attribute_for_gn(mod, obj, bm, named_attr_node_name, attr_name, values, "POINT")
 
     def update_edge_bool_attribute_for_gn(self, mod, obj, bm, named_attr_node_name, attr_name, values):
         self.update_bool_attribute_for_gn(mod, obj, bm, named_attr_node_name, attr_name, values, "EDGE")
 
+    def update_face_bool_attribute_for_gn(self, mod, obj, bm, named_attr_node_name, attr_name, values):
+        self.update_bool_attribute_for_gn(mod, obj, bm, named_attr_node_name, attr_name, values, "FACE")
 
 def remove_selected_attributes(obj):
 
     bpy.ops.object.mode_set(mode='OBJECT')
 
     mesh = obj.data
-    if "selected_edges" in mesh.attributes:
-        mesh.attributes.remove(mesh.attributes["selected_edges"])
     if "selected_vertices" in mesh.attributes:
         mesh.attributes.remove(mesh.attributes["selected_vertices"])
+    if "selected_edges" in mesh.attributes:
+        mesh.attributes.remove(mesh.attributes["selected_edges"])
+    if "selected_faces" in mesh.attributes:
+        mesh.attributes.remove(mesh.attributes["selected_faces"])
 
     bpy.ops.object.mode_set(mode='EDIT')
 

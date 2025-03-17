@@ -35,9 +35,7 @@ class JbeamTestObject:
 
     def set_jbeam_attributes(self):
 
-        j.create_attribute_node_id(self.obj)
-        j.create_attribute_node_props(self.obj)
-        j.create_attribute_beam_props(self.obj)
+        j.create_node_mesh_attributes(self.obj)
 
         node_ids = {
             0: "b3",

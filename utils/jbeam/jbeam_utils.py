@@ -72,6 +72,17 @@ class JbeamUtils:
         return JbeamUtils.create_attribute(obj, "jbeam_beam_props", domain="EDGE")
 
     @staticmethod
+    def create_attribute_triangle_props(obj):
+        return JbeamUtils.create_attribute(obj, "jbeam_triangle_props", domain="FACE")
+
+    @staticmethod
+    def create_node_mesh_attributes(obj):
+        JbeamUtils.create_attribute_node_id(obj) 
+        JbeamUtils.create_attribute_node_props(obj)
+        JbeamUtils.create_attribute_beam_props(obj)
+        JbeamUtils.create_attribute_triangle_props(obj)
+
+    @staticmethod
     def get_attribute_value(obj, index, attr_name, domain="verts") -> str:
         
         if not obj or obj.type != 'MESH':
@@ -130,6 +141,8 @@ class JbeamUtils:
     @staticmethod
     def get_triangle_id(obj, bm, face_index) -> str:
         face = bm.faces[face_index]
+        if len(face.verts) > 3:
+            return f"[ngon{face_index}]"
         v1, v2, v3 = sorted(face.verts, key=lambda v: v.index)  # Sort vertices by index
         n1 = JbeamUtils.get_node_id(obj, v1.index) or "?"
         n2 = JbeamUtils.get_node_id(obj, v2.index) or "?"
@@ -245,9 +258,7 @@ class JbeamUtils:
             }
             for i in range(num_verts)
         }
-        JbeamUtils.create_attribute_node_id(obj) 
-        JbeamUtils.create_attribute_node_props(obj)
-        JbeamUtils.create_attribute_beam_props(obj)
+        JbeamUtils.create_node_mesh_attributes(obj)
 
         for vertex_idx in range(num_verts):
             JbeamUtils.set_node_id(obj, vertex_idx, node_ids[vertex_idx])
@@ -288,6 +299,11 @@ class JbeamUtils:
     @staticmethod
     def set_gn_jbeam_active_beam_index(obj, edge_index):
         JbeamUtils.set_gn_jbeam_socket_mode(obj, "Active Beam Edge Index", value=edge_index)
+
+    @staticmethod
+    def set_gn_jbeam_active_triangle_index(obj, face_index):
+        return # TODO: not sure if we need colored triangle faces for actively selected triangles, if yes then we have to add a socket to the GN modifier
+        JbeamUtils.set_gn_jbeam_socket_mode(obj, "Active Triangle Face Index", value=face_index)
 
     @staticmethod
     def set_gn_jbeam_socket_mode(obj, socket_name, value=None, attribute_name=None):

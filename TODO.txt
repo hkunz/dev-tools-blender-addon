@@ -1,4 +1,6 @@
 TODO:
 
-
 Find out how .pc jbeam part displays the node names
+
+BUGS:
+When importing jbem mattress: Warning: Missing nodes id1:, id2: in verts_dic and possibly in jbeam nodes (id: is the header, should not be included in the check)

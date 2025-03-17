@@ -22,6 +22,11 @@ class JbeamElement(bpy.types.PropertyGroup):
         subtype="TRANSLATION"
     )  # type: ignore
 
+    selection: bpy.props.StringProperty(
+        name="Selection List",
+        default=""
+    )  # type: ignore
+
 class JbeamPropertyItem(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Property Name") # type: ignore
     value: bpy.props.StringProperty(name="Value") # type: ignore
@@ -108,7 +113,7 @@ class OBJECT_OT_BeamngLoadJbeamTriangleProps(OBJECT_OT_BeamngLoadJbeamPropsBase)
     domain = "faces"
     layer_name = j.ATTR_TRIANGLE_PROPS
     scene_property_name = "beamng_jbeam_face_props"
-    get_props_function = staticmethod(j.get_triangle_props_str)
+    get_props_function = staticmethod(j.get_triangle_props)
 
 class OBJECT_OT_BeamngSaveJbeamProp(bpy.types.Operator):
     """Base class for saving JBeam properties"""

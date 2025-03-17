@@ -11,6 +11,7 @@ class JbeamSelectionTracker:
     def __init__(self):
         self.previous_vertex_selection = None
         self.previous_edge_selection = None
+        self.previous_face_selection = None
         self.previous_selection_mode = -1
 
     @classmethod
@@ -44,6 +45,8 @@ class JbeamSelectionTracker:
             self.previous_vertex_selection = None
             scene.beamng_jbeam_active_edge_idx = -1
             self.previous_edge_selection = None
+            # Todo face = -1
+            self.previous_face_selection = None
             reset = True
 
         if o.is_vertex_selection_mode():
@@ -113,7 +116,33 @@ class JbeamSelectionTracker:
         bpy.ops.object.devtools_beamng_load_jbeam_beam_props()
         UiUtils.force_update_ui(bpy.context)
 
+    def update_face_data(self, scene, obj):
+        bm = bmesh.from_edit_mesh(obj.data)
+        bm.faces.ensure_lookup_table()
+        current_selection = {v.index for v in bm.faces if v.select}
 
+        if self.previous_face_selection == current_selection:
+            return
+
+        self.previous_face_selection = current_selection
+        mod = j.get_gn_jbeam_modifier(obj)
+        o.update_face_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_faces", "selected_faces", current_selection)
+        self.update_triangle_panel(scene, obj, bm, current_selection)
+        obj.data.update()
+
+    def update_triangle_panel(self, scene, obj, bm, current_selection):
+        active_face = bm.select_history.active if isinstance(bm.select_history.active, bmesh.types.BMFace) else None
+        active_index = active_face.index if active_face else (max(current_selection) if current_selection else -1)
+        #j.set_gn_jbeam_active_triangle_index(obj, active_index)
+        #scene.beamng_jbeam_active_node.face_index = active_index
+        jbeam_ids = [
+            j.get_triangle_id(obj, i) or f"({i})"
+            for i in current_selection
+        ]
+        #scene.beamng_jbeam_selected_nodes = ", ".join(jbeam_ids)
+        #scene.beamng_jbeam_active_node.node_id = j.get_node_id(obj, active_index) or ""
+        bpy.ops.object.devtools_beamng_load_jbeam_triangle_props()
+        UiUtils.force_update_ui(bpy.context)
 
 
 

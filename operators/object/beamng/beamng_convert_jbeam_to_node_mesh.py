@@ -34,9 +34,9 @@ class Beam:
     def __repr__(self):
         return (f"Beam(id={self.beam_id}, node_id1={self.node_id1}, node_id2={self.node_id2}, index={self.index}, props={self.props})")
 
-class OBJECT_OT_BeamngConvertJbeamToMesh_v2(Operator):
+class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
     """Convert object to Node Mesh by removing custom properties and merging by distance"""
-    bl_idname = "object.devtools_beamng_convert_jbeam_to_mesh_v2"
+    bl_idname = "object.devtools_beamng_convert_jbeam_to_node_mesh"
     bl_label = "DevTools: Convert JBeam to Mesh Object (v2)"
     bl_options = {'REGISTER', 'UNDO'}
 

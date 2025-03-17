@@ -377,6 +377,10 @@ class ObjectUtils:
         ObjectUtils.update_bool_attribute_for_gn(mod, obj, bm, named_attr_node_name, attr_name, values, "EDGE")
 
     @staticmethod
+    def update_face_bool_attribute_for_gn(mod, obj, bm, named_attr_node_name, attr_name, values):
+        ObjectUtils.update_bool_attribute_for_gn(mod, obj, bm, named_attr_node_name, attr_name, values, "FACE")
+
+    @staticmethod
     def set_gn_socket_mode(mod, socket_name, value=None, attribute_name=None):
         node_group = mod.node_group
         for socket in node_group.interface.items_tree:

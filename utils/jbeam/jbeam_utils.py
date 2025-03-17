@@ -12,6 +12,7 @@ class JbeamUtils:
     ATTR_NODE_ID = "jbeam_node_id"
     ATTR_NODE_PROPS = "jbeam_node_props"
     ATTR_BEAM_PROPS = "jbeam_beam_props"
+    ATTR_TRIANGLE_PROPS = "jbeam_triangle_props"
     ATTR_SELECTED_EDGES = "selected_edges"
 
     GN_JBEAM_VISUALIZER_GROUP_NODE_NAME = "__gn_jbeam_visualizer"
@@ -126,6 +127,15 @@ class JbeamUtils:
         n2 = JbeamUtils.get_node_id(obj, v2.index) or "?"
         return f"[{n1}|{n2}]"
 
+    @staticmethod
+    def get_triangle_id(obj, bm, face_index) -> str:
+        face = bm.faces[face_index]
+        v1, v2, v3 = sorted(face.verts, key=lambda v: v.index)  # Sort vertices by index
+        n1 = JbeamUtils.get_node_id(obj, v1.index) or "?"
+        n2 = JbeamUtils.get_node_id(obj, v2.index) or "?"
+        n3 = JbeamUtils.get_node_id(obj, v3.index) or "?"
+        return f"[{n1}|{n2}|{n3}]"
+
     def get_beam_node_ids(obj, edge_index) -> tuple[str, str]:
         edge = obj.data.edges[edge_index]
         v1_idx, v2_idx = sorted(edge.vertices)
@@ -140,6 +150,10 @@ class JbeamUtils:
     @staticmethod
     def get_beam_props_str(obj, edge_index) -> str:
         return JbeamUtils.get_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, 'edges')
+
+    @staticmethod
+    def get_triangle_props_str(obj, face_index) -> str:
+        return JbeamUtils.get_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, 'faces')
 
     @staticmethod
     def get_props(obj, index, props_str_func, element_type="element") -> dict:
@@ -158,6 +172,9 @@ class JbeamUtils:
     def get_beam_props(obj, edge_index) -> dict:
         return JbeamUtils.get_props(obj, edge_index, JbeamUtils.get_beam_props_str, "edge")
 
+    @staticmethod
+    def get_triangle_props(obj, face_index) -> dict:
+        return JbeamUtils.get_props(obj, face_index, JbeamUtils.get_triangle_props_str, "face")
 
     @staticmethod
     def set_attribute_value(obj, index: int, attr_name: str, attr_value: str, domain="verts"):
@@ -209,6 +226,10 @@ class JbeamUtils:
     @staticmethod
     def set_beam_props(obj, edge_index, beam_props: dict):
         JbeamUtils.set_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, json.dumps(beam_props), domain="edges")
+
+    @staticmethod
+    def set_triangle_props(obj, face_index, triangle_props: dict):
+        JbeamUtils.set_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, json.dumps(triangle_props), domain="faces")
 
     @staticmethod
     def setup_default_scope_modifiers_and_node_ids(obj):

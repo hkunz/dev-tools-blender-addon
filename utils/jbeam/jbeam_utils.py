@@ -1,11 +1,41 @@
 import bpy
 import bmesh
 import json
-import re
+import uuid
 import os
 
 from dev_tools.utils.file_utils import FileUtils # type: ignore
 from dev_tools.utils.object_utils import ObjectUtils # type: ignore
+
+
+class JbeamPropsStorage:
+    """Manages storage of JBeam properties using unique keys."""
+    _storage = {}  # Dictionary to hold key-value mappings
+
+    @staticmethod
+    def store_props(key, props: dict) -> str:
+        if not key or key not in JbeamPropsStorage._storage:
+            key = uuid.uuid4().hex[:12]
+        JbeamPropsStorage._storage[key] = props
+        return key
+
+    @staticmethod
+    def fetch_props(key: str) -> dict:
+        """Retrieves properties by key."""
+        return JbeamPropsStorage._storage.get(key, {})
+
+    @staticmethod
+    def delete_props(key: str):
+        """Removes properties from storage."""
+        if key in JbeamPropsStorage._storage:
+            del JbeamPropsStorage._storage[key]
+
+    @staticmethod
+    def cleanup(unused_keys: set):
+        """Removes unused keys from storage."""
+        for key in unused_keys:
+            JbeamPropsStorage.delete_props(key)
+
 
 class JbeamUtils:
 
@@ -149,6 +179,7 @@ class JbeamUtils:
         n3 = JbeamUtils.get_node_id(obj, v3.index) or "?"
         return f"[{n1}|{n2}|{n3}]"
 
+    @staticmethod
     def get_beam_node_ids(obj, edge_index) -> tuple[str, str]:
         edge = obj.data.edges[edge_index]
         v1_idx, v2_idx = sorted(edge.vertices)
@@ -157,37 +188,81 @@ class JbeamUtils:
         return n1, n2
 
     @staticmethod
-    def get_node_props_str(obj, vertex_index) -> str:
-        return JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, 'verts')
+    def get_node_props(obj, vertex_index) -> str:
+        key = JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, 'verts')
+        return JbeamPropsStorage.fetch_props(key)
 
     @staticmethod
-    def get_beam_props_str(obj, edge_index) -> str:
-        return JbeamUtils.get_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, 'edges')
+    def get_beam_props(obj, edge_index) -> str:
+        key = JbeamUtils.get_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, 'edges')
+        return JbeamPropsStorage.fetch_props(key)
 
     @staticmethod
-    def get_triangle_props_str(obj, face_index) -> str:
-        return JbeamUtils.get_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, 'faces')
+    def get_triangle_props(obj, face_index) -> str:
+        key = JbeamUtils.get_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, 'faces')
+        return JbeamPropsStorage.fetch_props(key)
 
     @staticmethod
-    def get_props(obj, index, props_str_func, element_type="element") -> dict:
-        props_str = props_str_func(obj, index)
-        try:
-            return json.loads(props_str) if props_str else {}
-        except json.JSONDecodeError:
-            print(f"Warning: Invalid JSON at {element_type} {index}: {props_str}")
-            return {}
+    def set_node_props(obj, vertex_index, node_props: dict):
+        key = JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, 'verts')
+        key = JbeamPropsStorage.store_props(key, node_props)
+        JbeamUtils.set_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, key, domain="verts")
 
     @staticmethod
-    def get_node_props(obj, vertex_index) -> dict:
-        return JbeamUtils.get_props(obj, vertex_index, JbeamUtils.get_node_props_str, "vertex")
+    def set_beam_props(obj, edge_index, beam_props: dict):
+        key = JbeamUtils.get_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, 'edges')
+        key = JbeamPropsStorage.store_props(key, beam_props)
+        JbeamUtils.set_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, key, domain="edges")
 
     @staticmethod
-    def get_beam_props(obj, edge_index) -> dict:
-        return JbeamUtils.get_props(obj, edge_index, JbeamUtils.get_beam_props_str, "edge")
+    def set_triangle_props(obj, face_index, triangle_props: dict):
+        key = JbeamUtils.get_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, 'faces')
+        key = JbeamPropsStorage.store_props(key, triangle_props)
+        JbeamUtils.set_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, key, domain="faces")
 
     @staticmethod
-    def get_triangle_props(obj, face_index) -> dict:
-        return JbeamUtils.get_props(obj, face_index, JbeamUtils.get_triangle_props_str, "face")
+    def check_integrity_storage_data(obj):
+        """Ensures unique keys in attributes and fixes duplicates."""
+        if not obj or obj.type != 'MESH':
+            return
+        
+        bm = bmesh.new()
+        bm.from_mesh(obj.data)
+
+        key_sets = {
+            'verts': set(),
+            'edges': set(),
+            'faces': set(),
+        }
+
+        domains = {
+            'verts': (bm.verts, JbeamUtils.ATTR_NODE_PROPS),
+            'edges': (bm.edges, JbeamUtils.ATTR_BEAM_PROPS),
+            'faces': (bm.faces, JbeamUtils.ATTR_TRIANGLE_PROPS),
+        }
+
+        for domain, (elements, attr_name) in domains.items():
+            layer = elements.layers.string.get(attr_name)
+            if not layer:
+                continue
+
+            for elem in elements:
+                key = elem[layer].decode('utf-8') if elem[layer] else None
+                if key and key in key_sets[domain]:  
+                    # Duplicate detected, fetch data and assign new key
+                    props = JbeamPropsStorage.get_props(key)
+                    new_key = uuid.uuid4().hex[:12]
+
+                    # Update element attribute with the new key
+                    elem[layer] = new_key.encode('utf-8')
+
+                    # Store the data under the new key
+                    JbeamPropsStorage.store_props(new_key, props)
+                else:
+                    key_sets[domain].add(key)
+
+        bm.to_mesh(obj.data)
+        bm.free()
 
     @staticmethod
     def set_attribute_value(obj, index: int, attr_name: str, attr_value: str, domain="verts"):
@@ -231,18 +306,6 @@ class JbeamUtils:
     @staticmethod
     def set_node_id(obj, vertex_index, node_id: str):
         JbeamUtils.set_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_ID, node_id)
-
-    @staticmethod
-    def set_node_props(obj, vertex_index, node_props: dict):
-        JbeamUtils.set_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, json.dumps(node_props), domain="verts")
-
-    @staticmethod
-    def set_beam_props(obj, edge_index, beam_props: dict):
-        JbeamUtils.set_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, json.dumps(beam_props), domain="edges")
-
-    @staticmethod
-    def set_triangle_props(obj, face_index, triangle_props: dict):
-        JbeamUtils.set_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, json.dumps(triangle_props), domain="faces")
 
     @staticmethod
     def setup_default_scope_modifiers_and_node_ids(obj):

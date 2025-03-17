@@ -53,7 +53,7 @@ class PreJbeamStructureHelper:
         }
 
     def get_node_properties(self):
-        return {i: j.get_node_props_str(self.obj, i) for i in range(len(self.obj.data.vertices))}
+        return {i: json.dumps(j.get_node_props(self.obj, i)) for i in range(len(self.obj.data.vertices))}
 
     def get_beam_properties(self):
         return {i: j.get_beam_props_str(self.obj, i) for i in range(len(self.obj.data.edges))}

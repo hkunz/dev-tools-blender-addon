@@ -275,10 +275,9 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                 elif o.is_face_selection_mode():
                     index = s.beamng_jbeam_active_triangle.index
                     if index > -1:
-                        node_id = j.get_triangle_id(obj, index)
                         row = box.row()
-                        split = row.split(factor=0.5)
-                        split.label(text=f"Active Triangle: {node_id} ({index})")
+                        split = row.split(factor=0.8)
+                        split.label(text=f"Active Triangle: {s.beamng_jbeam_active_triangle.id} ({index})")
                         split.alignment = 'RIGHT'
                         split.label(text=f"(area)")
                         box.label(text=f"Selected: {s.beamng_jbeam_active_triangle.selection}")

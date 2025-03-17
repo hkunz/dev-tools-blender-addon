@@ -218,7 +218,6 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
     def store_beam_props_in_edge_attributes(self, obj, part_data, verts_dic):
         json_beams = part_data.get("beams", [])
         beams = self.parse_beams(obj, json_beams, verts_dic)
-        #print("beams =============\n", beams)
 
         for beam in beams:
             if beam.index is None:
@@ -244,6 +243,7 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
             self.report({'WARNING'}, "No mesh object selected!")
             return {'CANCELLED'}
 
+        bpy.ops.object.mode_set(mode='OBJECT')
         if obj.type == 'CURVE':
             bpy.ops.object.convert(target='MESH')
         elif j.is_node_mesh(obj):

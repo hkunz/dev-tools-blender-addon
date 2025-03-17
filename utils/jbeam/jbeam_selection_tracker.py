@@ -136,7 +136,7 @@ class JbeamSelectionTracker:
         active_face = bm.select_history.active if isinstance(bm.select_history.active, bmesh.types.BMFace) else None
         active_index = active_face.index if active_face else (max(current_selection) if current_selection else -1)
         j.set_gn_jbeam_active_triangle_index(obj, active_index)
-        scene.beamng_jbeam_active_triangle.face_index = active_index
+        scene.beamng_jbeam_active_triangle.index = active_index
         ids = [
             j.get_triangle_id(obj, bm, i) or f"({i})"
             for i in current_selection

@@ -174,7 +174,7 @@ class JbeamUtils:
         try:
             return json.loads(props_str) if props_str else {}
         except json.JSONDecodeError:
-            print(f"Warning: Invalid JSON at {element_type} {index}")
+            print(f"Warning: Invalid JSON at {element_type} {index}: {props_str}")
             return {}
 
     @staticmethod

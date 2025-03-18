@@ -9,43 +9,47 @@ from bpy.types import Operator
 from dev_tools.utils.json_cleanup import json_cleanup  # type: ignore
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
 
-class Node:
-    def __init__(self, node_id, index, position, group=None, props=None):
-        self.node_id = node_id
+class JBeamElement:
+    """Base class for all JBeam elements (Node, Beam, Triangle)."""
+    def __init__(self, element_id, index, props=None):
+        self.id = element_id
         self.index = index
+        self.props = props or {}
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(id={self.id}, index={self.index}, props={self.props})"
+
+class Node(JBeamElement):
+    def __init__(self, node_id, index, position, group=None, props=None):
+        super().__init__(node_id, index, props)
         self.position = position
-        self.group = [group] if isinstance(group, str) else (group if group else [])
-        self.props = props if props else {}
+        self.group = [group] if isinstance(group, str) else (group or [])
 
     def get_fixed(self):
         return self.props.get("fixed", False)
 
     def __repr__(self):
-        return (f"Node(id={self.node_id}, index={self.index}, pos={self.position}, "f"group={self.group}, props={self.props})")
+        return f"Node(id={self.id}, index={self.index}, pos={self.position}, group={self.group}, props={self.props})"
 
-class Beam:
+class Beam(JBeamElement):
     def __init__(self, beam_id, node_id1, node_id2, index, props=None):
-        self.beam_id = beam_id
+        super().__init__(beam_id, index, props)
         self.node_id1 = node_id1
         self.node_id2 = node_id2
-        self.index = index
-        self.props = props if props else {}
 
     def __repr__(self):
-        return (f"Beam(id={self.beam_id}, node_id1={self.node_id1}, node_id2={self.node_id2}, index={self.index}, props={self.props})")
+        return f"Beam(id={self.id}, node_id1={self.node_id1}, node_id2={self.node_id2}, index={self.index}, props={self.props})"
 
-class Triangle:
+
+class Triangle(JBeamElement):
     def __init__(self, triangle_id, node_id1, node_id2, node_id3, index, props=None):
-        self.triangle_id = triangle_id
+        super().__init__(triangle_id, index, props)
         self.node_id1 = node_id1
         self.node_id2 = node_id2
         self.node_id3 = node_id3
-        self.index = index
-        self.props = props if props else {}
 
     def __repr__(self):
-        return (f"Triangle(id={self.triangle_id}, node_id1={self.node_id1}, node_id2={self.node_id2}, node_id3={self.node_id3}, index={self.index}, props={self.props})")
-
+        return f"Triangle(id={self.id}, node_id1={self.node_id1}, node_id2={self.node_id2}, node_id3={self.node_id3}, index={self.index}, props={self.props})"
 
 class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
     """Convert object to Node Mesh by removing custom properties and merging by distance"""
@@ -101,7 +105,7 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
 
         return nodes
 
-    def parse_structures(self, obj, json_data, verts_dic, structure_type):
+    def parse_elements(self, obj, json_data, verts_dic, structure_type):
         """ Generic parser for beams and triangles """
         structures, current_props = [], {}
         mesh = obj.data
@@ -133,15 +137,11 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
 
         return structures
 
-
     def parse_beams(self, obj, json_beams, verts_dic):
-        return self.parse_structures(obj, json_beams, verts_dic, "beams")
-
+        return self.parse_elements(obj, json_beams, verts_dic, "beams")
 
     def parse_triangles(self, obj, json_triangles, verts_dic):
-        return self.parse_structures(obj, json_triangles, verts_dic, "triangles")
-
-
+        return self.parse_elements(obj, json_triangles, verts_dic, "triangles")
 
     def get_vertex_indices(self, obj, part_data, epsilon=0.0005):
         verts_dic = {}
@@ -163,9 +163,9 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
             if closest_vert_idx is not None:
                 if closest_dist_sq < epsilon ** 2:  # Check if closest vertex is within range
                     node.index = closest_vert_idx
-                    verts_dic[node.node_id] = node
+                    verts_dic[node.id] = node
                 else:
-                    self.report({'ERROR'}, f"No vertex found within proximity of {node.node_id}")
+                    self.report({'ERROR'}, f"No vertex found within proximity of {node.id}")
                     node.index = None # Explicitly mark nodes with no close vertex
 
         return verts_dic
@@ -183,7 +183,7 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
                 continue
             idx = node.index
             if idx < 0:
-                self.report({'ERROR'}, f"No vertex index assigned to {node.node_id}")
+                self.report({'ERROR'}, f"No vertex index assigned to {node.id}")
                 continue
             vg.add([idx], 1.0, 'REPLACE')
             print(f"Assigned vertex {idx} to vertex group '{group_name}'.")
@@ -227,18 +227,18 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
 
     def store_node_props_in_vertex_attributes(self, obj, verts_dic):
 
-        for node_id, vert_props in verts_dic.items():
-            if not hasattr(vert_props, "index") or vert_props.index < 0:
+        for node_id, node in verts_dic.items():
+            if not hasattr(node, "index") or node.index < 0:
                 self.report({'ERROR'}, f"Invalid vertex index for node {node_id}")
                 continue
 
-            idx = vert_props.index
+            idx = node.index
             flat_data = {}
 
-            if hasattr(vert_props, "props") and isinstance(vert_props.props, dict):
-                flat_data.update({k: v for k, v in vert_props.props.items() if k != "group"})
+            if hasattr(node, "props") and isinstance(node.props, dict):
+                flat_data.update({k: v for k, v in node.props.items() if k != "group"})
 
-            j.set_node_id(obj, idx, str(vert_props.node_id))
+            j.set_node_id(obj, idx, str(node.id))
             j.set_node_props(obj, idx, flat_data)
 
     def store_beam_props_in_edge_attributes(self, obj, part_data, verts_dic):
@@ -247,7 +247,7 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
 
         for beam in beams:
             if beam.index is None:
-                self.report({'ERROR'}, f"No edge found for beam {beam.beam_id}")
+                self.report({'ERROR'}, f"No edge found for beam {beam.id}")
                 continue
 
             j.set_beam_props(obj, beam.index, beam.props)
@@ -258,7 +258,7 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
 
         for triangle in triangles:
             if triangle.index is None:
-                self.report({'ERROR'}, f"No face found for triangle {triangle.triangle_id}")
+                self.report({'ERROR'}, f"No face found for triangle {triangle.id}")
                 continue
 
             j.set_triangle_props(obj, triangle.index, triangle.props)

@@ -7,41 +7,68 @@ import os
 from dev_tools.utils.file_utils import FileUtils # type: ignore
 from dev_tools.utils.object_utils import ObjectUtils # type: ignore
 
-
 class JbeamPropsStorage:
     _instance = None
+
+    DOMAIN_ALIASES = {
+        "vertices": "verts",
+        "polygons": "faces"
+    }
 
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance.storage = {}
+            cls._instance.storage = {
+                "verts": {},
+                "edges": {},
+                "faces": {}
+            }
         return cls._instance
 
     @classmethod
     def get_instance(cls):
-        """Returns the singleton instance of JbeamPropsStorage."""
         return cls._instance or cls()
 
-    def store_props(self, key, props: dict) -> str:
-        """Stores properties and returns a unique key."""
-        if not key or key not in self.storage:
+    def resolve_domain(self, domain: str) -> str:
+        return self.DOMAIN_ALIASES.get(domain, domain)
+
+    def store_props(self, domain: str, key: str, props: dict) -> str:
+        """Stores properties in the specified domain and returns a unique key."""
+        domain = self.resolve_domain(domain)
+        if domain not in self.storage:
+            raise ValueError(f"Invalid domain: {domain}")
+
+        if not key or key in self.storage[domain]:
             key = uuid.uuid4().hex[:12]
-        self.storage[key] = props
+
+        self.storage[domain][key] = props
         return key
 
-    def fetch_props(self, key: str) -> dict:
-        """Retrieves properties by key."""
-        return self.storage.get(key, {})
+    def fetch_props(self, domain: str, key: str) -> dict:
+        """Retrieves properties from the specified domain by key."""
+        domain = self.resolve_domain(domain)
+        if domain not in self.storage:
+            raise ValueError(f"Invalid domain: {domain}")
 
-    def delete_props(self, key: str):
-        """Removes properties from storage."""
-        if key in self.storage:
-            del self.storage[key]
+        return self.storage[domain].get(key, {})
 
-    def cleanup(self, unused_keys: set):
-        """Removes unused keys from storage."""
+    def delete_props(self, domain: str, key: str):
+        """Removes properties from the specified domain."""
+        domain = self.resolve_domain(domain)
+        if domain not in self.storage:
+            raise ValueError(f"Invalid domain: {domain}")
+
+        if key in self.storage[domain]:
+            del self.storage[domain][key]
+
+    def cleanup(self, domain: str, unused_keys: set):
+        """Removes unused keys from the specified domain."""
+        domain = self.resolve_domain(domain)
+        if domain not in self.storage:
+            raise ValueError(f"Invalid domain: {domain}")
+
         for key in unused_keys:
-            self.delete_props(key)
+            self.delete_props(domain, key)
 
 
 class JbeamUtils:
@@ -121,17 +148,25 @@ class JbeamUtils:
 
     @staticmethod
     def get_attribute_value(obj, index, attr_name, domain="verts") -> str:
-        
-        if not obj or obj.type != 'MESH':
-            print(f"Invalid object: {repr(obj)}")
-            return None
-
         mesh = obj.data
-
         if obj.mode == 'EDIT':
             bm = bmesh.from_edit_mesh(mesh)
-            bm.verts.ensure_lookup_table()
-            bm_data = getattr(bm, domain)  # Access verts or edges dynamically
+            bm_data_map = {
+                "verts": bm.verts,
+                "edges": bm.edges,
+                "faces": bm.faces
+            }
+            if domain in bm_data_map:
+                bm_data_map[domain].ensure_lookup_table()
+            else:
+                print(f"{repr(obj)}: Unsupported domain '{domain}' in Edit Mode")
+                return None
+            
+            bm_data = getattr(bm, domain, None)  # Access verts, edges, or faces dynamically
+
+            if bm_data is None:
+                print(f"{repr(obj)}: Unsupported domain '{domain}' in Edit Mode")
+                return None
 
             num_elements = len(bm_data)
             if index >= num_elements or num_elements <= 0:
@@ -165,7 +200,7 @@ class JbeamUtils:
 
     @staticmethod
     def get_node_id(obj, vertex_index) -> str:
-        return JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_ID)
+        return JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_ID, 'verts')
 
     @staticmethod
     def get_beam_id(obj, edge_index, bm=None) -> str:
@@ -204,40 +239,46 @@ class JbeamUtils:
 
     @staticmethod
     def get_node_props(obj, vertex_index) -> str:
-        key = JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, 'verts')
-        return JbeamPropsStorage.get_instance().fetch_props(key)
+        doamin = "verts"
+        key = JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, doamin)
+        return JbeamPropsStorage.get_instance().fetch_props(doamin, key)
 
     @staticmethod
     def get_beam_props(obj, edge_index) -> str:
-        key = JbeamUtils.get_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, 'edges')
-        return JbeamPropsStorage.get_instance().fetch_props(key)
+        doamin = "edges"
+        key = JbeamUtils.get_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, doamin)
+        return JbeamPropsStorage.get_instance().fetch_props(doamin, key)
 
     @staticmethod
     def get_triangle_props(obj, face_index) -> str:
-        key = JbeamUtils.get_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, 'faces')
-        return JbeamPropsStorage.get_instance().fetch_props(key)
+        doamin = "faces"
+        key = JbeamUtils.get_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, doamin)
+        return JbeamPropsStorage.get_instance().fetch_props(doamin, key)
 
     @staticmethod
     def set_node_props(obj, vertex_index, node_props: dict):
-        key = JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, 'verts')
-        key = JbeamPropsStorage.get_instance().store_props(key, node_props)
-        JbeamUtils.set_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, key, domain="verts")
+        doamin = "verts"
+        key = JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, doamin)
+        key = JbeamPropsStorage.get_instance().store_props(doamin, key, node_props)
+        JbeamUtils.set_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, key, domain=doamin)
 
     @staticmethod
     def set_beam_props(obj, edge_index, beam_props: dict):
-        key = JbeamUtils.get_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, 'edges')
-        key = JbeamPropsStorage.get_instance().store_props(key, beam_props)
-        JbeamUtils.set_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, key, domain="edges")
+        doamin = "edges"
+        key = JbeamUtils.get_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, doamin)
+        key = JbeamPropsStorage.get_instance().store_props(doamin, key, beam_props)
+        JbeamUtils.set_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, key, domain=doamin)
 
     @staticmethod
     def set_triangle_props(obj, face_index, triangle_props: dict):
-        key = JbeamUtils.get_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, 'faces')
-        key = JbeamPropsStorage.get_instance().store_props(key, triangle_props)
-        JbeamUtils.set_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, key, domain="faces")
+        doamin = "faces"
+        key = JbeamUtils.get_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, doamin)
+        key = JbeamPropsStorage.get_instance().store_props(doamin, key, triangle_props)
+        JbeamUtils.set_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, key, domain=doamin)
 
     @staticmethod
     def check_integrity_storage_data(obj):
-        """Ensures unique keys in attributes and fixes duplicates."""
+        """Ensures unique keys in attributes and fixes duplicates for each domain separately."""
         if not obj or obj.type != 'MESH':
             return
         
@@ -264,15 +305,15 @@ class JbeamUtils:
             for elem in elements:
                 key = elem[layer].decode('utf-8') if elem[layer] else None
                 if key and key in key_sets[domain]:  
-                    # Duplicate detected, fetch data and assign new key
-                    props = JbeamPropsStorage.get_props(key)
+                    # Duplicate detected, fetch data and assign new key in the correct domain storage
+                    props = JbeamPropsStorage.get_instance().fetch_props(domain, key)
                     new_key = uuid.uuid4().hex[:12]
 
                     # Update element attribute with the new key
                     elem[layer] = new_key.encode('utf-8')
 
-                    # Store the data under the new key
-                    JbeamPropsStorage.store_props(new_key, props)
+                    # Store the data under the new key in the correct domain
+                    JbeamPropsStorage.get_instance().store_props(domain, new_key, props)
                 else:
                     key_sets[domain].add(key)
 
@@ -281,16 +322,11 @@ class JbeamUtils:
 
     @staticmethod
     def set_attribute_value(obj, index: int, attr_name: str, attr_value: str, domain="verts"):
-        
-        if not obj or obj.type != 'MESH':
-            print(f"Invalid object: {repr(obj)}")
-            return False
-
         mesh = obj.data
 
         if obj.mode == 'EDIT':
             bm = bmesh.from_edit_mesh(mesh)
-            bm_data = getattr(bm, domain)  # Access verts or edges dynamically
+            bm_data = getattr(bm, domain)  # Access verts, edges, or faces dynamically
 
             if index >= len(bm_data):
                 print(f"{repr(obj)}: Index {index} out of range in Edit Mode ({domain})")
@@ -303,8 +339,14 @@ class JbeamUtils:
             return True
 
         elif obj.mode == 'OBJECT':
+            domain_map = {"verts": "POINT", "edges": "EDGE", "faces": "FACE"}
+
+            if domain not in domain_map:
+                print(f"{repr(obj)}: Unsupported domain '{domain}'")
+                return False
+
             if attr_name not in mesh.attributes:
-                mesh.attributes.new(name=attr_name, type='STRING', domain="POINT" if domain == "verts" else "EDGE")
+                mesh.attributes.new(name=attr_name, type='STRING', domain=domain_map[domain])
 
             attr_data = mesh.attributes[attr_name].data
 

@@ -3,10 +3,6 @@ import json
 
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j, JbeamPropsStorage  # type: ignore
 
-
-import bpy
-import json
-
 class OBJECT_OT_PrintJBeamPropsBase(bpy.types.Operator):
     """Base class for printing JBeam properties"""
     bl_idname = "object.print_jbeam_props_base"
@@ -29,14 +25,14 @@ class OBJECT_OT_PrintJBeamPropsBase(bpy.types.Operator):
             mesh = obj.data
             elements = getattr(mesh, self.domain)  # Get vertices, edges, or faces
             print(f"Object '{obj.name}' ({self.attr_name}):")
-            for index in range(len(elements)):  # Iterate over elements
+            for index in range(len(elements)):
                 key = j.get_attribute_value(obj, index, self.attr_name, self.domain)
-                id_str = self.id_function(obj, index)  # Use subclass-defined function
+                id_str = self.id_function(obj, index)
                 if key:
                     props = JbeamPropsStorage.get_instance().fetch_props(key)
                     print(f"{id_str}({index}): {key} => {json.dumps(props)}")
                 else:
-                    print(f"{id_str}({index}): {key} => nothing found")
+                    print(f"{id_str}({index}): no key, no attribute value (no scope modifiers assigned)")
 
         return {'FINISHED'}
 

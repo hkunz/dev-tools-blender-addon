@@ -90,7 +90,7 @@ class OBJECT_OT_BeamngLoadJbeamNodeProps(OBJECT_OT_BeamngLoadJbeamPropsBase):
 
     domain = "verts"
     layer_name = j.ATTR_NODE_PROPS
-    scene_property_name = "beamng_jbeam_vertex_props"
+    scene_property_name = "beamng_jbeam_node_props"
     get_props_function = staticmethod(j.get_node_props)
 
 class OBJECT_OT_BeamngLoadJbeamBeamProps(OBJECT_OT_BeamngLoadJbeamPropsBase):
@@ -101,7 +101,7 @@ class OBJECT_OT_BeamngLoadJbeamBeamProps(OBJECT_OT_BeamngLoadJbeamPropsBase):
 
     domain = "edges"
     layer_name = j.ATTR_BEAM_PROPS
-    scene_property_name = "beamng_jbeam_edge_props"
+    scene_property_name = "beamng_jbeam_beam_props"
     get_props_function = staticmethod(j.get_beam_props)
 
 class OBJECT_OT_BeamngLoadJbeamTriangleProps(OBJECT_OT_BeamngLoadJbeamPropsBase):
@@ -112,7 +112,7 @@ class OBJECT_OT_BeamngLoadJbeamTriangleProps(OBJECT_OT_BeamngLoadJbeamPropsBase)
 
     domain = "faces"
     layer_name = j.ATTR_TRIANGLE_PROPS
-    scene_property_name = "beamng_jbeam_face_props"
+    scene_property_name = "beamng_jbeam_triangle_props"
     get_props_function = staticmethod(j.get_triangle_props)
 
 class OBJECT_OT_BeamngSaveJbeamProp(bpy.types.Operator):
@@ -130,9 +130,9 @@ class OBJECT_OT_BeamngSaveJbeamProp(bpy.types.Operator):
 
         bm = bmesh.from_edit_mesh(obj.data)
         domain_map = {
-            'NODE': ('verts', 'beamng_jbeam_vertex_props', j.ATTR_NODE_PROPS, j.get_node_props, j.set_node_props),
-            'BEAM': ('edges', 'beamng_jbeam_edge_props', j.ATTR_BEAM_PROPS, j.get_beam_props, j.set_beam_props),
-            'TRIANGLE': ('faces', 'beamng_jbeam_face_props', j.ATTR_TRIANGLE_PROPS, j.get_triangle_props, j.set_triangle_props),
+            'NODE': ('verts', 'beamng_jbeam_node_props', j.ATTR_NODE_PROPS, j.get_node_props, j.set_node_props),
+            'BEAM': ('edges', 'beamng_jbeam_beam_props', j.ATTR_BEAM_PROPS, j.get_beam_props, j.set_beam_props),
+            'TRIANGLE': ('faces', 'beamng_jbeam_triangle_props', j.ATTR_TRIANGLE_PROPS, j.get_triangle_props, j.set_triangle_props),
         }
 
         if self.prop_type in domain_map:
@@ -280,9 +280,9 @@ class OBJECT_OT_BeamngAddJbeamProp(bpy.types.Operator):
 
     def execute(self, context):
         if self.prop_type == 'NODE':
-            prop = context.scene.beamng_jbeam_vertex_props.add()
+            prop = context.scene.beamng_jbeam_node_props.add()
         elif self.prop_type == 'BEAM':
-            prop = context.scene.beamng_jbeam_edge_props.add()
+            prop = context.scene.beamng_jbeam_beam_props.add()
         else:
             self.report({'ERROR'}, f"Unknown property type: {self.prop_type}")
             return {'CANCELLED'}
@@ -336,13 +336,13 @@ class OBJECT_OT_BeamngRemoveJbeamProp(bpy.types.Operator):
         if self.prop_type == "vertex":
             layer = bm.verts.layers.string.get(j.ATTR_NODE_PROPS)
             selected_elements = [v for v in bm.verts if v.select]
-            ui_list = scene.beamng_jbeam_vertex_props
+            ui_list = scene.beamng_jbeam_node_props
             get_props = j.get_node_props
             set_props = j.set_node_props
         else:  # Edge (beam)
             layer = bm.edges.layers.string.get(j.ATTR_BEAM_PROPS)
             selected_elements = [e for e in bm.edges if e.select]
-            ui_list = scene.beamng_jbeam_edge_props
+            ui_list = scene.beamng_jbeam_beam_props
             get_props = j.get_beam_props
             set_props = j.set_beam_props
 
@@ -476,7 +476,7 @@ class OBJECT_OT_BeamngSelectJbeamNodesByProperty(OBJECT_OT_BeamngSelectByPropert
         return j.get_node_props(obj, element.index)
 
     def get_property_collection(self, context):
-        return context.scene.beamng_jbeam_vertex_props
+        return context.scene.beamng_jbeam_node_props
 
 class OBJECT_OT_BeamngSelectJbeamBeamsByProperty(OBJECT_OT_BeamngSelectByPropertyBase):
     """Select all edges (beams) that share the same JBeam property and value"""
@@ -490,5 +490,5 @@ class OBJECT_OT_BeamngSelectJbeamBeamsByProperty(OBJECT_OT_BeamngSelectByPropert
         return j.get_beam_props(obj, element.index)
 
     def get_property_collection(self, context):
-        return context.scene.beamng_jbeam_edge_props
+        return context.scene.beamng_jbeam_beam_props
 

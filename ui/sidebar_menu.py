@@ -218,8 +218,8 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                         box.prop(s.beamng_jbeam_active_node, "id", text="Active Node ID")
                         box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign JBeam ID")
 
-                        if s.beamng_jbeam_vertex_props:
-                            for prop in s.beamng_jbeam_vertex_props:
+                        if s.beamng_jbeam_node_props:
+                            for prop in s.beamng_jbeam_node_props:
                                 r = box.row()
                                 r.prop(prop, "name", text="")
                                 r.prop(prop, "value", text="")
@@ -253,8 +253,8 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                         box.prop(s.beamng_jbeam_active_beam, "id", text="Active Beam ID")
                         #box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign JBeam ID")
 
-                        if s.beamng_jbeam_edge_props:
-                            for prop in s.beamng_jbeam_edge_props:  
+                        if s.beamng_jbeam_beam_props:
+                            for prop in s.beamng_jbeam_beam_props:  
                                 r = box.row()
                                 r.prop(prop, "name", text="")
                                 r.prop(prop, "value", text="")
@@ -284,8 +284,8 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                         box.prop(s.beamng_jbeam_active_triangle, "id", text="Active Triangle ID")
                         #box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign Node ID")
 
-                        if s.beamng_jbeam_face_props:
-                            for prop in s.beamng_jbeam_face_props:
+                        if s.beamng_jbeam_triangle_props:
+                            for prop in s.beamng_jbeam_triangle_props:
                                 r = box.row()
                                 r.prop(prop, "name", text="")
                                 r.prop(prop, "value", text="")
@@ -376,9 +376,9 @@ def register() -> None:
     bpy.types.Scene.beamng_jbeam_active_node = bpy.props.PointerProperty(type=JbeamElement)
     bpy.types.Scene.beamng_jbeam_active_beam = bpy.props.PointerProperty(type=JbeamElement)
     bpy.types.Scene.beamng_jbeam_active_triangle = bpy.props.PointerProperty(type=JbeamElement)
-    bpy.types.Scene.beamng_jbeam_vertex_props = bpy.props.CollectionProperty(type=JbeamPropertyItem)
-    bpy.types.Scene.beamng_jbeam_edge_props = bpy.props.CollectionProperty(type=JbeamPropertyItem)
-    bpy.types.Scene.beamng_jbeam_face_props = bpy.props.CollectionProperty(type=JbeamPropertyItem)
+    bpy.types.Scene.beamng_jbeam_node_props = bpy.props.CollectionProperty(type=JbeamPropertyItem)
+    bpy.types.Scene.beamng_jbeam_beam_props = bpy.props.CollectionProperty(type=JbeamPropertyItem)
+    bpy.types.Scene.beamng_jbeam_triangle_props = bpy.props.CollectionProperty(type=JbeamPropertyItem)
 
     bpy.app.handlers.depsgraph_update_post.append(on_depsgraph_update)
 
@@ -396,7 +396,7 @@ def unregister() -> None:
     del bpy.types.Scene.beamng_jbeam_active_node
     del bpy.types.Scene.beamng_jbeam_active_beam
     del bpy.types.Scene.beamng_jbeam_active_triangle
-    del bpy.types.Scene.beamng_jbeam_vertex_props
-    del bpy.types.Scene.beamng_jbeam_edge_props
-    del bpy.types.Scene.beamng_jbeam_face_props
+    del bpy.types.Scene.beamng_jbeam_node_props
+    del bpy.types.Scene.beamng_jbeam_beam_props
+    del bpy.types.Scene.beamng_jbeam_triangle_props
     bpy.app.handlers.depsgraph_update_post.remove(on_depsgraph_update)

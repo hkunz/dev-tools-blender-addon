@@ -186,20 +186,13 @@ class JbeamUtils:
         if bm is None:
             mesh = obj.data
             face = mesh.polygons[face_index]
-            if len(face.vertices) > 3:
-                return f"[ngon{face_index}]"
-            v1, v2, v3 = sorted(face.vertices)
+            verts = face.vertices  # Get all vertex indices of the face
         else:
             face = bm.faces[face_index]
-            if len(face.verts) > 3:
-                return f"[ngon{face_index}]"
-            v1, v2, v3 = sorted(face.verts, key=lambda v: v.index)
-            v1, v2, v3 = v1.index, v2.index, v3.index
-        n1 = JbeamUtils.get_node_id(obj, v1) or "?"
-        n2 = JbeamUtils.get_node_id(obj, v2) or "?"
-        n3 = JbeamUtils.get_node_id(obj, v3) or "?"
-        return f"[{n1}|{n2}|{n3}]"
+            verts = [v.index for v in face.verts]  # Get all vertex indices
 
+        node_ids = [JbeamUtils.get_node_id(obj, v) or "?" for v in verts]
+        return f"[{'|'.join(node_ids)}]" # Format the result as "[id1|id2|id3|...]"
 
     @staticmethod
     def get_beam_node_ids(obj, edge_index) -> tuple[str, str]:

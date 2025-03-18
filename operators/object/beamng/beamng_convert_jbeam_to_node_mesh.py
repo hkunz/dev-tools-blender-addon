@@ -34,6 +34,19 @@ class Beam:
     def __repr__(self):
         return (f"Beam(id={self.beam_id}, node_id1={self.node_id1}, node_id2={self.node_id2}, index={self.index}, props={self.props})")
 
+class Triangle:
+    def __init__(self, triangle_id, node_id1, node_id2, node_id3, index, props=None):
+        self.triangle_id = triangle_id
+        self.node_id1 = node_id1
+        self.node_id2 = node_id2
+        self.node_id3 = node_id3
+        self.index = index
+        self.props = props if props else {}
+
+    def __repr__(self):
+        return (f"Triangle(id={self.triangle_id}, node_id1={self.node_id1}, node_id2={self.node_id2}, node_id3={self.node_id3}, index={self.index}, props={self.props})")
+
+
 class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
     """Convert object to Node Mesh by removing custom properties and merging by distance"""
     bl_idname = "object.devtools_beamng_convert_jbeam_to_node_mesh"
@@ -71,51 +84,64 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
 
     def parse_nodes(self, json_nodes):
         nodes = []
-        current_props = {}
-        current_group = None
+        current_props, current_group = {}, None
 
         for entry in json_nodes:
             if isinstance(entry, dict):  
-                if "group" in entry:
-                    current_group = entry["group"]
+                current_group = entry.get("group", current_group)
                 current_props.update(entry)
             elif isinstance(entry, list) and len(entry) >= 4:
-                node_id, x, y, z = entry[:4]  
+                node_id, x, y, z = entry[:4]
 
-                if isinstance(x, str) or isinstance(y, str) or isinstance(z, str):
+                if any(isinstance(v, str) for v in (x, y, z)):
                     continue  # Skip header row
 
                 position = mathutils.Vector((x, y, z))
-                node_props = current_props.copy()  
-                node_group = [current_group] if isinstance(current_group, str) else current_group
-                nodes.append(Node(node_id, -1, position, node_group, node_props))
+                nodes.append(Node(node_id, -1, position, [current_group] if current_group else None, current_props.copy()))
+
         return nodes
 
-    def parse_beams(self, obj, json_beams, verts_dic):
-        beams = []
-        current_props = {}
+    def parse_structures(self, obj, json_data, verts_dic, structure_type):
+        """ Generic parser for beams and triangles """
+        structures, current_props = [], {}
         mesh = obj.data
-        edge_lookup = {tuple(sorted((e.vertices[0], e.vertices[1]))): e.index for e in mesh.edges} # Precompute edge lookup dictionary
 
-        def get_edge_index(i1, i2):
-            return edge_lookup.get(tuple(sorted((i1, i2))))  # Handles both directions
+        if structure_type == "beams":
+            lookup = {tuple(sorted((e.vertices[0], e.vertices[1]))): e.index for e in mesh.edges}
+        elif structure_type == "triangles":
+            lookup = {tuple(sorted(f.vertices)): f.index for f in mesh.polygons}
+        else:
+            raise ValueError("Invalid structure type")
 
-        for i, entry in enumerate(json_beams, start=1):
+        def get_index(indices):
+            return lookup.get(tuple(sorted(indices)))
+
+        for entry in json_data:
             if isinstance(entry, dict):
                 current_props.update(entry)
-            elif isinstance(entry, list) and len(entry) >= 2:
-                n1, n2 = entry[:2]
-                node1, node2 = verts_dic.get(n1), verts_dic.get(n2)
-                if node1 is None or node2 is None:
-                    print(f"Warning: Missing nodes {n1}, {n2} in verts_dic and possibly in jbeam nodes")
+            elif isinstance(entry, list) and len(entry) >= (2 if structure_type == "beams" else 3):
+                nodes = [verts_dic.get(n) for n in entry[:len(entry)]]
+                if any(n is None for n in nodes):
+                    print(f"Warning: Missing nodes {entry[:len(entry)]} in verts_dic and possibly in jbeam nodes")
                     continue
 
-                edge_index = get_edge_index(node1.index, node2.index)
-                beam_id = f"[{n1}|{n2}]"
-                beam_props = current_props.copy()
-                beams.append(Beam(beam_id, n1, n2, edge_index, beam_props))
+                index = get_index([n.index for n in nodes])
+                struct_id = f"[{'|'.join(entry[:len(entry)])}]"
+                structures.append(
+                    (Beam if structure_type == "beams" else Triangle)(struct_id, *nodes, index, current_props.copy())
+                )
 
-        return beams
+        return structures
+
+
+    def parse_beams(self, obj, json_beams, verts_dic):
+        return self.parse_structures(obj, json_beams, verts_dic, "beams")
+
+
+    def parse_triangles(self, obj, json_triangles, verts_dic):
+        return self.parse_structures(obj, json_triangles, verts_dic, "triangles")
+
+
 
     def get_vertex_indices(self, obj, part_data, epsilon=0.0005):
         verts_dic = {}
@@ -226,6 +252,17 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
 
             j.set_beam_props(obj, beam.index, beam.props)
 
+    def store_triangle_props_in_face_attributes(self, obj, part_data, verts_dic):
+        json_triangles = part_data.get("triangles", [])
+        triangles = self.parse_triangles(obj, json_triangles, verts_dic)
+
+        for triangle in triangles:
+            if triangle.index is None:
+                self.report({'ERROR'}, f"No face found for triangle {triangle.triangle_id}")
+                continue
+
+            j.set_triangle_props(obj, triangle.index, triangle.props)
+
     def create_default_flex_group(self, obj):
         node_group = "flexbody_mesh"
         vertex_groups_data = {
@@ -287,6 +324,7 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
             self.create_node_mesh_attributes(obj)
             self.store_node_props_in_vertex_attributes(obj, verts_dic)
             self.store_beam_props_in_edge_attributes(obj, part_data, verts_dic)
+            self.store_triangle_props_in_face_attributes(obj, part_data, verts_dic)
         else:
             self.create_default_flex_group(obj)
             j.setup_default_scope_modifiers_and_node_ids(obj)

@@ -110,11 +110,11 @@ class JbeamSelectionTracker:
         j.set_gn_jbeam_active_beam_index(obj, active_index)
         scene.beamng_jbeam_active_beam.index = active_index
         ids = [
-            j.get_beam_id(obj, bm, i) or f"({i})"
+            j.get_beam_id(obj, i, bm) or f"({i})"
             for i in current_selection
         ]
         scene.beamng_jbeam_active_beam.selection = ", ".join(ids)
-        scene.beamng_jbeam_active_beam.id = j.get_beam_id(obj, bm, active_index) or ""
+        scene.beamng_jbeam_active_beam.id = j.get_beam_id(obj, active_index, bm) or ""
         bpy.ops.object.devtools_beamng_load_jbeam_beam_props()
         UiUtils.force_update_ui(bpy.context)
 
@@ -138,11 +138,11 @@ class JbeamSelectionTracker:
         j.set_gn_jbeam_active_triangle_index(obj, active_index)
         scene.beamng_jbeam_active_triangle.index = active_index
         ids = [
-            j.get_triangle_id(obj, bm, i) or f"({i})"
+            j.get_triangle_id(obj, i, bm) or f"({i})"
             for i in current_selection
         ]
         scene.beamng_jbeam_active_triangle.selection = ", ".join(ids)
-        scene.beamng_jbeam_active_triangle.id = j.get_triangle_id(obj, bm, active_index) or ""
+        scene.beamng_jbeam_active_triangle.id = j.get_triangle_id(obj, active_index, bm) or ""
         bpy.ops.object.devtools_beamng_load_jbeam_triangle_props()
         UiUtils.force_update_ui(bpy.context)
 

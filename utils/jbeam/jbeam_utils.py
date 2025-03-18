@@ -9,32 +9,39 @@ from dev_tools.utils.object_utils import ObjectUtils # type: ignore
 
 
 class JbeamPropsStorage:
-    """Manages storage of JBeam properties using unique keys."""
-    _storage = {}  # Dictionary to hold key-value mappings
+    _instance = None
 
-    @staticmethod
-    def store_props(key, props: dict) -> str:
-        if not key or key not in JbeamPropsStorage._storage:
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance.storage = {}
+        return cls._instance
+
+    @classmethod
+    def get_instance(cls):
+        """Returns the singleton instance of JbeamPropsStorage."""
+        return cls._instance or cls()
+
+    def store_props(self, key, props: dict) -> str:
+        """Stores properties and returns a unique key."""
+        if not key or key not in self.storage:
             key = uuid.uuid4().hex[:12]
-        JbeamPropsStorage._storage[key] = props
+        self.storage[key] = props
         return key
 
-    @staticmethod
-    def fetch_props(key: str) -> dict:
+    def fetch_props(self, key: str) -> dict:
         """Retrieves properties by key."""
-        return JbeamPropsStorage._storage.get(key, {})
+        return self.storage.get(key, {})
 
-    @staticmethod
-    def delete_props(key: str):
+    def delete_props(self, key: str):
         """Removes properties from storage."""
-        if key in JbeamPropsStorage._storage:
-            del JbeamPropsStorage._storage[key]
+        if key in self.storage:
+            del self.storage[key]
 
-    @staticmethod
-    def cleanup(unused_keys: set):
+    def cleanup(self, unused_keys: set):
         """Removes unused keys from storage."""
         for key in unused_keys:
-            JbeamPropsStorage.delete_props(key)
+            self.delete_props(key)
 
 
 class JbeamUtils:
@@ -161,23 +168,38 @@ class JbeamUtils:
         return JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_ID)
 
     @staticmethod
-    def get_beam_id(obj, bm, edge_index) -> str:
-        edge = bm.edges[edge_index]
-        v1, v2 = sorted(edge.verts, key=lambda v: v.index)  # Sort vertices by index
-        n1 = JbeamUtils.get_node_id(obj, v1.index) or "?"
-        n2 = JbeamUtils.get_node_id(obj, v2.index) or "?"
+    def get_beam_id(obj, edge_index, bm=None) -> str:
+        if bm is None:
+            mesh = obj.data
+            edge = mesh.edges[edge_index]
+            v1, v2 = sorted(edge.vertices)
+        else:
+            edge = bm.edges[edge_index]
+            v1, v2 = sorted(edge.verts, key=lambda v: v.index)
+            v1, v2 = v1.index, v2.index
+        n1 = JbeamUtils.get_node_id(obj, v1) or "?"
+        n2 = JbeamUtils.get_node_id(obj, v2) or "?"
         return f"[{n1}|{n2}]"
 
     @staticmethod
-    def get_triangle_id(obj, bm, face_index) -> str:
-        face = bm.faces[face_index]
-        if len(face.verts) > 3:
-            return f"[ngon{face_index}]"
-        v1, v2, v3 = sorted(face.verts, key=lambda v: v.index)  # Sort vertices by index
-        n1 = JbeamUtils.get_node_id(obj, v1.index) or "?"
-        n2 = JbeamUtils.get_node_id(obj, v2.index) or "?"
-        n3 = JbeamUtils.get_node_id(obj, v3.index) or "?"
+    def get_triangle_id(obj, face_index, bm=None) -> str:
+        if bm is None:
+            mesh = obj.data
+            face = mesh.polygons[face_index]
+            if len(face.vertices) > 3:
+                return f"[ngon{face_index}]"
+            v1, v2, v3 = sorted(face.vertices)
+        else:
+            face = bm.faces[face_index]
+            if len(face.verts) > 3:
+                return f"[ngon{face_index}]"
+            v1, v2, v3 = sorted(face.verts, key=lambda v: v.index)
+            v1, v2, v3 = v1.index, v2.index, v3.index
+        n1 = JbeamUtils.get_node_id(obj, v1) or "?"
+        n2 = JbeamUtils.get_node_id(obj, v2) or "?"
+        n3 = JbeamUtils.get_node_id(obj, v3) or "?"
         return f"[{n1}|{n2}|{n3}]"
+
 
     @staticmethod
     def get_beam_node_ids(obj, edge_index) -> tuple[str, str]:
@@ -190,34 +212,34 @@ class JbeamUtils:
     @staticmethod
     def get_node_props(obj, vertex_index) -> str:
         key = JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, 'verts')
-        return JbeamPropsStorage.fetch_props(key)
+        return JbeamPropsStorage.get_instance().fetch_props(key)
 
     @staticmethod
     def get_beam_props(obj, edge_index) -> str:
         key = JbeamUtils.get_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, 'edges')
-        return JbeamPropsStorage.fetch_props(key)
+        return JbeamPropsStorage.get_instance().fetch_props(key)
 
     @staticmethod
     def get_triangle_props(obj, face_index) -> str:
         key = JbeamUtils.get_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, 'faces')
-        return JbeamPropsStorage.fetch_props(key)
+        return JbeamPropsStorage.get_instance().fetch_props(key)
 
     @staticmethod
     def set_node_props(obj, vertex_index, node_props: dict):
         key = JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, 'verts')
-        key = JbeamPropsStorage.store_props(key, node_props)
+        key = JbeamPropsStorage.get_instance().store_props(key, node_props)
         JbeamUtils.set_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, key, domain="verts")
 
     @staticmethod
     def set_beam_props(obj, edge_index, beam_props: dict):
         key = JbeamUtils.get_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, 'edges')
-        key = JbeamPropsStorage.store_props(key, beam_props)
+        key = JbeamPropsStorage.get_instance().store_props(key, beam_props)
         JbeamUtils.set_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, key, domain="edges")
 
     @staticmethod
     def set_triangle_props(obj, face_index, triangle_props: dict):
         key = JbeamUtils.get_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, 'faces')
-        key = JbeamPropsStorage.store_props(key, triangle_props)
+        key = JbeamPropsStorage.get_instance().store_props(key, triangle_props)
         JbeamUtils.set_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, key, domain="faces")
 
     @staticmethod

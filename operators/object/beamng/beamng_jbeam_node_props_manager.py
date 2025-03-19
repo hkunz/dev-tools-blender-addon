@@ -208,24 +208,41 @@ class OBJECT_OT_BeamngSaveAllJbeamProps(bpy.types.Operator):
     """Base class for saving JBeam properties"""
     bl_options = {'INTERNAL', 'UNDO'}
     
-    prop_type = "vertex"  # This will now be accessed via cls.prop_type
+    domain = ""  # uses 'verts', 'edges', or 'faces'
+    prop_type = ""  # uses 'node', 'beam', or 'triangle'
 
     @classmethod
     def get_bmesh_layer(cls, bm):
-        return bm.verts.layers.string.get(j.ATTR_NODE_PROPS) if cls.prop_type == "vertex" else bm.edges.layers.string.get(j.ATTR_BEAM_PROPS)
-    
+        """Retrieve the correct BMesh layer based on the property type."""
+        layer_attr = {
+            "verts": j.ATTR_NODE_PROPS,
+            "edges": j.ATTR_BEAM_PROPS,
+            "faces": j.ATTR_TRIANGLE_PROPS,
+        }.get(cls.domain)
+
+        if not layer_attr:
+            return None
+        # Dynamically access the layers using self.domain
+        layers = getattr(bm, cls.domain).layers.string
+        return layers.get(layer_attr) if layers else None
+
     @classmethod
     def get_selected_elements(cls, bm):
-        return [v for v in bm.verts if v.select] if cls.prop_type == "vertex" else [e for e in bm.edges if e.select]
-    
+        """Retrieve selected elements dynamically."""
+        return [elem for elem in getattr(bm, cls.domain, []) if elem.select]
+
     @classmethod
     def get_props(cls, obj, index):
-        return j.get_node_props(obj, index) if cls.prop_type == "vertex" else j.get_beam_props(obj, index)
-    
+        """Retrieve JBeam properties for the given element index."""
+        return getattr(j, f"get_{cls.prop_type}_props", lambda *_: {})(obj, index)
+
     @classmethod
     def set_props(cls, obj, index, props):
-        return j.set_node_props(obj, index, props) if cls.prop_type == "vertex" else j.set_beam_props(obj, index, props)
-    
+        """Set JBeam properties for the given element index."""
+        setter = getattr(j, f"set_{cls.prop_type}_props", None)
+        if setter:
+            setter(obj, index, props)
+
     def save_jbeam_props(self, context):
         obj = context.object
         if not obj or obj.type != 'MESH':
@@ -236,7 +253,7 @@ class OBJECT_OT_BeamngSaveAllJbeamProps(bpy.types.Operator):
         selected_elements = self.get_selected_elements(bm)
 
         if not selected_elements or not layer:
-            return f"No selected {self.prop_type}s or no property data found", 'CANCELLED'
+            return f"No selected {self.prop_type} or no property data found", 'CANCELLED'
         
         ui_props = {prop.name: prop.value for prop in getattr(context.scene, f'beamng_jbeam_{self.prop_type}_props')}
         if any(prop_name.lower() == "group" for prop_name in ui_props):
@@ -264,13 +281,22 @@ class OBJECT_OT_BeamngSaveAllJbeamNodeProps(OBJECT_OT_BeamngSaveAllJbeamProps):
     """Save all JBeam node properties for selected vertices"""
     bl_idname = "object.devtools_beamng_save_all_jbeam_node_props"
     bl_label = "DevTools: BeamNG Save All JBeam Node Properties"
-    prop_type = "vertex"
+    prop_type = "node"
+    domain = "verts"
 
 class OBJECT_OT_BeamngSaveAllJbeamBeamProps(OBJECT_OT_BeamngSaveAllJbeamProps):
     """Save all JBeam beam properties for selected edges"""
     bl_idname = "object.devtools_beamng_save_all_jbeam_beam_props"
     bl_label = "DevTools: BeamNG Save All JBeam Beam Properties"
-    prop_type = "edge"
+    prop_type = "beam"
+    domain = "edges"
+
+class OBJECT_OT_BeamngSaveAllJbeamTriangleProps(OBJECT_OT_BeamngSaveAllJbeamProps):
+    """Save all JBeam triangle properties for selected faces"""
+    bl_idname = "object.devtools_beamng_save_all_jbeam_triangle_props"
+    bl_label = "DevTools: BeamNG Save All JBeam Triangle Properties"
+    prop_type = "triangle"
+    domain = "faces"
 
 class OBJECT_OT_BeamngAddJbeamProp(bpy.types.Operator):
     """Base class for adding JBeam properties"""
@@ -283,11 +309,13 @@ class OBJECT_OT_BeamngAddJbeamProp(bpy.types.Operator):
             prop = context.scene.beamng_jbeam_node_props.add()
         elif self.prop_type == 'BEAM':
             prop = context.scene.beamng_jbeam_beam_props.add()
+        elif self.prop_type == 'TRIANGLE':
+            prop = context.scene.beamng_jbeam_triangle_props.add()
         else:
             self.report({'ERROR'}, f"Unknown property type: {self.prop_type}")
             return {'CANCELLED'}
         
-        prop.name = "NewProp"
+        prop.name = f"{self.prop_type.capitalize()}Prop"
         prop.value = "0"
         return {'FINISHED'}
 
@@ -306,6 +334,15 @@ class OBJECT_OT_BeamngAddJbeamBeamProp(OBJECT_OT_BeamngAddJbeamProp):
 
     def __init__(self):
         self.prop_type = 'BEAM'
+
+class OBJECT_OT_BeamngAddJbeamTriangleProp(OBJECT_OT_BeamngAddJbeamProp):
+    """Add a new JBeam Triangle property"""
+    bl_idname = "object.devtools_beamng_add_jbeam_triangle_prop"
+    bl_label = "DevTools: BeamNG Add JBeam Triangle Property"
+
+    def __init__(self):
+        self.prop_type = 'TRIANGLE'
+
 
 class OBJECT_OT_BeamngRemoveJbeamProp(bpy.types.Operator):
     """Remove a JBeam property (Shift+Click to also save)"""

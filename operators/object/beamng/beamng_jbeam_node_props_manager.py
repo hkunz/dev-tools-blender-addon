@@ -1,7 +1,7 @@
 import bpy
 import bmesh
 
-from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
+from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
 
 class JbeamElement(bpy.types.PropertyGroup):
     id: bpy.props.StringProperty(
@@ -28,8 +28,9 @@ class JbeamElement(bpy.types.PropertyGroup):
     )  # type: ignore
 
 class JbeamPropertyItem(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty(name="Property Name") # type: ignore
-    value: bpy.props.StringProperty(name="Value") # type: ignore
+    name: bpy.props.StringProperty(name="Property Name")  # type: ignore
+    value: bpy.props.StringProperty(name="Value")  # type: ignore
+
 
 class OBJECT_OT_BeamngLoadJbeamPropsBase(bpy.types.Operator):
     """Base class for loading JBeam properties"""
@@ -84,10 +85,8 @@ class OBJECT_OT_BeamngLoadJbeamPropsBase(bpy.types.Operator):
 
 class OBJECT_OT_BeamngLoadJbeamNodeProps(OBJECT_OT_BeamngLoadJbeamPropsBase):
     """Load JBeam properties of the selected nodes"""
-    
     bl_idname = "object.devtools_beamng_load_jbeam_node_props"
     bl_label = "DevTools: BeamNG Load JBeam Node Properties"
-
     domain = "verts"
     layer_name = j.ATTR_NODE_PROPS
     scene_property_name = "beamng_jbeam_node_props"
@@ -95,10 +94,8 @@ class OBJECT_OT_BeamngLoadJbeamNodeProps(OBJECT_OT_BeamngLoadJbeamPropsBase):
 
 class OBJECT_OT_BeamngLoadJbeamBeamProps(OBJECT_OT_BeamngLoadJbeamPropsBase):
     """Load JBeam properties of the selected beams"""
-    
     bl_idname = "object.devtools_beamng_load_jbeam_beam_props"
     bl_label = "DevTools: BeamNG Load JBeam Beam Properties"
-
     domain = "edges"
     layer_name = j.ATTR_BEAM_PROPS
     scene_property_name = "beamng_jbeam_beam_props"
@@ -106,14 +103,13 @@ class OBJECT_OT_BeamngLoadJbeamBeamProps(OBJECT_OT_BeamngLoadJbeamPropsBase):
 
 class OBJECT_OT_BeamngLoadJbeamTriangleProps(OBJECT_OT_BeamngLoadJbeamPropsBase):
     """Load JBeam properties of the selected triangles"""
-    
     bl_idname = "object.devtools_beamng_load_jbeam_triangle_props"
     bl_label = "DevTools: BeamNG Load JBeam Triangle Properties"
-
     domain = "faces"
     layer_name = j.ATTR_TRIANGLE_PROPS
     scene_property_name = "beamng_jbeam_triangle_props"
     get_props_function = staticmethod(j.get_triangle_props)
+
 
 class OBJECT_OT_BeamngSaveJbeamProp(bpy.types.Operator):
     """Base class for saving JBeam properties"""
@@ -176,33 +172,24 @@ class OBJECT_OT_BeamngSaveJbeamProp(bpy.types.Operator):
         self.report({'INFO'}, f"Saved property: {self.prop_name}")
         return {'FINISHED'}
 
-
 class OBJECT_OT_BeamngSaveJbeamNodeProp(OBJECT_OT_BeamngSaveJbeamProp):
     """Save a single JBeam node property for selected nodes"""
     bl_idname = "object.devtools_beamng_save_jbeam_node_prop"
     bl_label = "DevTools: BeamNG Save JBeam Node Property"
-
-    def __init__(self):
-        super().__init__()
-        self.prop_type = 'NODE'
+    prop_type = 'NODE'
 
 class OBJECT_OT_BeamngSaveJbeamBeamProp(OBJECT_OT_BeamngSaveJbeamProp):
     """Save a single JBeam edge property for selected beams"""
     bl_idname = "object.devtools_beamng_save_jbeam_beam_prop"
     bl_label = "DevTools: BeamNG Save JBeam Beam Property"
-
-    def __init__(self):
-        super().__init__()
-        self.prop_type = 'BEAM'
+    prop_type = 'BEAM'
 
 class OBJECT_OT_BeamngSaveJbeamTriangleProp(OBJECT_OT_BeamngSaveJbeamProp):
     """Save a single JBeam edge property for selected triangles"""
     bl_idname = "object.devtools_beamng_save_jbeam_triangle_prop"
     bl_label = "DevTools: BeamNG Save JBeam Triangle Property"
+    prop_type = 'TRIANGLE'
 
-    def __init__(self):
-        super().__init__()
-        self.prop_type = 'TRIANGLE'
 
 class OBJECT_OT_BeamngSaveAllJbeamProps(bpy.types.Operator):
     """Base class for saving JBeam properties"""
@@ -298,11 +285,12 @@ class OBJECT_OT_BeamngSaveAllJbeamTriangleProps(OBJECT_OT_BeamngSaveAllJbeamProp
     prop_type = "triangle"
     domain = "faces"
 
+
 class OBJECT_OT_BeamngAddJbeamProp(bpy.types.Operator):
     """Base class for adding JBeam properties"""
     bl_options = {'INTERNAL', 'UNDO'}
 
-    prop_type: bpy.props.StringProperty() # type: ignore
+    prop_type: bpy.props.StringProperty()  # type: ignore
 
     def execute(self, context):
         if self.prop_type == 'NODE':
@@ -323,25 +311,19 @@ class OBJECT_OT_BeamngAddJbeamNodeProp(OBJECT_OT_BeamngAddJbeamProp):
     """Add a new JBeam node property"""
     bl_idname = "object.devtools_beamng_add_jbeam_node_prop"
     bl_label = "DevTools: BeamNG Add JBeam Node Property"
-
-    def __init__(self):
-        self.prop_type = 'NODE'
+    prop_type = 'NODE'
 
 class OBJECT_OT_BeamngAddJbeamBeamProp(OBJECT_OT_BeamngAddJbeamProp):
     """Add a new JBeam Beam property"""
     bl_idname = "object.devtools_beamng_add_jbeam_edge_prop"
     bl_label = "DevTools: BeamNG Add JBeam Beam Property"
-
-    def __init__(self):
-        self.prop_type = 'BEAM'
+    prop_type = 'BEAM'
 
 class OBJECT_OT_BeamngAddJbeamTriangleProp(OBJECT_OT_BeamngAddJbeamProp):
     """Add a new JBeam Triangle property"""
     bl_idname = "object.devtools_beamng_add_jbeam_triangle_prop"
     bl_label = "DevTools: BeamNG Add JBeam Triangle Property"
-
-    def __init__(self):
-        self.prop_type = 'TRIANGLE'
+    prop_type = 'TRIANGLE'
 
 
 class OBJECT_OT_BeamngRemoveJbeamProp(bpy.types.Operator):
@@ -432,7 +414,6 @@ class OBJECT_OT_BeamngRemoveJbeamNodeProp(OBJECT_OT_BeamngRemoveJbeamProp):
     get_props = staticmethod(j.get_node_props)
     set_props = staticmethod(j.set_node_props)
 
-
 class OBJECT_OT_BeamngRemoveJbeamBeamProp(OBJECT_OT_BeamngRemoveJbeamProp):
     """Remove a JBeam beam property (Shift+Click to also save)"""
     bl_idname = "object.devtools_beamng_remove_jbeam_beam_prop"
@@ -442,7 +423,6 @@ class OBJECT_OT_BeamngRemoveJbeamBeamProp(OBJECT_OT_BeamngRemoveJbeamProp):
     ui_list_attr = "beamng_jbeam_beam_props"
     get_props = staticmethod(j.get_beam_props)
     set_props = staticmethod(j.set_beam_props)
-
 
 class OBJECT_OT_BeamngRemoveJbeamTriangleProp(OBJECT_OT_BeamngRemoveJbeamProp):
     """Remove a JBeam triangle property (Shift+Click to also save)"""
@@ -545,4 +525,3 @@ class OBJECT_OT_BeamngSelectJbeamBeamsByProperty(OBJECT_OT_BeamngSelectByPropert
 
     def get_property_collection(self, context):
         return context.scene.beamng_jbeam_beam_props
-

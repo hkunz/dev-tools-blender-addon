@@ -115,7 +115,7 @@ class OBJECT_OT_BeamngSaveJbeamProp(bpy.types.Operator):
     """Base class for saving JBeam properties"""
     bl_options = {'INTERNAL', 'UNDO'}
 
-    prop_type: bpy.props.StringProperty()  # type: ignore
+    prop_type = ""
     prop_name: bpy.props.StringProperty()  # type: ignore
 
     def execute(self, context):
@@ -290,7 +290,7 @@ class OBJECT_OT_BeamngAddJbeamProp(bpy.types.Operator):
     """Base class for adding JBeam properties"""
     bl_options = {'INTERNAL', 'UNDO'}
 
-    prop_type: bpy.props.StringProperty()  # type: ignore
+    prop_type = ""
 
     def execute(self, context):
         if self.prop_type == 'NODE':
@@ -525,3 +525,17 @@ class OBJECT_OT_BeamngSelectJbeamBeamsByProperty(OBJECT_OT_BeamngSelectByPropert
 
     def get_property_collection(self, context):
         return context.scene.beamng_jbeam_beam_props
+
+class OBJECT_OT_BeamngSelectJbeamTrianglesByProperty(OBJECT_OT_BeamngSelectByPropertyBase):
+    """Select all faces (triangles) that share the same JBeam property and value"""
+    bl_idname = "object.devtools_beamng_select_jbeam_triangles_by_property"
+    bl_label = "DevTools: BeamNG Select JBeam Triangles by Property"
+
+    def get_elements(self, bm):
+        return bm.faces
+
+    def get_property_data(self, obj, element):
+        return j.get_triangle_props(obj, element.index)
+
+    def get_property_collection(self, context):
+        return context.scene.beamng_jbeam_triangle_props

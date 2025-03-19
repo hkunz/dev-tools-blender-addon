@@ -57,7 +57,7 @@ class JbeamSelectionTracker:
         num_edges = len(bm.edges)
         num_faces = len(bm.faces)
 
-        if num_verts != self.previous_vertex_count or num_edges != self.previous_edge_count or num_faces != self.previous_face_count:
+        if num_verts > self.previous_vertex_count or num_edges > self.previous_edge_count or num_faces > self.previous_face_count:
             j.validate_and_fix_storage_keys(obj, bm)
 
         self.previous_vertex_count = num_verts

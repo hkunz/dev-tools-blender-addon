@@ -174,6 +174,15 @@ class JbeamUtils:
         return n1, n2
 
     @staticmethod
+    def get_triangle_node_ids(obj, face_index) -> tuple[str, str, str]:
+        face = obj.data.polygons[face_index]
+        v1_idx, v2_idx, v3_idx = sorted(face.vertices)
+        n1 = JbeamUtils.get_node_id(obj, v1_idx) or "?"
+        n2 = JbeamUtils.get_node_id(obj, v2_idx) or "?"
+        n3 = JbeamUtils.get_node_id(obj, v3_idx) or "?"
+        return n1, n2, n3
+
+    @staticmethod
     def get_node_props(obj, vertex_index) -> str:
         doamin = "verts"
         key = JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, doamin)

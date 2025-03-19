@@ -262,6 +262,18 @@ class EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Operator):
             beam_data.append(item)
         return beam_data
 
+    def generate_jbeam_triangle_list(self, obj):
+
+        jbeam = PreJbeamStructureHelper(obj, domain="face")
+        data = jbeam.structure_data()
+        reducer = RedundancyReducerJbeamNodesGenerator(obj, data, domain="face")
+        data_actual = reducer.reduce_redundancy()
+
+        beam_data = [] #[["id1:", "id2:", "id3:"]]
+        for item in data_actual:
+            beam_data.append(item)
+        return beam_data
+
     def export_jbeam_format(self, filepath):
         obj = bpy.context.active_object
         if obj is None or obj.type != "MESH":
@@ -273,7 +285,7 @@ class EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Operator):
 
         nodes = self.generate_jbeam_node_list(obj)
         beams = self.generate_jbeam_beam_list(obj)
-        triangles = self.get_triangles(obj)
+        triangles = self.generate_jbeam_triangle_list(obj)
         quads = self.get_quads(obj)
         ngons = self.get_ngons(obj)
         ref_nodes = self.find_reference_nodes(obj)
@@ -335,9 +347,7 @@ class EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Operator):
             refnodes_str = self.get_final_struct(existing_data, ref_nodes_data, "refNodes")
             nodes_str = format_list(nodes, '["id", "posX", "posY", "posZ"],', False)
             beams_str = format_list(beams, '["id1:","id2:"],', False)
-            #nodes_str = self.get_final_struct(existing_data, nodes, "nodes", [["id", "posX", "posY", "posZ"]])
-            #beams_str = self.get_final_struct(existing_data, beams, "beams", [["id1:", "id2:"]])
-            tris_str = "" #self.get_final_struct(existing_data, triangles, "triangles", [["id1:","id2:","id3:"]])
+            tris_str = format_list(triangles, '["id1:","id2:","id3:"],', False)
             if quads: quads_str = "" #self.get_final_struct(existing_data, quads, "quads", [["id1:","id2:","id3:","id4:"]])
             if ngons: ngons_str = "" #self.get_final_struct(existing_data, ngons, "ngons", [["ngons:"]])
             
@@ -357,17 +367,6 @@ class EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Operator):
         self.report({'INFO'}, f"{obj.name}: JBeam exported to {filepath}")
 
         return True
-
-    def get_beams(self, o):
-        return [[j.get_node_id(o,v1), j.get_node_id(o,v2)] for v1, v2 in (edge.vertices for edge in o.data.edges)]
-
-    def get_triangles(self, o):
-        triangles = []
-        for poly in o.data.polygons:
-            if len(poly.vertices) == 3:
-                v1, v2, v3 = poly.vertices
-                triangles.append([j.get_node_id(o,v1), j.get_node_id(o,v2), j.get_node_id(o,v3)])
-        return triangles
 
     def get_quads(self, o):
         quads = []

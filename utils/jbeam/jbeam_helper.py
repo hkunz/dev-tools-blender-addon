@@ -36,6 +36,8 @@ class PreJbeamStructureHelper:
             self.props = self.get_node_properties()
         elif self.domain == "edge":
             self.props = self.get_beam_properties()
+        elif self.domain == "face":
+            self.props = self.get_triangle_properties()
 
     def check(self):
         if not j.has_jbeam_node_id(self.obj):
@@ -56,7 +58,10 @@ class PreJbeamStructureHelper:
         return {i: json.dumps(j.get_node_props(self.obj, i)) for i in range(len(self.obj.data.vertices))}
 
     def get_beam_properties(self):
-        return {i: j.get_beam_props_str(self.obj, i) for i in range(len(self.obj.data.edges))}
+        return {i: json.dumps(j.get_beam_props(self.obj, i)) for i in range(len(self.obj.data.edges))}
+
+    def get_triangle_properties(self):
+        return {i: json.dumps(j.get_triangle_props(self.obj, i)) for i in range(len(self.obj.data.polygons))}
 
     def parse_properties(self, properties_str):
         if not properties_str:
@@ -77,12 +82,12 @@ class PreJbeamStructureHelper:
                 }
                 for v_idx, groups in self.vertex_to_groups.items()
             }
-        elif self.domain =="edge":
+        elif self.domain =="edge" or self.domain == "face":
             data_dict = {
                 v_idx: self.parse_properties(self.props.get(v_idx, ""))
                 for v_idx in self.props
             }
-        print("data_dict: ==== ", data_dict)
+        #print("data_dict: ==== ", data_dict)
 
         unique_props = set()  # Collect all unique properties dynamically
         for node_info in data_dict.values():
@@ -170,6 +175,9 @@ class RedundancyReducerJbeamNodesGenerator:
             elif self.domain == "edge":
                 node_id1, node_id2 = j.get_beam_node_ids(self.obj, index)
                 hierarchy.append([node_id1, node_id2])  # Append the beam itself to the hierarchy
+            elif self.domain == "face":
+                node_id1, node_id2, node_id3 = j.get_triangle_node_ids(self.obj, index)
+                hierarchy.append([node_id1, node_id2, node_id3])  # Append the triangle itself to the hierarchy
 
         # Add the last property values
         for key, value in curr_props.items():

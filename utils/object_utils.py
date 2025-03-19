@@ -248,6 +248,13 @@ class ObjectUtils:
         return (vert.co.x, vert.co.y, vert.co.z)  # Local coordinates
 
     @staticmethod
+    def has_ngons(obj):
+        """Check if a mesh object contains N-gons (faces with more than 3 vertices)."""
+        if obj.type != "MESH":
+            return False
+        return any(len(face.vertices) > 3 for face in obj.data.polygons)
+
+    @staticmethod
     def is_vertex_selection_mode():
         return bpy.context.tool_settings.mesh_select_mode[0]
 

@@ -5,9 +5,10 @@ import io
 import json
 from pprint import pprint
 
-from dev_tools.utils.json_cleanup import json_cleanup # type: ignore
-from dev_tools.utils.jbeam.jbeam_helper import PreJbeamStructureHelper, RedundancyReducerJbeamNodesGenerator # type: ignore
-from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
+from dev_tools.utils.object_utils import ObjectUtils as o  # type: ignore
+from dev_tools.utils.json_cleanup import json_cleanup  # type: ignore
+from dev_tools.utils.jbeam.jbeam_helper import PreJbeamStructureHelper, RedundancyReducerJbeamNodesGenerator  # type: ignore
+from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
 
 import io
 import json
@@ -206,6 +207,10 @@ class EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Operator):
 
         if not j.is_node_mesh(active_object):
             self.report({'WARNING'}, f"{repr(active_object)} is not a Node Mesh")
+            return {'CANCELLED'}
+
+        if o.has_ngons(active_object):
+            self.report({'ERROR'}, "Jbeam does not support quads and N-gons. Triangulate these faces with Ctrl+T")
             return {'CANCELLED'}
 
         # Check vertex groups

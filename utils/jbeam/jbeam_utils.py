@@ -1,75 +1,11 @@
 import bpy
 import bmesh
-import json
-import uuid
 import os
+import copy
 
-from dev_tools.utils.file_utils import FileUtils # type: ignore
-from dev_tools.utils.object_utils import ObjectUtils # type: ignore
-
-class JbeamPropsStorage:
-    _instance = None
-
-    DOMAIN_ALIASES = {
-        "vertices": "verts",
-        "polygons": "faces"
-    }
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance.storage = {
-                "verts": {},
-                "edges": {},
-                "faces": {}
-            }
-        return cls._instance
-
-    @classmethod
-    def get_instance(cls):
-        return cls._instance or cls()
-
-    def resolve_domain(self, domain: str) -> str:
-        return self.DOMAIN_ALIASES.get(domain, domain)
-
-    def store_props(self, domain: str, key: str, props: dict) -> str:
-        """Stores properties in the specified domain and returns a unique key."""
-        domain = self.resolve_domain(domain)
-        if domain not in self.storage:
-            raise ValueError(f"Invalid domain: {domain}")
-
-        if not key or key in self.storage[domain]:
-            key = uuid.uuid4().hex[:12]
-
-        self.storage[domain][key] = props
-        return key
-
-    def fetch_props(self, domain: str, key: str) -> dict:
-        """Retrieves properties from the specified domain by key."""
-        domain = self.resolve_domain(domain)
-        if domain not in self.storage:
-            raise ValueError(f"Invalid domain: {domain}")
-
-        return self.storage[domain].get(key, {})
-
-    def delete_props(self, domain: str, key: str):
-        """Removes properties from the specified domain."""
-        domain = self.resolve_domain(domain)
-        if domain not in self.storage:
-            raise ValueError(f"Invalid domain: {domain}")
-
-        if key in self.storage[domain]:
-            del self.storage[domain][key]
-
-    def cleanup(self, domain: str, unused_keys: set):
-        """Removes unused keys from the specified domain."""
-        domain = self.resolve_domain(domain)
-        if domain not in self.storage:
-            raise ValueError(f"Invalid domain: {domain}")
-
-        for key in unused_keys:
-            self.delete_props(domain, key)
-
+from dev_tools.utils.file_utils import FileUtils  # type: ignore
+from dev_tools.utils.object_utils import ObjectUtils  # type: ignore
+from dev_tools.utils.jbeam.jbeam_props_storage import JbeamPropsStorage  # type: ignore
 
 class JbeamUtils:
 
@@ -277,48 +213,39 @@ class JbeamUtils:
         JbeamUtils.set_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, key, domain=doamin)
 
     @staticmethod
-    def check_integrity_storage_data(obj):
+    def validate_and_fix_storage_keys(obj, bm):
         """Ensures unique keys in attributes and fixes duplicates for each domain separately."""
-        if not obj or obj.type != 'MESH':
-            return
-        
-        bm = bmesh.new()
-        bm.from_mesh(obj.data)
-
+        print("Running integrity check: Ensuring JBeam data storage consistency...")
         key_sets = {
             'verts': set(),
             'edges': set(),
             'faces': set(),
         }
-
         domains = {
             'verts': (bm.verts, JbeamUtils.ATTR_NODE_PROPS),
             'edges': (bm.edges, JbeamUtils.ATTR_BEAM_PROPS),
             'faces': (bm.faces, JbeamUtils.ATTR_TRIANGLE_PROPS),
         }
-
+        modified = False
         for domain, (elements, attr_name) in domains.items():
             layer = elements.layers.string.get(attr_name)
             if not layer:
                 continue
-
             for elem in elements:
                 key = elem[layer].decode('utf-8') if elem[layer] else None
-                if key and key in key_sets[domain]:  
-                    # Duplicate detected, fetch data and assign new key in the correct domain storage
-                    props = JbeamPropsStorage.get_instance().fetch_props(domain, key)
-                    new_key = uuid.uuid4().hex[:12]
-
-                    # Update element attribute with the new key
+                if key and key in key_sets[domain]:
+                    storage = JbeamPropsStorage.get_instance()
+                    props = storage.fetch_props(domain, key)
+                    new_key = storage.store_props(domain, None, copy.deepcopy(props))
                     elem[layer] = new_key.encode('utf-8')
-
-                    # Store the data under the new key in the correct domain
-                    JbeamPropsStorage.get_instance().store_props(domain, new_key, props)
+                    print(f"Duplicate detected in domain '{domain}' for key '{key}'. Generated new key: '{new_key}'")
+                    modified = True
                 else:
                     key_sets[domain].add(key)
-
-        bm.to_mesh(obj.data)
-        bm.free()
+        if modified:
+            bmesh.update_edit_mesh(obj.data)
+        else:
+            print("JBeam storage check complete: No duplicates found.")
 
     @staticmethod
     def set_attribute_value(obj, index: int, attr_name: str, attr_value: str, domain="verts"):

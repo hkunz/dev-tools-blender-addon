@@ -9,6 +9,9 @@ class JbeamSelectionTracker:
     _instance = None
 
     def __init__(self):
+        self.previous_vertex_count = -1
+        self.previous_edge_count = -1
+        self.previous_face_count = -1
         self.previous_vertex_selection = None
         self.previous_edge_selection = None
         self.previous_face_selection = None
@@ -49,17 +52,28 @@ class JbeamSelectionTracker:
             self.previous_face_selection = None
             reset = True
 
+        bm = bmesh.from_edit_mesh(obj.data)
+        num_verts = len(bm.verts)
+        num_edges = len(bm.edges)
+        num_faces = len(bm.faces)
+
+        if num_verts != self.previous_vertex_count or num_edges != self.previous_edge_count or num_faces != self.previous_face_count:
+            j.validate_and_fix_storage_keys(obj, bm)
+
+        self.previous_vertex_count = num_verts
+        self.previous_edge_count = num_edges
+        self.previous_face_count = num_faces
+
         if o.is_vertex_selection_mode():
-            self.update_vertex_data(scene, obj)
+            self.update_vertex_data(scene, obj, bm)
         elif o.is_edge_selection_mode():
-            self.update_edge_data(scene, obj)
+            self.update_edge_data(scene, obj, bm)
         elif o.is_face_selection_mode():
-            self.update_face_data(scene, obj)
+            self.update_face_data(scene, obj, bm)
         elif reset:
             obj.data.update()
 
-    def update_vertex_data(self, scene, obj):
-        bm = bmesh.from_edit_mesh(obj.data)
+    def update_vertex_data(self, scene, obj, bm):
         bm.verts.ensure_lookup_table()
         current_selection = {v.index for v in bm.verts if v.select}
 
@@ -90,8 +104,7 @@ class JbeamSelectionTracker:
         bpy.ops.object.devtools_beamng_load_jbeam_node_props()
         UiUtils.force_update_ui(bpy.context)
 
-    def update_edge_data(self, scene, obj):
-        bm = bmesh.from_edit_mesh(obj.data)
+    def update_edge_data(self, scene, obj, bm):
         bm.edges.ensure_lookup_table()
         current_selection = {e.index for e in bm.edges if e.select}
 
@@ -118,8 +131,7 @@ class JbeamSelectionTracker:
         bpy.ops.object.devtools_beamng_load_jbeam_beam_props()
         UiUtils.force_update_ui(bpy.context)
 
-    def update_face_data(self, scene, obj):
-        bm = bmesh.from_edit_mesh(obj.data)
+    def update_face_data(self, scene, obj, bm):
         bm.faces.ensure_lookup_table()
         current_selection = {v.index for v in bm.faces if v.select}
 

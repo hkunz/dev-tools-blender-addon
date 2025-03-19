@@ -348,8 +348,12 @@ class OBJECT_OT_BeamngRemoveJbeamProp(bpy.types.Operator):
     """Remove a JBeam property (Shift+Click to also save)"""
     bl_options = {'INTERNAL', 'UNDO'}
 
-    prop_type = "vertex"  # Can be "vertex" (node) or "edge" (beam)
-    
+    domain = ""  # verts (node), edges (beam), faces (triangle)
+    attr_layer = ""
+    ui_list_attr = ""
+    get_props = None
+    set_props = None
+
     prop_name: bpy.props.StringProperty()  # type: ignore
 
     def invoke(self, context, event):
@@ -369,26 +373,17 @@ class OBJECT_OT_BeamngRemoveJbeamProp(bpy.types.Operator):
 
         bm = bmesh.from_edit_mesh(obj.data)
 
-        # Get correct layer and elements based on prop_type
-        if self.prop_type == "vertex":
-            layer = bm.verts.layers.string.get(j.ATTR_NODE_PROPS)
-            selected_elements = [v for v in bm.verts if v.select]
-            ui_list = scene.beamng_jbeam_node_props
-            get_props = j.get_node_props
-            set_props = j.set_node_props
-        else:  # Edge (beam)
-            layer = bm.edges.layers.string.get(j.ATTR_BEAM_PROPS)
-            selected_elements = [e for e in bm.edges if e.select]
-            ui_list = scene.beamng_jbeam_beam_props
-            get_props = j.get_beam_props
-            set_props = j.set_beam_props
+        # Fetch relevant attributes from subclass
+        layer = bm.__getattribute__(self.domain).layers.string.get(self.attr_layer)
+        selected_elements = [elem for elem in bm.__getattribute__(self.domain) if elem.select]
+        ui_list = getattr(scene, self.ui_list_attr)
 
         if layer is None:
             self.report({'WARNING'}, "No property data found")
             return {'CANCELLED'}
 
         if not selected_elements:
-            self.report({'WARNING'}, f"No selected {self.prop_type}s found")
+            self.report({'WARNING'}, f"No selection on domain '{self.domain}' found")
             return {'CANCELLED'}
 
         removed_from_ui = False
@@ -406,10 +401,10 @@ class OBJECT_OT_BeamngRemoveJbeamProp(bpy.types.Operator):
             for element in selected_elements:
                 if element[layer]:  # Ensure there's data before proceeding
                     try:
-                        props = get_props(obj, element.index)
+                        props = self.get_props(obj, element.index)
                         if self.prop_name in props:
                             del props[self.prop_name]  # Remove property
-                            set_props(obj, element.index, props)  # Update stored properties
+                            self.set_props(obj, element.index, props)  # Update stored properties
                             removed_from_mesh = True
                     except Exception as e:
                         self.report({'ERROR'}, f"Failed to remove property: {e}")
@@ -426,17 +421,39 @@ class OBJECT_OT_BeamngRemoveJbeamProp(bpy.types.Operator):
 
         return {'FINISHED' if removed_from_ui else 'CANCELLED'}
 
+
 class OBJECT_OT_BeamngRemoveJbeamNodeProp(OBJECT_OT_BeamngRemoveJbeamProp):
     """Remove a JBeam node property (Shift+Click to also save)"""
     bl_idname = "object.devtools_beamng_remove_jbeam_node_prop"
     bl_label = "DevTools: BeamNG Remove JBeam Node Property"
-    prop_type = "vertex"
+    domain = "verts"
+    attr_layer = j.ATTR_NODE_PROPS
+    ui_list_attr = "beamng_jbeam_node_props"
+    get_props = staticmethod(j.get_node_props)
+    set_props = staticmethod(j.set_node_props)
+
 
 class OBJECT_OT_BeamngRemoveJbeamBeamProp(OBJECT_OT_BeamngRemoveJbeamProp):
     """Remove a JBeam beam property (Shift+Click to also save)"""
     bl_idname = "object.devtools_beamng_remove_jbeam_beam_prop"
     bl_label = "DevTools: BeamNG Remove JBeam Beam Property"
-    prop_type = "edge"
+    domain = "edges"
+    attr_layer = j.ATTR_BEAM_PROPS
+    ui_list_attr = "beamng_jbeam_beam_props"
+    get_props = staticmethod(j.get_beam_props)
+    set_props = staticmethod(j.set_beam_props)
+
+
+class OBJECT_OT_BeamngRemoveJbeamTriangleProp(OBJECT_OT_BeamngRemoveJbeamProp):
+    """Remove a JBeam triangle property (Shift+Click to also save)"""
+    bl_idname = "object.devtools_beamng_remove_jbeam_triangle_prop"
+    bl_label = "DevTools: BeamNG Remove JBeam Triangle Property"
+    domain = "faces"
+    attr_layer = j.ATTR_TRIANGLE_PROPS
+    ui_list_attr = "beamng_jbeam_triangle_props"
+    get_props = staticmethod(j.get_triangle_props)
+    set_props = staticmethod(j.set_triangle_props)
+
 
 class OBJECT_OT_BeamngSelectByPropertyBase(bpy.types.Operator):
     """Base class for selecting elements based on JBeam property"""

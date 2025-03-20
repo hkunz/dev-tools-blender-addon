@@ -88,6 +88,7 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
 
     def parse_nodes(self, json_nodes):
         nodes = []
+        seen_node_ids = set()  # Track node_id uniqueness
         current_props, current_group = {}, None
 
         for entry in json_nodes:
@@ -100,6 +101,11 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
                 if any(isinstance(v, str) for v in (x, y, z)):
                     continue  # Skip header row
 
+                if node_id in seen_node_ids:
+                    print(f"Warning: Duplicate node_id found and skipped: {node_id}")
+                    continue  # Skip duplicate node_id
+
+                seen_node_ids.add(node_id)
                 position = mathutils.Vector((x, y, z))
                 nodes.append(Node(node_id, -1, position, [current_group] if current_group else None, current_props.copy()))
 
@@ -108,6 +114,7 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
     def parse_elements(self, obj, json_data, verts_dic, structure_type):
         """ Generic parser for beams and triangles """
         structures, current_props = [], {}
+        seen_structures = set()  # Track unique beams/triangles
         mesh = obj.data
 
         if structure_type == "beams":
@@ -130,7 +137,13 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
                     continue
 
                 index = get_index([n.index for n in nodes])
-                struct_id = f"[{'|'.join(entry[:len(entry)])}]"
+                struct_id = tuple(sorted(entry[:len(entry)]))  # Store as a tuple (order-independent)
+
+                if struct_id in seen_structures:
+                    print(f"Warning: Duplicate {structure_type[:-1]} found and skipped: {entry[:len(entry)]}")
+                    continue  # Skip duplicate beam/triangle
+
+                seen_structures.add(struct_id)
                 structures.append(
                     (Beam if structure_type == "beams" else Triangle)(struct_id, *nodes, index, current_props.copy())
                 )

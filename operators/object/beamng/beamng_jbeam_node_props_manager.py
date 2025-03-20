@@ -27,6 +27,20 @@ class JbeamElement(bpy.types.PropertyGroup):
         default=""
     )  # type: ignore
 
+class JbeamHiddenElements(bpy.types.PropertyGroup):
+    num_hidden_nodes: bpy.props.IntProperty(
+        name="Number of Hidden Nodes",
+        default=0
+    )  # type: ignore
+    num_hidden_beams: bpy.props.IntProperty(
+        name="Number of Hidden Beams",
+        default=0
+    )  # type: ignore
+    num_hidden_faces: bpy.props.IntProperty(
+        name="Number of Hidden Faces",
+        default=0
+    )  # type: ignore
+
 class JbeamPropertyItem(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Property Name")  # type: ignore
     value: bpy.props.StringProperty(name="Value")  # type: ignore

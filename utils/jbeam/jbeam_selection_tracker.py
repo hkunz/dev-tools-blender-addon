@@ -56,6 +56,9 @@ class JbeamSelectionTracker:
         num_verts = len(bm.verts)
         num_edges = len(bm.edges)
         num_faces = len(bm.faces)
+        scene.beamng_jbeam_hidden_elements.num_hidden_nodes = sum(1 for v in bm.verts if v.hide)
+        scene.beamng_jbeam_hidden_elements.num_hidden_beams = sum(1 for e in bm.edges if e.hide)
+        scene.beamng_jbeam_hidden_elements.num_hidden_faces =sum(1 for f in bm.faces if f.hide)
 
         if num_verts > self.previous_vertex_count or num_edges > self.previous_edge_count or num_faces > self.previous_face_count:
             j.validate_and_fix_storage_keys(obj, bm)

@@ -16,7 +16,7 @@ from dev_tools.operators.object.beamng.beamng_create_metaball_cloud_operator imp
 from dev_tools.operators.object.beamng.beamng_parent_to_start01_empty_operator import OBJECT_OT_BeamngParentToStart01Empty, OBJECT_OT_BeamngClearChildrenStart01Empty # type: ignore
 from dev_tools.operators.object.beamng.beamng_parent_to_start01_empty_operator import OBJECT_OT_BeamngClearChildrenStart01Empty, OBJECT_OT_BeamngParentToStart01Empty # type: ignore
 from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_node_mesh import OBJECT_OT_BeamngConvertJbeamToNodeMesh # type: ignore
-from dev_tools.operators.object.beamng.beamng_jbeam_node_props_manager import OBJECT_OT_BeamngSaveJbeamNodeProp, OBJECT_OT_BeamngSaveJbeamBeamProp, OBJECT_OT_BeamngSaveJbeamTriangleProp, OBJECT_OT_BeamngSaveAllJbeamNodeProps, OBJECT_OT_BeamngSaveAllJbeamBeamProps, OBJECT_OT_BeamngSaveAllJbeamTriangleProps, OBJECT_OT_BeamngAddJbeamNodeProp, OBJECT_OT_BeamngAddJbeamBeamProp, OBJECT_OT_BeamngAddJbeamTriangleProp, OBJECT_OT_BeamngRemoveJbeamNodeProp, OBJECT_OT_BeamngRemoveJbeamBeamProp, OBJECT_OT_BeamngRemoveJbeamTriangleProp, OBJECT_OT_BeamngSelectJbeamNodesByProperty, OBJECT_OT_BeamngSelectJbeamBeamsByProperty, OBJECT_OT_BeamngSelectJbeamTrianglesByProperty, JbeamPropertyItem, JbeamElement  # type: ignore
+from dev_tools.operators.object.beamng.beamng_jbeam_node_props_manager import OBJECT_OT_BeamngSaveJbeamNodeProp, OBJECT_OT_BeamngSaveJbeamBeamProp, OBJECT_OT_BeamngSaveJbeamTriangleProp, OBJECT_OT_BeamngSaveAllJbeamNodeProps, OBJECT_OT_BeamngSaveAllJbeamBeamProps, OBJECT_OT_BeamngSaveAllJbeamTriangleProps, OBJECT_OT_BeamngAddJbeamNodeProp, OBJECT_OT_BeamngAddJbeamBeamProp, OBJECT_OT_BeamngAddJbeamTriangleProp, OBJECT_OT_BeamngRemoveJbeamNodeProp, OBJECT_OT_BeamngRemoveJbeamBeamProp, OBJECT_OT_BeamngRemoveJbeamTriangleProp, OBJECT_OT_BeamngSelectJbeamNodesByProperty, OBJECT_OT_BeamngSelectJbeamBeamsByProperty, OBJECT_OT_BeamngSelectJbeamTrianglesByProperty, JbeamPropertyItem, JbeamElement, JbeamHiddenElements  # type: ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_rename_selected_nodes import OBJECT_OT_BeamngJbeamRenameSelectedNodes # type:ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_create_node_mesh import OBJECT_OT_BeamngJbeamCreateNodeMesh # type: ignore
 
@@ -134,21 +134,11 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
 
     def draw(self, context) -> None:
         layout: bpy.types.UILayout = self.layout
-        selected_mesh_objects = [obj for obj in context.selected_objects if obj.type == 'MESH']
-        active_object = context.active_object if len(selected_mesh_objects) > 0 and context.active_object in selected_mesh_objects else None
-        properties: MyPropertyGroup1 = context.scene.my_property_group_pointer
-        #box = layout.box().column()
-
-        # sample props:
-        #box.prop(properties, "bake_image_resolution")
-        # box.prop(properties, "my_float_prop")
-        # box.prop(properties, "my_string_prop")
-        # box.prop(properties, "my_file_input_prop")
         # box.label(text="Icon Label", icon=IconsManager.BUILTIN_ICON_MESH_DATA)
         # self.draw_sample_modifier_exposed_props(context, layout, "GeometryNodes")
         self.draw_expanded_armature_options(context, layout)
         self.draw_expanded_bake_options(context, layout)
-        self.draw_expanded_beamng_options(context, layout, active_object)
+        self.draw_expanded_beamng_options(context, layout, context.active_object)
         # self.draw_sample_color_picker(context, layout)
 
     def draw_sample_modifier_exposed_props(self, context, layout, md_name = "GeometryNodes"):
@@ -202,6 +192,16 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             elif len(context.selected_objects) == 1:
                 col.operator(OBJECT_OT_BeamngConvertJbeamToNodeMesh.bl_idname, text="Convert to Node Mesh")
             box = col.box()
+
+            if obj and obj.mode == 'EDIT':
+                if s.beamng_jbeam_hidden_elements.num_hidden_nodes or s.beamng_jbeam_hidden_elements.num_hidden_beams or s.beamng_jbeam_hidden_elements.num_hidden_faces:
+                    h_nodes = f"Nodes({s.beamng_jbeam_hidden_elements.num_hidden_nodes}) " if s.beamng_jbeam_hidden_elements.num_hidden_nodes else ""
+                    h_beams = f"Beams({s.beamng_jbeam_hidden_elements.num_hidden_beams}) " if s.beamng_jbeam_hidden_elements.num_hidden_beams else ""
+                    h_faces = f"Faces({s.beamng_jbeam_hidden_elements.num_hidden_faces}) " if s.beamng_jbeam_hidden_elements.num_hidden_faces else ""
+                    row = box.row()
+                    split = row.split(factor=0.7)
+                    split.label(text=f"Hidden: {h_nodes} {h_beams} {h_faces}")
+                    split.operator("mesh.reveal", text="Unhide", icon="HIDE_OFF")
 
             if obj and obj.mode == 'EDIT' and obj.type == 'MESH' and j.is_node_mesh(obj):
                 if o.is_vertex_selection_mode():
@@ -366,6 +366,7 @@ def register() -> None:
     bpy.utils.register_class(MyPropertyGroup2)
     bpy.utils.register_class(JbeamPropertyItem)
     bpy.utils.register_class(JbeamElement)
+    bpy.utils.register_class(JbeamHiddenElements)
     bpy.types.Material.my_slot_setting = bpy.props.PointerProperty(type=MyPropertyGroup2)
     bpy.types.Scene.my_property_group_pointer = bpy.props.PointerProperty(type=MyPropertyGroup1)
     bpy.types.Scene.expanded_armature_options = bpy.props.BoolProperty(default=False)
@@ -377,6 +378,7 @@ def register() -> None:
     bpy.types.Scene.beamng_jbeam_node_props = bpy.props.CollectionProperty(type=JbeamPropertyItem)
     bpy.types.Scene.beamng_jbeam_beam_props = bpy.props.CollectionProperty(type=JbeamPropertyItem)
     bpy.types.Scene.beamng_jbeam_triangle_props = bpy.props.CollectionProperty(type=JbeamPropertyItem)
+    bpy.types.Scene.beamng_jbeam_hidden_elements = bpy.props.PointerProperty(type=JbeamHiddenElements)
 
     bpy.app.handlers.depsgraph_update_post.append(on_depsgraph_update)
 
@@ -386,6 +388,7 @@ def unregister() -> None:
     bpy.utils.unregister_class(MyPropertyGroup2)
     bpy.utils.unregister_class(JbeamPropertyItem)
     bpy.utils.unregister_class(JbeamElement)
+    bpy.utils.unregister_class(JbeamHiddenElements)
     del bpy.types.Material.my_slot_setting
     del bpy.types.Scene.expanded_armature_options
     del bpy.types.Scene.expanded_bake_options
@@ -397,4 +400,5 @@ def unregister() -> None:
     del bpy.types.Scene.beamng_jbeam_node_props
     del bpy.types.Scene.beamng_jbeam_beam_props
     del bpy.types.Scene.beamng_jbeam_triangle_props
+    del bpy.types.Scene.beamng_jbeam_hidden_elements
     bpy.app.handlers.depsgraph_update_post.remove(on_depsgraph_update)

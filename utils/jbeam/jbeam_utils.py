@@ -15,6 +15,8 @@ class JbeamUtils:
     ATTR_TRIANGLE_PROPS = "jbeam_triangle_props"
     ATTR_SELECTED_EDGES = "selected_edges"
 
+    RESERVED_GROUP_NAMES = ["group", "deformGroup", "breakGroup"]
+
     GN_JBEAM_VISUALIZER_GROUP_NODE_NAME = "__gn_jbeam_visualizer"
 
     @staticmethod

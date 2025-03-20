@@ -32,21 +32,23 @@ class Node(JBeamElement):
         return f"Node(id={self.id}, index={self.index}, pos={self.position}, group={self.group}, props={self.props})"
 
 class Beam(JBeamElement):
-    def __init__(self, beam_id, node_id1, node_id2, index, props=None):
+    def __init__(self, beam_id, node_id1, node_id2, index, breakGroup=None, deformGroup=None, props=None):
         super().__init__(beam_id, index, props)
         self.node_id1 = node_id1
         self.node_id2 = node_id2
+        self.breakGroup = [breakGroup] if isinstance(breakGroup, str) else (breakGroup or [])
+        self.deformGroup = [deformGroup] if isinstance(deformGroup, str) else (deformGroup or [])
 
     def __repr__(self):
         return f"Beam(id={self.id}, node_id1={self.node_id1}, node_id2={self.node_id2}, index={self.index}, props={self.props})"
 
-
 class Triangle(JBeamElement):
-    def __init__(self, triangle_id, node_id1, node_id2, node_id3, index, props=None):
+    def __init__(self, triangle_id, node_id1, node_id2, node_id3, index, group=None, props=None):
         super().__init__(triangle_id, index, props)
         self.node_id1 = node_id1
         self.node_id2 = node_id2
         self.node_id3 = node_id3
+        self.group = [group] if isinstance(group, str) else (group or [])
 
     def __repr__(self):
         return f"Triangle(id={self.id}, node_id1={self.node_id1}, node_id2={self.node_id2}, node_id3={self.node_id3}, index={self.index}, props={self.props})"

@@ -163,9 +163,10 @@ class OBJECT_OT_BeamngSaveJbeamProp(bpy.types.Operator):
             return {'CANCELLED'}
 
         # Reserved keyword check
-        if any(prop.name.lower() == "group" for prop in prop_collection):
-            self.report({'WARNING'}, "Keyword 'group' is reserved. Use vertex groups prefixed 'group_' to assign nodes to groups.")
-            return {'CANCELLED'}
+        for reserved in j.RESERVED_GROUP_NAMES:
+            if any(prop.name.lower() == reserved.lower() for prop in prop_collection):
+                self.report({'WARNING'}, f"Keyword '{reserved}' is reserved. Use vertex groups prefixed '{reserved}_' to assign nodes to a {reserved}.")
+                return {'CANCELLED'}
 
         # Find the property to apply
         prop_to_save = next((prop for prop in prop_collection if prop.name == self.prop_name), None)
@@ -257,9 +258,11 @@ class OBJECT_OT_BeamngSaveAllJbeamProps(bpy.types.Operator):
             return f"No selected {self.prop_type} or no property data found", 'CANCELLED'
         
         ui_props = {prop.name: prop.value for prop in getattr(context.scene, f'beamng_jbeam_{self.prop_type}_props')}
-        if any(prop_name.lower() == "group" for prop_name in ui_props):
-            return "Keyword 'group' is reserved. Use vertex groups prefixed 'group_' to assign nodes to groups.", 'CANCELLED'
-        
+
+        for reserved in j.RESERVED_GROUP_NAMES:
+            if any(prop_name.lower() == reserved.lower() for prop_name in ui_props):
+                return f"Keyword '{reserved}' is reserved. Use vertex groups prefixed '{reserved}_' to assign nodes to a {reserved}.", 'CANCELLED'
+
         for element in selected_elements:
             try:
                 props = self.get_props(obj, element.index)

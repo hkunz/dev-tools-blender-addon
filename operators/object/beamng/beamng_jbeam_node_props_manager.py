@@ -163,7 +163,7 @@ class OBJECT_OT_BeamngSaveJbeamProp(bpy.types.Operator):
             return {'CANCELLED'}
 
         # Reserved keyword check
-        for reserved in j.RESERVED_GROUP_NAMES:
+        for reserved in j.RESERVED_KEYWORDS:
             if any(prop.name.lower() == reserved.lower() for prop in prop_collection):
                 self.report({'WARNING'}, f"Keyword '{reserved}' is reserved. Use vertex groups prefixed '{reserved}_' to assign nodes to a {reserved}.")
                 return {'CANCELLED'}
@@ -259,7 +259,7 @@ class OBJECT_OT_BeamngSaveAllJbeamProps(bpy.types.Operator):
         
         ui_props = {prop.name: prop.value for prop in getattr(context.scene, f'beamng_jbeam_{self.prop_type}_props')}
 
-        for reserved in j.RESERVED_GROUP_NAMES:
+        for reserved in j.RESERVED_KEYWORDS:
             if any(prop_name.lower() == reserved.lower() for prop_name in ui_props):
                 return f"Keyword '{reserved}' is reserved. Use vertex groups prefixed '{reserved}_' to assign nodes to a {reserved}.", 'CANCELLED'
 
@@ -481,16 +481,18 @@ class OBJECT_OT_BeamngSelectByPropertyBase(bpy.types.Operator):
 
         # Retrieve the property value from the UI
         selected_prop_value = None
+        selected_prop_value_orig = None
         for prop in prop_collection:
             if prop.name == self.prop_name:
-                selected_prop_value = str(prop.value).strip().lower()
+                selected_prop_value_orig = str(prop.value).strip()
+                selected_prop_value = selected_prop_value_orig.lower().strip("\"'")
                 break
 
         if selected_prop_value is None:
             self.report({'WARNING'}, f"Property '{self.prop_name}' not found in UI")
             return {'CANCELLED'}
 
-        print(f"\n[DEBUG] Searching for elements with {self.prop_name} = {selected_prop_value}")
+        print(f"\n[DEBUG] Searching for elements with {self.prop_name} = {selected_prop_value_orig}")
 
         # Deselect all elements first
         for elem in self.get_elements(bm):
@@ -505,14 +507,14 @@ class OBJECT_OT_BeamngSelectByPropertyBase(bpy.types.Operator):
             stored_data = self.get_property_data(obj, elem)
             stored_value = stored_data.get(self.prop_name, None)
 
-            if stored_value is not None and str(stored_value).strip().lower() == selected_prop_value:
+            if stored_value is not None and str(stored_value).strip().lower().strip("\"'") == selected_prop_value:
                 elem.select = True
                 matched_count += 1
 
         bmesh.update_edit_mesh(obj.data)
 
         print(f"Total Matched Elements: {matched_count}")
-        self.report({'INFO'}, f"Selected {matched_count} elements with {self.prop_name} = {selected_prop_value}")
+        self.report({'INFO'}, f"Selected {matched_count} elements with {self.prop_name} = {selected_prop_value_orig}")
         return {'FINISHED'}
 
 class OBJECT_OT_BeamngSelectJbeamNodesByProperty(OBJECT_OT_BeamngSelectByPropertyBase):

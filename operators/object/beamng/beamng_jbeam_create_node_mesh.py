@@ -47,15 +47,6 @@ class JbeamNodeMesh:
         j.setup_default_scope_modifiers_and_node_ids(self.obj)
         
     def create_vertex_groups(self):
-        node_group = "flexbody_mesh"
-        vertex_groups_data = {
-            f'group_{node_group}': list(range(8))
-        }
-
-        for group_name, vertex_indices in vertex_groups_data.items():
-            group = self.obj.vertex_groups.new(name=group_name)
-            group.add(vertex_indices, 1.0, 'REPLACE')
-        
         bpy.ops.object.devtools_beamng_create_refnodes_vertex_groups()
 
 

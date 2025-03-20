@@ -1,4 +1,6 @@
+import ast
 import json
+import re
 from collections import defaultdict, OrderedDict
 
 from dev_tools.utils.number_utils import NumberUtils # type: ignore
@@ -63,7 +65,7 @@ class PreJbeamStructureHelper:
     def get_triangle_properties(self):
         return {i: json.dumps(j.get_triangle_props(self.obj, i)) for i in range(len(self.obj.data.polygons))}
 
-    def parse_properties(self, properties_str):
+    def parse_properties_old(self, properties_str):
         if not properties_str:
             return {}
         return {
@@ -73,7 +75,22 @@ class PreJbeamStructureHelper:
             for k, v in [parts]
         }
 
+    def parse_properties(self, properties_str):
+        if not properties_str:
+            return {}
+
+        try:
+            properties_dict = ast.literal_eval(properties_str)
+            if isinstance(properties_dict, dict):
+                return {k.strip(): v for k, v in properties_dict.items()}
+        except (SyntaxError, ValueError):
+            pass  # Handle invalid cases gracefully
+
+        return {}
+
+
     def structure_data(self):
+        '''
         if self.domain == "vertex":
             data_dict = {
                 v_idx: {
@@ -82,11 +99,12 @@ class PreJbeamStructureHelper:
                 }
                 for v_idx, groups in self.vertex_to_groups.items()
             }
-        elif self.domain =="edge" or self.domain == "face":
-            data_dict = {
-                v_idx: self.parse_properties(self.props.get(v_idx, ""))
-                for v_idx in self.props
-            }
+        elif self.domain =="edge" or self.domain == "face":'
+        '''
+        data_dict = {
+            v_idx: self.parse_properties(self.props.get(v_idx, ""))
+            for v_idx in self.props
+        }
         #print("data_dict: ==== ", data_dict)
 
         unique_props = set()  # Collect all unique properties dynamically
@@ -109,14 +127,27 @@ class PreJbeamStructureHelper:
                     cleaned_node_info[prop] = int(value)
                 elif NumberUtils.is_float(value):
                     cleaned_node_info[prop] = float(value)
+                elif not value.lstrip().startswith("["):
+                    pass #value = value.replace('"', '').replace("'", '')
 
-            # Keep "group" first, then sort everything else alphabetically
             sorted_props = OrderedDict()
-            if self.domain == "vertex" and "group" in cleaned_node_info:
-                sorted_props["group"] = cleaned_node_info.pop("group")
+            for key in ["group", "deformGroup", "breakGroup"]:
+                if key in cleaned_node_info:
+                    value = cleaned_node_info.pop(key)
+                    # Convert from string to list if it's a JSON string
+                    if isinstance(value, str):
+                        try:
+                            cleaned_json_str = re.sub(r",\s*]", "]", value)
+                            value = json.loads(cleaned_json_str.strip())  # Strip spaces and load JSON
+                        except json.JSONDecodeError:
+                            pass  # If not a JSON string, keep as-is
+                    if isinstance(value, list):
+                        value = sorted(value)  # Ensure sorted list is stored properly
+
+                    sorted_props[key] = value
 
             sorted_props.update(dict(sorted(cleaned_node_info.items(), key=lambda x: x[0].lower())))
-
+            
             # Convert to JSON string for stable sorting
             formatted_json = json.dumps(sorted_props, separators=(",", ":"), sort_keys=False)
             final_list[node_id] = formatted_json

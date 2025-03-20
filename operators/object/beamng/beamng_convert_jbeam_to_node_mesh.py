@@ -20,35 +20,31 @@ class JBeamElement:
         return f"{self.__class__.__name__}(id={self.id}, index={self.index}, props={self.props})"
 
 class Node(JBeamElement):
-    def __init__(self, node_id, index, position, group=None, props=None):
+    def __init__(self, node_id, index, position, props=None):
         super().__init__(node_id, index, props)
         self.position = position
-        self.group = [group] if isinstance(group, str) else (group or [])
 
     def get_fixed(self):
         return self.props.get("fixed", False)
 
     def __repr__(self):
-        return f"Node(id={self.id}, index={self.index}, pos={self.position}, group={self.group}, props={self.props})"
+        return f"Node(id={self.id}, index={self.index}, pos={self.position}, props={self.props})"
 
 class Beam(JBeamElement):
-    def __init__(self, beam_id, node_id1, node_id2, index, breakGroup=None, deformGroup=None, props=None):
+    def __init__(self, beam_id, node_id1, node_id2, index, props=None):
         super().__init__(beam_id, index, props)
         self.node_id1 = node_id1
         self.node_id2 = node_id2
-        self.breakGroup = [breakGroup] if isinstance(breakGroup, str) else (breakGroup or [])
-        self.deformGroup = [deformGroup] if isinstance(deformGroup, str) else (deformGroup or [])
 
     def __repr__(self):
         return f"Beam(id={self.id}, node_id1={self.node_id1}, node_id2={self.node_id2}, index={self.index}, props={self.props})"
 
 class Triangle(JBeamElement):
-    def __init__(self, triangle_id, node_id1, node_id2, node_id3, index, group=None, props=None):
+    def __init__(self, triangle_id, node_id1, node_id2, node_id3, index, props=None):
         super().__init__(triangle_id, index, props)
         self.node_id1 = node_id1
         self.node_id2 = node_id2
         self.node_id3 = node_id3
-        self.group = [group] if isinstance(group, str) else (group or [])
 
     def __repr__(self):
         return f"Triangle(id={self.id}, node_id1={self.node_id1}, node_id2={self.node_id2}, node_id3={self.node_id3}, index={self.index}, props={self.props})"
@@ -91,11 +87,10 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
     def parse_nodes(self, json_nodes):
         nodes = []
         seen_node_ids = set()  # Track node_id uniqueness
-        current_props, current_group = {}, None
+        current_props = {}
 
         for entry in json_nodes:
-            if isinstance(entry, dict):  
-                current_group = entry.get("group", current_group)
+            if isinstance(entry, dict):
                 current_props.update(entry)
             elif isinstance(entry, list) and len(entry) >= 4:
                 node_id, x, y, z = entry[:4]
@@ -109,7 +104,7 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
 
                 seen_node_ids.add(node_id)
                 position = mathutils.Vector((x, y, z))
-                nodes.append(Node(node_id, -1, position, [current_group] if current_group else None, current_props.copy()))
+                nodes.append(Node(node_id, -1, position, current_props.copy()))
 
         return nodes
 
@@ -251,7 +246,9 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
             flat_data = {}
 
             if hasattr(node, "props") and isinstance(node.props, dict):
-                flat_data.update({k: v for k, v in node.props.items() if k != "group"})
+                #flat_data.update({k: v for k, v in node.props.items() if k != "group"})
+                flat_data.update({k: json.dumps(v) for k, v in node.props.items()})
+
 
             j.set_node_id(obj, idx, str(node.id))
             j.set_node_props(obj, idx, flat_data)
@@ -277,16 +274,6 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
                 continue
 
             j.set_triangle_props(obj, triangle.index, triangle.props)
-
-    def create_default_flex_group(self, obj):
-        node_group = "flexbody_mesh"
-        vertex_groups_data = {
-            f'group_{node_group}': list(range(len(obj.data.vertices)))
-        }
-
-        for group_name, vertex_indices in vertex_groups_data.items():
-            group = obj.vertex_groups.new(name=group_name)
-            group.add(vertex_indices, 1.0, 'REPLACE')
 
     def execute(self, context):
         obj = context.object
@@ -335,13 +322,12 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
         if is_jbeam_part:
             verts_dic = self.get_vertex_indices(obj, part_data)
             self.assign_ref_nodes_to_vertex_groups(obj, ref_nodes, verts_dic)
-            self.assign_flex_groups_to_vertex_groups(obj, part_data, verts_dic)
+            #self.assign_flex_groups_to_vertex_groups(obj, part_data, verts_dic) #  groups are now also part of the scope modifiers instead of vertex groups
             self.create_node_mesh_attributes(obj)
             self.store_node_props_in_vertex_attributes(obj, verts_dic)
             self.store_beam_props_in_edge_attributes(obj, part_data, verts_dic)
             self.store_triangle_props_in_face_attributes(obj, part_data, verts_dic)
         else:
-            self.create_default_flex_group(obj)
             j.setup_default_scope_modifiers_and_node_ids(obj)
 
         bpy.ops.object.devtools_beamng_create_refnodes_vertex_groups()

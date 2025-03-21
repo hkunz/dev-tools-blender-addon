@@ -128,6 +128,9 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
             if isinstance(entry, dict):
                 current_props.update(entry)
             elif isinstance(entry, list) and len(entry) >= (2 if structure_type == "beams" else 3):
+                if all(isinstance(item, str) and item.startswith("id") and item.endswith(":") for item in entry):
+                    print(f"Header detected: {entry} (ignored)")
+                    continue
                 nodes = [verts_dic.get(n) for n in entry[:len(entry)]]
                 if any(n is None for n in nodes):
                     print(f"Warning: Missing nodes {entry[:len(entry)]} in verts_dic and possibly in jbeam nodes")

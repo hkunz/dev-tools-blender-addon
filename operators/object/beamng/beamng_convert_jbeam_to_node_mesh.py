@@ -11,37 +11,38 @@ from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
 
 class JBeamElement:
     """Base class for all JBeam elements (Node, Beam, Triangle)."""
-    def __init__(self, element_id, index, props=None):
+    def __init__(self, instance, element_id, index, props=None):
+        self.instance = instance
         self.id = element_id
         self.index = index
         self.props = props or {}
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(id={self.id}, index={self.index}, props={self.props})"
+        return f"{self.__class__.__name__}(instance={self.instance}, id={self.id}, index={self.index}, props={self.props})"
 
 class Node(JBeamElement):
-    def __init__(self, node_id, index, position, props=None):
-        super().__init__(node_id, index, props)
+    def __init__(self, instance, node_id, index, position, props=None):
+        super().__init__(instance, node_id, index, props)
         self.position = position
 
     def get_fixed(self):
         return self.props.get("fixed", False)
 
     def __repr__(self):
-        return f"Node(id={self.id}, index={self.index}, pos={self.position}, props={self.props})"
+        return f"Node(instance={self.instance}, id={self.id}, index={self.index}, pos={self.position}, props={self.props})"
 
 class Beam(JBeamElement):
-    def __init__(self, beam_id, node_id1, node_id2, index, props=None):
-        super().__init__(beam_id, index, props)
+    def __init__(self, instance, beam_id, node_id1, node_id2, index, props=None):
+        super().__init__(instance, beam_id, index, props)
         self.node_id1 = node_id1
         self.node_id2 = node_id2
 
     def __repr__(self):
-        return f"Beam(id={self.id}, node_id1={self.node_id1}, node_id2={self.node_id2}, index={self.index}, props={self.props})"
+        return f"Beam(instance={self.instance}, id={self.id}, node_id1={self.node_id1}, node_id2={self.node_id2}, index={self.index}, props={self.props})"
 
 class Triangle(JBeamElement):
-    def __init__(self, triangle_id, node_id1, node_id2, node_id3, index, props=None):
-        super().__init__(triangle_id, index, props)
+    def __init__(self, instance, triangle_id, node_id1, node_id2, node_id3, index, props=None):
+        super().__init__(instance, triangle_id, index, props)
         self.node_id1 = node_id1
         self.node_id2 = node_id2
         self.node_id3 = node_id3
@@ -104,14 +105,15 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
 
                 seen_node_ids.add(node_id)
                 position = mathutils.Vector((x, y, z))
-                nodes.append(Node(node_id, -1, position, current_props.copy()))
+                instance = 1 # only 1 instance can exist of one node ID unlike beams and triangles that can have multiple instances
+                nodes.append(Node(instance, node_id, -1, position, current_props.copy()))
 
         return nodes
 
-    def parse_elements(self, obj, json_data, verts_dic, structure_type):
+    def parse_elements(self, obj, json_data, verts_dic, structure_type): # parse beams or triangles
         """ Generic parser for beams and triangles """
         structures, current_props = [], {}
-        seen_structures = set()  # Track unique beams/triangles
+        seen_structures = {}  # Track unique beams/triangles and their instance counts
         mesh = obj.data
 
         if structure_type == "beams":
@@ -139,16 +141,24 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
                 index = get_index([n.index for n in nodes])
                 struct_id = tuple(sorted(entry[:len(entry)]))  # Store as a tuple (order-independent)
 
-                if struct_id in seen_structures:
-                    print(f"Warning: Duplicate {structure_type[:-1]} found and skipped: {entry[:len(entry)]}")
-                    continue  # Skip duplicate beam/triangle
+                # Determine instance count
+                if struct_id not in seen_structures:
+                    seen_structures[struct_id] = 1
+                else:
+                    seen_structures[struct_id] += 1
 
-                seen_structures.add(struct_id)
+                instance = seen_structures[struct_id]
+                print(f"{structure_type[:-1].capitalize()} detected: {struct_id} (Instance: {instance}) => {current_props}")
+
+                # Add Beam or Triangle
                 structures.append(
-                    (Beam if structure_type == "beams" else Triangle)(struct_id, *nodes, index, current_props.copy())
+                    (Beam if structure_type == "beams" else Triangle)(
+                        instance, struct_id, *nodes, index, current_props.copy()
+                    )
                 )
 
         return structures
+
 
     def parse_beams(self, obj, json_beams, verts_dic):
         return self.parse_elements(obj, json_beams, verts_dic, "beams")
@@ -265,7 +275,7 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
                 self.report({'ERROR'}, f"No edge found for beam {beam.id}")
                 continue
 
-            j.set_beam_props(obj, beam.index, beam.props)
+            j.set_beam_props(obj, beam.index, beam.props, beam.instance)
 
     def store_triangle_props_in_face_attributes(self, obj, part_data, verts_dic):
         json_triangles = part_data.get("triangles", [])

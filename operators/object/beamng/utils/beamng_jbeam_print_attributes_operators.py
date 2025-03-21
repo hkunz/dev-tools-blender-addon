@@ -3,6 +3,7 @@ import json
 
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j, JbeamPropsStorage  # type: ignore
 
+
 class OBJECT_OT_PrintJBeamPropsBase(bpy.types.Operator):
     """Base class for printing JBeam properties"""
     bl_idname = "object.print_jbeam_props_base"
@@ -19,20 +20,26 @@ class OBJECT_OT_PrintJBeamPropsBase(bpy.types.Operator):
 
         for obj in context.selected_objects:
             if not j.is_node_mesh(obj):
-                print(f"Object '{obj.name}' ({self.attr_name}): Object is not a Node Mesh")
+                self.report({'WARNING'}, f"Object '{obj.name}' ({self.attr_name}): Object is not a Node Mesh")
                 continue
 
             mesh = obj.data
             elements = getattr(mesh, self.domain)  # Get vertices, edges, or faces
-            print(f"Object '{obj.name}' ({self.attr_name}):")
+            self.report({'INFO'}, f"Object '{obj.name}' ({self.attr_name}):")
             for index in range(len(elements)):
                 key = j.get_attribute_value(obj, index, self.attr_name, self.domain)
                 id_str = self.id_function(obj, index)
                 if key:
-                    props = JbeamPropsStorage.get_instance().fetch_props(self.domain, key)
-                    print(f"{id_str}({index}): {key} => {json.dumps(props)}")
+                    props = JbeamPropsStorage.get_instance().storage.get(self.domain, {}).get(key, {})
+                    if props:
+                        for instance_key, instance_props in props.items():
+                            # Convert properties to a single-line JSON string
+                            props_str = json.dumps(instance_props, separators=(",", ":"))
+                            print(f"{id_str}({index}): {key} [{instance_key}] => {props_str}")
+                    else:
+                        print(f"{id_str}({index}): {key} => No properties found")
                 else:
-                    print(f"{id_str}({index}): no key, no attribute value (no scope modifiers assigned)")
+                    print(f"{id_str}({index}): No key, no attribute value (no scope modifiers assigned)")
 
         return {'FINISHED'}
 

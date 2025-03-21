@@ -210,11 +210,12 @@ class JbeamUtils:
         JbeamUtils.set_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, key, domain=doamin)
 
     @staticmethod
-    def set_beam_props(obj, edge_index, beam_props: dict):
-        doamin = "edges"
-        key = JbeamUtils.get_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, doamin)
-        key = JbeamPropsStorage.get_instance().store_props(doamin, key, beam_props)
-        JbeamUtils.set_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, key, domain=doamin)
+    def set_beam_props(obj, edge_index, beam_props: dict, instance=1):
+        domain = "edges"
+        key = JbeamUtils.get_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, domain)
+        key = JbeamPropsStorage.get_instance().store_props(domain, key, beam_props, instance=instance)
+        # Update the Blender attribute with the (possibly new) key
+        JbeamUtils.set_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, key, domain=domain)
 
     @staticmethod
     def set_triangle_props(obj, face_index, triangle_props: dict):
@@ -259,7 +260,7 @@ class JbeamUtils:
             print("JBeam storage check complete: No duplicates found.")
 
     @staticmethod
-    def set_attribute_value(obj, index: int, attr_name: str, attr_value: str, domain="verts"):
+    def set_attribute_value(obj, index: int, attr_name: str, attr_value: str, domain="verts", instance=1):
         mesh = obj.data
 
         if obj.mode == 'EDIT':

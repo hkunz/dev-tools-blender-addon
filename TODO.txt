@@ -3,6 +3,9 @@ TODO:
 Find out how .pc jbeam part displays the node names
 Detect overlapping vertices and mark node in red
 Add function to search a node by id
+support overlapping nodes
+support multiple beams/triangle instances
+on_save event, save the jbeam_props_storage.py data into object.data as custom serialized json
 
 BUGS:
 

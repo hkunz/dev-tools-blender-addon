@@ -45,6 +45,7 @@ from dev_tools.utils.file_utils import FileUtils # type: ignore
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
 from dev_tools.utils.temp_file_manager import TempFileManager # type: ignore
 from dev_tools.utils.icons_manager import IconsManager # type: ignore
+from dev_tools.utils.jbeam.jbeam_props_storage import JbeamPropsStorage  # type: ignore
 from dev_tools.utils.jbeam.jbeam_selection_tracker import JbeamSelectionTracker # type: ignore
 from dev_tools.translation.translations import register as register_translations, unregister as unregister_translations # type: ignore
 from dev_tools.ui.sidebar_menu import register as register_devtools_panel, unregister as unregister_devtools_panel # type: ignore
@@ -107,6 +108,9 @@ DEVTOOLS_CLASSES = [
 def on_application_load(a, b):
     print("DevTools application load post handler ==============>", a, b)
 
+def save_pre_handler(dummy):
+    JbeamPropsStorage.get_instance().save_jbeam_props_to_mesh()
+
 def register() -> None:
     print("DevTools addon Registration Begin ==============>")
     #add_executable_permission(FileUtils.get_executable_filepath())
@@ -122,6 +126,7 @@ def register() -> None:
     IconsManager().init()
     JbeamSelectionTracker.get_instance().register()
 
+    bpy.app.handlers.save_pre.append(save_pre_handler)
     bpy.app.handlers.load_post.append(on_application_load)
 
     print("DevTools addon Registration Complete <==========\n")
@@ -139,5 +144,6 @@ def unregister() -> None:
     for cls in reversed(DEVTOOLS_CLASSES):
         bpy.utils.unregister_class(cls)
 
+    bpy.app.handlers.save_pre.remove(save_pre_handler)
     bpy.app.handlers.load_post.remove(on_application_load)
     print("DevTools addon Unregistration Complete <========\n")

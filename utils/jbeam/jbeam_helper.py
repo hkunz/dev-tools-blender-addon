@@ -90,23 +90,10 @@ class PreJbeamStructureHelper:
 
 
     def structure_data(self):
-        '''
-        if self.domain == "vertex":
-            data_dict = {
-                v_idx: {
-                    "group": sorted(groups),  # Ensure groups are sorted
-                    **self.parse_properties(self.props.get(v_idx, "")),
-                }
-                for v_idx, groups in self.vertex_to_groups.items()
-            }
-        elif self.domain =="edge" or self.domain == "face":'
-        '''
         data_dict = {
             v_idx: self.parse_properties(self.props.get(v_idx, ""))
             for v_idx in self.props
         }
-        #print("data_dict: ==== ", data_dict)
-
         unique_props = set()  # Collect all unique properties dynamically
         for node_info in data_dict.values():
             unique_props.update(node_info.keys())
@@ -128,23 +115,23 @@ class PreJbeamStructureHelper:
                 elif NumberUtils.is_float(value):
                     cleaned_node_info[prop] = float(value)
                 elif not value.lstrip().startswith("["):
-                    pass #value = value.replace('"', '').replace("'", '')
+                    cleaned_node_info[prop] = value.replace('"', '').replace("'", '') # Properties with quotes in the UI are acceptable; they will automatically be sanitized here and converted to use double quotes in the JBeam file for consistency.
 
             sorted_props = OrderedDict()
             for key in ["group", "deformGroup", "breakGroup"]:
-                if key in cleaned_node_info:
-                    value = cleaned_node_info.pop(key)
-                    # Convert from string to list if it's a JSON string
-                    if isinstance(value, str):
-                        try:
-                            cleaned_json_str = re.sub(r",\s*]", "]", value)
-                            value = json.loads(cleaned_json_str.strip())  # Strip spaces and load JSON
-                        except json.JSONDecodeError:
-                            pass  # If not a JSON string, keep as-is
-                    if isinstance(value, list):
-                        value = sorted(value)  # Ensure sorted list is stored properly
-
-                    sorted_props[key] = value
+                if not key in cleaned_node_info:
+                    continue
+                value = cleaned_node_info.pop(key) # make group properties display first in the dictionary
+                # Try convert from string to list if it's a JSON string so we can sort the elements for groups
+                if isinstance(value, str):
+                    try:
+                        cleaned_json_str = re.sub(r",\s*]", "]", value)
+                        value = json.loads(cleaned_json_str.strip())  # Strip spaces and load JSON
+                    except json.JSONDecodeError:
+                        pass  # If not a JSON string, keep as-is
+                if isinstance(value, list):
+                    value = sorted(value)
+                sorted_props[key] = value
 
             sorted_props.update(dict(sorted(cleaned_node_info.items(), key=lambda x: x[0].lower())))
             

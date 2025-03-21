@@ -2,6 +2,8 @@ TODO:
 
 Find out how .pc jbeam part displays the node names
 Detect overlapping vertices and mark node in red
+Add function to search a node by id
 
 BUGS:
 
+Ctrl+Z not working when saving jbeam props, even though we use bl_options UNDO

@@ -25,7 +25,9 @@ class OBJECT_OT_PrintJBeamPropsBase(bpy.types.Operator):
 
             mesh = obj.data
             elements = getattr(mesh, self.domain)  # Get vertices, edges, or faces
-            self.report({'INFO'}, f"Object '{obj.name}' ({self.attr_name}):")
+            info = f"Object '{obj.name}' ({self.attr_name})"
+            print(f"{info}:")
+
             for index in range(len(elements)):
                 key = j.get_attribute_value(obj, index, self.attr_name, self.domain)
                 id_str = self.id_function(obj, index)
@@ -41,6 +43,8 @@ class OBJECT_OT_PrintJBeamPropsBase(bpy.types.Operator):
                 else:
                     print(f"{id_str}({index}): No key, no attribute value (no scope modifiers assigned)")
 
+        if len(context.selected_objects) > 0:
+            self.report({'INFO'}, "Node Mesh Attributes have been printed. Check the console for detailed output.")
         return {'FINISHED'}
 
 

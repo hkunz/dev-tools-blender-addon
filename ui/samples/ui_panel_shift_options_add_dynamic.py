@@ -35,7 +35,7 @@ class ManageDynamicButtonsOperator(bpy.types.Operator):
     action: bpy.props.EnumProperty(
         items=[
             ('ADD', "Add Button", "Add a new button"),
-            ('REMOVE', "Remove Button", "Remove the last button")
+            ('REMOVE', "Remove Button", "Remove highlighted buttons")
         ],
         name="Action"
     )  # type: ignore
@@ -44,12 +44,30 @@ class ManageDynamicButtonsOperator(bpy.types.Operator):
         settings = context.scene.dynamic_buttons
 
         if self.action == 'ADD':
-            # Add a new button
-            item = settings.add()
-            item.name = ""
+            # Add a new button and deselect others
+            for item in settings:
+                item.name = ""  # Deselect all
+            item = settings.add()  # Add new button
+            item.name = f"Button {len(settings)}"  # Make it the active one
         elif self.action == 'REMOVE' and settings:
-            # Remove the last button
-            settings.remove(len(settings) - 1)
+            # Get indices of highlighted buttons
+            highlighted_indices = [i for i, item in enumerate(settings) if item.name]
+
+            if highlighted_indices:
+                # Remove all highlighted buttons
+                for index in reversed(highlighted_indices):
+                    settings.remove(index)
+
+                # Determine the button to highlight next
+                last_index = highlighted_indices[-1]
+                if last_index < len(settings):
+                    # Highlight the next button if it exists
+                    settings[last_index].name = f"Button {last_index + 1}"
+                elif len(settings) > 0:
+                    # Otherwise, highlight the previous button
+                    settings[len(settings) - 1].name = f"Button {len(settings)}"
+            else:
+                self.report({'WARNING'}, "No buttons are highlighted to remove!")
 
         return {'FINISHED'}
 
@@ -64,23 +82,27 @@ class DynamicButtonPanel(bpy.types.Panel):
         layout = self.layout
         settings = context.scene.dynamic_buttons
 
-        row = layout.row(align=True)
+        # Create a row and divide it into two parts (80% and 20%)
+        split = layout.row(align=True).split(factor=0.8)
 
-        # Dynamically create buttons
+        # First part for the dynamically created buttons (80%)
+        button_row = split.row(align=True)
         for i, item in enumerate(settings):
-            row.operator(
+            button_row.operator(
                 "wm.toggle_dynamic_button",
                 text=f"Button {i + 1}" if not item.name else item.name,
                 depress=bool(item.name)
             ).index = i
 
+        # Second part for the `+` and `X` buttons (20%)
+        control_row = split.row(align=True)
+        control_row.operator("wm.manage_dynamic_buttons", text="+").action = 'ADD'
+        control_row.operator("wm.manage_dynamic_buttons", text="X").action = 'REMOVE'
+
         # Display selected buttons
         selected = [item.name for item in settings if item.name]
         layout.label(text=f"Selected: {', '.join(selected) if selected else 'None'}")
 
-        # Add controls to manage buttons
-        layout.operator("wm.manage_dynamic_buttons", text="Add Button").action = 'ADD'
-        layout.operator("wm.manage_dynamic_buttons", text="Remove Button").action = 'REMOVE'
 
 # Registration
 classes = [ButtonItem, ToggleDynamicButtonOperator, ManageDynamicButtonsOperator, DynamicButtonPanel]

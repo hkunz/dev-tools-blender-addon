@@ -225,6 +225,18 @@ class JbeamUtils:
         JbeamUtils.set_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, key, domain=doamin)
 
     @staticmethod
+    def get_total_beam_instances(obj, edge_index) -> str:
+        doamin = "edges"
+        key = JbeamUtils.get_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, doamin)
+        return JbeamPropsStorage.get_instance().get_total_instances(doamin, key)
+
+    @staticmethod
+    def get_total_triangle_instances(obj, face_index) -> str:
+        doamin = "faces"
+        key = JbeamUtils.get_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, doamin)
+        return JbeamPropsStorage.get_instance().get_total_instances(doamin, key)
+
+    @staticmethod
     def validate_and_fix_storage_keys(obj, bm):
         """Ensures unique keys in attributes and fixes duplicates for each domain separately."""
         print("Running integrity check: Ensuring JBeam data storage consistency...")

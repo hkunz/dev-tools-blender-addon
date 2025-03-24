@@ -63,6 +63,8 @@ class JbeamSelectionTracker:
         if num_verts > self.previous_vertex_count or num_edges > self.previous_edge_count or num_faces > self.previous_face_count:
             j.validate_and_fix_storage_keys(obj, bm)
 
+        scene.beamng_jbeam_active_beam.active_instance = '1'
+
         self.previous_vertex_count = num_verts
         self.previous_edge_count = num_edges
         self.previous_face_count = num_faces
@@ -125,6 +127,7 @@ class JbeamSelectionTracker:
         active_index = active_edge.index if active_edge else (max(current_selection) if current_selection else -1)
         j.set_gn_jbeam_active_beam_index(obj, active_index)
         scene.beamng_jbeam_active_beam.index = active_index
+        scene.beamng_jbeam_active_beam.num_instances = j.get_total_beam_instances(obj, active_index)
         ids = [
             j.get_beam_id(obj, i, bm) or f"({i})"
             for i in current_selection
@@ -152,6 +155,7 @@ class JbeamSelectionTracker:
         active_index = active_face.index if active_face else (max(current_selection) if current_selection else -1)
         j.set_gn_jbeam_active_triangle_index(obj, active_index)
         scene.beamng_jbeam_active_triangle.index = active_index
+        scene.beamng_jbeam_active_triangle.num_instances = j.get_total_triangle_instances(obj, active_index)
         ids = [
             j.get_triangle_id(obj, i, bm) or f"({i})"
             for i in current_selection

@@ -131,6 +131,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
     #bl_space_type = 'PROPERTIES'
     #bl_region_type = 'WINDOW'
     #bl_context = "object"
+    #https://blender.stackexchange.com/questions/201360/how-to-control-spacing-alignment-of-label-horizontal-enum-property
 
     def draw(self, context) -> None:
         layout: bpy.types.UILayout = self.layout
@@ -250,7 +251,19 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                         split.alignment = 'RIGHT'
                         split.label(text=f"({edge_length:.2f})")
                         box.label(text=f"Selected: {s.beamng_jbeam_active_beam.selection}")
+
+                        print("=========== BeamNG JBeam Active Beam: ", s.beamng_jbeam_active_beam)
+                        print("Active Instance Enum: ", s.beamng_jbeam_active_beam.active_instance)
+
+                        # https://blender.stackexchange.com/questions/201360/how-to-control-spacing-alignment-of-label-horizontal-enum-property
+                        #box.use_property_split = True
+                        box.use_property_decorate = False 
                         box.prop(s.beamng_jbeam_active_beam, "id", text="Active Beam ID")
+                        r = box.row()
+                        r.prop(s.beamng_jbeam_active_beam, "active_instance", expand=True)
+                        r.prop(s.beamng_jbeam_active_beam, "my_enum", expand=True)
+                        
+
 
                         if s.beamng_jbeam_beam_props:
                             for prop in s.beamng_jbeam_beam_props:  

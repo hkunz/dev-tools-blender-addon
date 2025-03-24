@@ -78,6 +78,17 @@ class JbeamPropsStorage:
             if not self.storage[domain][key]:
                 del self.storage[domain][key]
 
+    def get_total_instances(self, domain: str, key: str) -> int:
+        """Returns the total number of instances for the given key in the specified domain."""
+        domain = self.resolve_domain(domain)
+        if domain not in self.storage:
+            raise ValueError(f"Invalid domain: {domain}")
+
+        if key not in self.storage[domain]:
+            return 0
+
+        return len(self.storage[domain][key])
+
     def cleanup(self, domain: str, unused_keys: set):
         """Removes unused keys from the specified domain."""
         domain = self.resolve_domain(domain)

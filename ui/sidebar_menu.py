@@ -331,7 +331,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
         for i, item in enumerate(settings):
             o = button_row.operator(
                 "wm.toggle_dynamic_button",
-                text=button_name.replace("#", str(i + 1)) if not item.name else item.name,
+                text=ButtonItem.generate_button_name(i) if not item.name else item.name,
                 depress=bool(item.name)
             )
             o.index = i

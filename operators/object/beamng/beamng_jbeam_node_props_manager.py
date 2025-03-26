@@ -259,7 +259,7 @@ class OBJECT_OT_BeamngSaveAllJbeamProps(bpy.types.Operator):
         if not selected_elements or not layer:
             return f"No selected {self.prop_type} or no property data found", 'CANCELLED'
         
-        ui_props = {prop.name: prop.value for prop in getattr(context.scene, f'beamng_jbeam_{self.prop_type}_props')}
+        ui_props = {prop.name: prop.value for prop in context.scene.beamng_jbeam_structure_props}
 
         for reserved in j.RESERVED_KEYWORDS:
             if any(prop_name.lower() == reserved.lower() for prop_name in ui_props):

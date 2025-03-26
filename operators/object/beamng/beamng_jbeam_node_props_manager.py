@@ -3,7 +3,7 @@ import bmesh
 
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
 
-class JbeamElement(bpy.types.PropertyGroup):
+class JbeamStructure(bpy.types.PropertyGroup):
     id: bpy.props.StringProperty(
         name="Element ID",
         default=""

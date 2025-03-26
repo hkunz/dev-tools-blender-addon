@@ -16,7 +16,7 @@ from dev_tools.operators.object.beamng.beamng_create_metaball_cloud_operator imp
 from dev_tools.operators.object.beamng.beamng_parent_to_start01_empty_operator import OBJECT_OT_BeamngParentToStart01Empty, OBJECT_OT_BeamngClearChildrenStart01Empty # type: ignore
 from dev_tools.operators.object.beamng.beamng_parent_to_start01_empty_operator import OBJECT_OT_BeamngClearChildrenStart01Empty, OBJECT_OT_BeamngParentToStart01Empty # type: ignore
 from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_node_mesh import OBJECT_OT_BeamngConvertJbeamToNodeMesh # type: ignore
-from dev_tools.operators.object.beamng.beamng_jbeam_node_props_manager import OBJECT_OT_BeamngSaveJbeamNodeProp, OBJECT_OT_BeamngSaveJbeamBeamProp, OBJECT_OT_BeamngSaveJbeamTriangleProp, OBJECT_OT_BeamngSaveAllJbeamNodeProps, OBJECT_OT_BeamngSaveAllJbeamBeamProps, OBJECT_OT_BeamngSaveAllJbeamTriangleProps, OBJECT_OT_BeamngAddJbeamNodeProp, OBJECT_OT_BeamngAddJbeamBeamProp, OBJECT_OT_BeamngAddJbeamTriangleProp, OBJECT_OT_BeamngRemoveJbeamNodeProp, OBJECT_OT_BeamngRemoveJbeamBeamProp, OBJECT_OT_BeamngRemoveJbeamTriangleProp, OBJECT_OT_BeamngSelectJbeamNodesByProperty, OBJECT_OT_BeamngSelectJbeamBeamsByProperty, OBJECT_OT_BeamngSelectJbeamTrianglesByProperty, JbeamPropertyItem, JbeamElement, JbeamHiddenElements  # type: ignore
+from dev_tools.operators.object.beamng.beamng_jbeam_node_props_manager import OBJECT_OT_BeamngSaveJbeamNodeProp, OBJECT_OT_BeamngSaveJbeamBeamProp, OBJECT_OT_BeamngSaveJbeamTriangleProp, OBJECT_OT_BeamngSaveAllJbeamNodeProps, OBJECT_OT_BeamngSaveAllJbeamBeamProps, OBJECT_OT_BeamngSaveAllJbeamTriangleProps, OBJECT_OT_BeamngAddJbeamNodeProp, OBJECT_OT_BeamngAddJbeamBeamProp, OBJECT_OT_BeamngAddJbeamTriangleProp, OBJECT_OT_BeamngRemoveJbeamNodeProp, OBJECT_OT_BeamngRemoveJbeamBeamProp, OBJECT_OT_BeamngRemoveJbeamTriangleProp, OBJECT_OT_BeamngSelectJbeamNodesByProperty, OBJECT_OT_BeamngSelectJbeamBeamsByProperty, OBJECT_OT_BeamngSelectJbeamTrianglesByProperty, JbeamPropertyItem, JbeamStructure, JbeamHiddenElements  # type: ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_rename_selected_nodes import OBJECT_OT_BeamngJbeamRenameSelectedNodes # type:ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_create_node_mesh import OBJECT_OT_BeamngJbeamCreateNodeMesh # type: ignore
 from dev_tools.operators.common.ui.toggle_dynamic_button_operator import ButtonItem, InstanceProperties, ToggleDynamicButtonOperator, ManageDynamicButtonsOperator  # type: ignore
@@ -411,7 +411,7 @@ def register() -> None:
     bpy.utils.register_class(MyPropertyGroup1)
     bpy.utils.register_class(MyPropertyGroup2)
     bpy.utils.register_class(JbeamPropertyItem)
-    bpy.utils.register_class(JbeamElement)
+    bpy.utils.register_class(JbeamStructure)
     bpy.utils.register_class(JbeamHiddenElements)
     bpy.utils.register_class(ButtonItem)
     bpy.utils.register_class(InstanceProperties)
@@ -423,7 +423,7 @@ def register() -> None:
     bpy.types.Scene.expanded_armature_options = bpy.props.BoolProperty(default=False)
     bpy.types.Scene.expanded_bake_options = bpy.props.BoolProperty(default=False)
     bpy.types.Scene.expanded_beamng_options = bpy.props.BoolProperty(default=False)
-    bpy.types.Scene.beamng_jbeam_active_structure = bpy.props.PointerProperty(type=JbeamElement)
+    bpy.types.Scene.beamng_jbeam_active_structure = bpy.props.PointerProperty(type=JbeamStructure)
     bpy.types.Scene.beamng_jbeam_structure_props = bpy.props.CollectionProperty(type=JbeamPropertyItem)
     bpy.types.Scene.beamng_jbeam_hidden_elements = bpy.props.PointerProperty(type=JbeamHiddenElements)
     bpy.types.Scene.beamng_jbeam_instance = bpy.props.PointerProperty(type=InstanceProperties)
@@ -434,7 +434,7 @@ def unregister() -> None:
     bpy.utils.unregister_class(MyPropertyGroup1)
     bpy.utils.unregister_class(MyPropertyGroup2)
     bpy.utils.unregister_class(JbeamPropertyItem)
-    bpy.utils.unregister_class(JbeamElement)
+    bpy.utils.unregister_class(JbeamStructure)
     bpy.utils.unregister_class(JbeamHiddenElements)
     bpy.utils.unregister_class(InstanceProperties)  
     bpy.utils.unregister_class(ButtonItem)

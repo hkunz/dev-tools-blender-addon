@@ -137,7 +137,7 @@ class JbeamUtils:
         return None
 
     @staticmethod
-    def get_node_id(obj, vertex_index) -> str:
+    def get_node_id(obj, vertex_index, bm=None) -> str:
         return JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_ID, 'verts')
 
     @staticmethod

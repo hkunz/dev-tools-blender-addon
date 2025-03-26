@@ -44,11 +44,9 @@ class JbeamSelectionTracker:
         reset = False
         if self.previous_selection_mode != mode:
             self.previous_selection_mode = mode
-            scene.beamng_jbeam_active_node.index = -1
+            scene.beamng_jbeam_active_structure.index = -1
             self.previous_vertex_selection = None
-            scene.beamng_jbeam_active_beam.index = -1
             self.previous_edge_selection = None
-            scene.beamng_jbeam_active_triangle.index = -1
             self.previous_face_selection = None
             reset = True
 
@@ -95,17 +93,18 @@ class JbeamSelectionTracker:
         active_vert = bm.select_history.active if isinstance(bm.select_history.active, bmesh.types.BMVert) else None
         active_index = active_vert.index if active_vert else (max(current_selection) if current_selection else -1)
         j.set_gn_jbeam_active_node_index(obj, active_index)
-        scene.beamng_jbeam_active_node.index = active_index
+        struct = scene.beamng_jbeam_active_structure
+        struct.index = active_index
         x, y, z = o.get_vertex_position_by_index(obj, bm, active_index)
-        scene.beamng_jbeam_active_node.position.x = x
-        scene.beamng_jbeam_active_node.position.y = y
-        scene.beamng_jbeam_active_node.position.z = z
+        struct.position.x = x
+        struct.position.y = y
+        struct.position.z = z
         ids = [
             j.get_node_id(obj, i) or f"({i})"
             for i in current_selection
         ]
-        scene.beamng_jbeam_active_node.selection = ", ".join(ids)
-        scene.beamng_jbeam_active_node.id = j.get_node_id(obj, active_index) or ""
+        struct.selection = ", ".join(ids)
+        struct.id = j.get_node_id(obj, active_index) or ""
         bpy.ops.object.devtools_beamng_load_jbeam_node_props()
         UiUtils.force_update_ui(bpy.context)
 
@@ -126,14 +125,15 @@ class JbeamSelectionTracker:
         active_edge = bm.select_history.active if isinstance(bm.select_history.active, bmesh.types.BMEdge) else None
         active_index = active_edge.index if active_edge else (max(current_selection) if current_selection else -1)
         j.set_gn_jbeam_active_beam_index(obj, active_index)
-        scene.beamng_jbeam_active_beam.index = active_index
-        scene.beamng_jbeam_active_beam.num_instances = j.get_total_beam_instances(obj, active_index)
+        struct = scene.beamng_jbeam_active_structure
+        struct.index = active_index
+        struct.num_instances = j.get_total_beam_instances(obj, active_index)
         ids = [
             j.get_beam_id(obj, i, bm) or f"({i})"
             for i in current_selection
         ]
-        scene.beamng_jbeam_active_beam.selection = ", ".join(ids)
-        scene.beamng_jbeam_active_beam.id = j.get_beam_id(obj, active_index, bm) or ""
+        struct.selection = ", ".join(ids)
+        struct.id = j.get_beam_id(obj, active_index, bm) or ""
         bpy.ops.object.devtools_beamng_load_jbeam_beam_props()
         UiUtils.force_update_ui(bpy.context)
 
@@ -154,13 +154,14 @@ class JbeamSelectionTracker:
         active_face = bm.select_history.active if isinstance(bm.select_history.active, bmesh.types.BMFace) else None
         active_index = active_face.index if active_face else (max(current_selection) if current_selection else -1)
         j.set_gn_jbeam_active_triangle_index(obj, active_index)
-        scene.beamng_jbeam_active_triangle.index = active_index
-        scene.beamng_jbeam_active_triangle.num_instances = j.get_total_triangle_instances(obj, active_index)
+        struct = scene.beamng_jbeam_active_structure
+        struct.index = active_index
+        struct.num_instances = j.get_total_triangle_instances(obj, active_index)
         ids = [
             j.get_triangle_id(obj, i, bm) or f"({i})"
             for i in current_selection
         ]
-        scene.beamng_jbeam_active_triangle.selection = ", ".join(ids)
-        scene.beamng_jbeam_active_triangle.id = j.get_triangle_id(obj, active_index, bm) or ""
+        struct.selection = ", ".join(ids)
+        struct.id = j.get_triangle_id(obj, active_index, bm) or ""
         bpy.ops.object.devtools_beamng_load_jbeam_triangle_props()
         UiUtils.force_update_ui(bpy.context)

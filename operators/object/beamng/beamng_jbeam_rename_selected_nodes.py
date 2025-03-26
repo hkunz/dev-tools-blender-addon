@@ -17,7 +17,7 @@ class OBJECT_OT_BeamngJbeamRenameSelectedNodes(bpy.types.Operator):
             return {'CANCELLED'}
 
         mesh = obj.data
-        active_id = context.scene.beamng_jbeam_active_node.id.strip()
+        active_id = context.scene.beamng_jbeam_active_structure.id.strip()
 
         if not active_id:
             self.report({'WARNING'}, "Active Node ID is empty")

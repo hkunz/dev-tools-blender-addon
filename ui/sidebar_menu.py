@@ -207,17 +207,18 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
 
             if obj and obj.mode == 'EDIT' and obj.type == 'MESH' and j.is_node_mesh(obj):
                 if o.is_vertex_selection_mode():
-                    index = s.beamng_jbeam_active_node.index
+                    struct = s.beamng_jbeam_active_structure
+                    index = struct.index
                     if index > -1:
-                        node_id = s.beamng_jbeam_active_node.id
-                        pos = s.beamng_jbeam_active_node.position
+                        node_id = struct.id
+                        pos = struct.position
                         row = box.row()
                         split = row.split(factor=0.5)
                         split.label(text=f"Active Node: {node_id} ({index})")
                         split.alignment = 'RIGHT'
                         split.label(text=f"({pos.x:.2f}, {pos.y:.2f}, {pos.z:.2f})")
-                        box.label(text=f"Selected: {s.beamng_jbeam_active_node.selection}")
-                        box.prop(s.beamng_jbeam_active_node, "id", text="Active Node ID")
+                        box.label(text=f"Selected: {struct.selection}")
+                        box.prop(struct, "id", text="Active Node ID")
                         box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign JBeam ID")
 
                         if s.beamng_jbeam_structure_props:
@@ -240,7 +241,8 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                         box.label(text=msg)
 
                 elif o.is_edge_selection_mode():
-                    index = s.beamng_jbeam_active_beam.index
+                    struct = s.beamng_jbeam_active_structure
+                    index = struct.index
                     if index > -1:
                         bm = bmesh.from_edit_mesh(obj.data)
                         bm.edges.ensure_lookup_table()
@@ -248,18 +250,18 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                         edge_length = edge.calc_length()
                         row = box.row()
                         split = row.split(factor=0.67)
-                        split.label(text=f"Active Beam: {s.beamng_jbeam_active_beam.id} ({index})")
+                        split.label(text=f"Active Beam: {struct.id} ({index})")
                         split.alignment = 'RIGHT'
                         split.label(text=f"({edge_length:.2f})")
-                        box.label(text=f"Selected: {s.beamng_jbeam_active_beam.selection}")
+                        box.label(text=f"Selected: {struct.selection}")
 
-                        print("=========== BeamNG JBeam Active Beam: ", s.beamng_jbeam_active_beam)
+                        print("=========== BeamNG JBeam Active Beam: ", struct)
                         #print("Active Instance Enum: ", s.beamng_jbeam_active_instance)
 
                         # https://blender.stackexchange.com/questions/201360/how-to-control-spacing-alignment-of-label-horizontal-enum-property
                         #box.use_property_split = True
                         box.use_property_decorate = False 
-                        box.prop(s.beamng_jbeam_active_beam, "id", text="Active Beam ID")
+                        box.prop(struct, "id", text="Active Beam ID")
                         r = box.row()
                         #r.prop(s, "beamng_jbeam_active_instance", expand=True)
                         self.draw_element_instances_buttons(context, r)
@@ -284,15 +286,16 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                         box.label(text=msg)
 
                 elif o.is_face_selection_mode():
-                    index = s.beamng_jbeam_active_triangle.index
+                    struct = s.beamng_jbeam_active_structure
+                    index = struct.index
                     if index > -1:
                         row = box.row()
                         split = row.split(factor=0.8)
-                        split.label(text=f"Active Triangle: {s.beamng_jbeam_active_triangle.id} ({index})")
+                        split.label(text=f"Active Triangle: {struct.id} ({index})")
                         split.alignment = 'RIGHT'
                         split.label(text=f"(area)")
-                        box.label(text=f"Selected: {s.beamng_jbeam_active_triangle.selection}")
-                        box.prop(s.beamng_jbeam_active_triangle, "id", text="Active Triangle ID")
+                        box.label(text=f"Selected: {struct.selection}")
+                        box.prop(struct, "id", text="Active Triangle ID")
 
                         if s.beamng_jbeam_structure_props:
                             for prop in s.beamng_jbeam_structure_props:
@@ -420,9 +423,7 @@ def register() -> None:
     bpy.types.Scene.expanded_armature_options = bpy.props.BoolProperty(default=False)
     bpy.types.Scene.expanded_bake_options = bpy.props.BoolProperty(default=False)
     bpy.types.Scene.expanded_beamng_options = bpy.props.BoolProperty(default=False)
-    bpy.types.Scene.beamng_jbeam_active_node = bpy.props.PointerProperty(type=JbeamElement)
-    bpy.types.Scene.beamng_jbeam_active_beam = bpy.props.PointerProperty(type=JbeamElement)
-    bpy.types.Scene.beamng_jbeam_active_triangle = bpy.props.PointerProperty(type=JbeamElement)
+    bpy.types.Scene.beamng_jbeam_active_structure = bpy.props.PointerProperty(type=JbeamElement)
     bpy.types.Scene.beamng_jbeam_structure_props = bpy.props.CollectionProperty(type=JbeamPropertyItem)
     bpy.types.Scene.beamng_jbeam_hidden_elements = bpy.props.PointerProperty(type=JbeamHiddenElements)
     bpy.types.Scene.beamng_jbeam_instance = bpy.props.PointerProperty(type=InstanceProperties)
@@ -444,9 +445,7 @@ def unregister() -> None:
     del bpy.types.Scene.expanded_bake_options
     del bpy.types.Scene.expanded_beamng_options
     del bpy.types.Scene.my_property_group_pointer
-    del bpy.types.Scene.beamng_jbeam_active_node
-    del bpy.types.Scene.beamng_jbeam_active_beam
-    del bpy.types.Scene.beamng_jbeam_active_triangle
+    del bpy.types.Scene.beamng_jbeam_active_structure
     del bpy.types.Scene.beamng_jbeam_structure_props
     del bpy.types.Scene.beamng_jbeam_hidden_elements
     del bpy.types.Scene.beamng_jbeam_instance

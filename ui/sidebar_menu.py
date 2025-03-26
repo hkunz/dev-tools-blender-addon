@@ -16,7 +16,7 @@ from dev_tools.operators.object.beamng.beamng_create_metaball_cloud_operator imp
 from dev_tools.operators.object.beamng.beamng_parent_to_start01_empty_operator import OBJECT_OT_BeamngParentToStart01Empty, OBJECT_OT_BeamngClearChildrenStart01Empty # type: ignore
 from dev_tools.operators.object.beamng.beamng_parent_to_start01_empty_operator import OBJECT_OT_BeamngClearChildrenStart01Empty, OBJECT_OT_BeamngParentToStart01Empty # type: ignore
 from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_node_mesh import OBJECT_OT_BeamngConvertJbeamToNodeMesh # type: ignore
-from dev_tools.operators.object.beamng.beamng_jbeam_node_props_manager import OBJECT_OT_BeamngSaveJbeamNodeProp, OBJECT_OT_BeamngSaveJbeamBeamProp, OBJECT_OT_BeamngSaveJbeamTriangleProp, OBJECT_OT_BeamngSaveAllJbeamNodeProps, OBJECT_OT_BeamngSaveAllJbeamBeamProps, OBJECT_OT_BeamngSaveAllJbeamTriangleProps, OBJECT_OT_BeamngAddJbeamNodeProp, OBJECT_OT_BeamngAddJbeamBeamProp, OBJECT_OT_BeamngAddJbeamTriangleProp, OBJECT_OT_BeamngRemoveJbeamNodeProp, OBJECT_OT_BeamngRemoveJbeamBeamProp, OBJECT_OT_BeamngRemoveJbeamTriangleProp, OBJECT_OT_BeamngSelectJbeamNodesByProperty, OBJECT_OT_BeamngSelectJbeamBeamsByProperty, OBJECT_OT_BeamngSelectJbeamTrianglesByProperty, JbeamPropertyItem, JbeamStructure, JbeamHiddenElements  # type: ignore
+from dev_tools.operators.object.beamng.beamng_jbeam_node_props_manager import OBJECT_OT_BeamngSaveJbeamNodeProp, OBJECT_OT_BeamngSaveJbeamBeamProp, OBJECT_OT_BeamngSaveJbeamTriangleProp, OBJECT_OT_BeamngSaveAllJbeamNodeProps, OBJECT_OT_BeamngSaveAllJbeamBeamProps, OBJECT_OT_BeamngSaveAllJbeamTriangleProps, OBJECT_OT_BeamngAddJbeamNodeProp, OBJECT_OT_BeamngAddJbeamBeamProp, OBJECT_OT_BeamngAddJbeamTriangleProp, OBJECT_OT_BeamngRemoveJbeamNodeProp, OBJECT_OT_BeamngRemoveJbeamBeamProp, OBJECT_OT_BeamngRemoveJbeamTriangleProp, OBJECT_OT_BeamngSelectJbeamNodesByProperty, OBJECT_OT_BeamngSelectJbeamBeamsByProperty, OBJECT_OT_BeamngSelectJbeamTrianglesByProperty, JbeamStructurePropertyItem, JbeamStructure, JbeamHiddenElements  # type: ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_rename_selected_nodes import OBJECT_OT_BeamngJbeamRenameSelectedNodes # type:ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_create_node_mesh import OBJECT_OT_BeamngJbeamCreateNodeMesh # type: ignore
 from dev_tools.operators.common.ui.toggle_dynamic_button_operator import ButtonItem, ButtonItemSelector, ToggleDynamicButtonOperator, ManageDynamicButtonsOperator  # type: ignore
@@ -221,8 +221,8 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                         box.prop(struct, "id", text="Active Node ID")
                         box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign JBeam ID")
 
-                        if s.beamng_jbeam_structure_props:
-                            for prop in s.beamng_jbeam_structure_props:
+                        if s.beamng_jbeam_active_structure.prop_items:
+                            for prop in s.beamng_jbeam_active_structure.prop_items:
                                 r = box.row()
                                 r.prop(prop, "name", text="")
                                 r.prop(prop, "value", text="")
@@ -266,8 +266,8 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                         #r.prop(s, "beamng_jbeam_active_instance", expand=True)
                         self.draw_element_instances_buttons(context, r)
                         
-                        if s.beamng_jbeam_structure_props:
-                            for prop in s.beamng_jbeam_structure_props:  
+                        if s.beamng_jbeam_active_structure.prop_items:
+                            for prop in s.beamng_jbeam_active_structure.prop_items:  
                                 r = box.row()
                                 r.prop(prop, "name", text="")
                                 r.prop(prop, "value", text="")
@@ -297,8 +297,8 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                         box.label(text=f"Selected: {struct.selection}")
                         box.prop(struct, "id", text="Active Triangle ID")
 
-                        if s.beamng_jbeam_structure_props:
-                            for prop in s.beamng_jbeam_structure_props:
+                        if s.beamng_jbeam_active_structure.prop_items:
+                            for prop in s.beamng_jbeam_active_structure.prop_items:
                                 r = box.row()
                                 r.prop(prop, "name", text="")
                                 r.prop(prop, "value", text="")
@@ -410,7 +410,7 @@ def register() -> None:
     bpy.utils.register_class(OBJECT_PT_devtools_addon_panel)
     bpy.utils.register_class(MyPropertyGroup1)
     bpy.utils.register_class(MyPropertyGroup2)
-    bpy.utils.register_class(JbeamPropertyItem)
+    bpy.utils.register_class(JbeamStructurePropertyItem)
     bpy.utils.register_class(JbeamStructure)
     bpy.utils.register_class(JbeamHiddenElements)
     bpy.utils.register_class(ButtonItem)
@@ -424,7 +424,6 @@ def register() -> None:
     bpy.types.Scene.expanded_bake_options = bpy.props.BoolProperty(default=False)
     bpy.types.Scene.expanded_beamng_options = bpy.props.BoolProperty(default=False)
     bpy.types.Scene.beamng_jbeam_active_structure = bpy.props.PointerProperty(type=JbeamStructure)
-    bpy.types.Scene.beamng_jbeam_structure_props = bpy.props.CollectionProperty(type=JbeamPropertyItem)
     bpy.types.Scene.beamng_jbeam_hidden_elements = bpy.props.PointerProperty(type=JbeamHiddenElements)
     bpy.types.Scene.beamng_jbeam_instance = bpy.props.PointerProperty(type=ButtonItemSelector)
     bpy.app.handlers.depsgraph_update_post.append(on_depsgraph_update)
@@ -433,7 +432,7 @@ def unregister() -> None:
     bpy.utils.unregister_class(OBJECT_PT_devtools_addon_panel)
     bpy.utils.unregister_class(MyPropertyGroup1)
     bpy.utils.unregister_class(MyPropertyGroup2)
-    bpy.utils.unregister_class(JbeamPropertyItem)
+    bpy.utils.unregister_class(JbeamStructurePropertyItem)
     bpy.utils.unregister_class(JbeamStructure)
     bpy.utils.unregister_class(JbeamHiddenElements)
     bpy.utils.unregister_class(ButtonItemSelector)  
@@ -446,7 +445,6 @@ def unregister() -> None:
     del bpy.types.Scene.expanded_beamng_options
     del bpy.types.Scene.my_property_group_pointer
     del bpy.types.Scene.beamng_jbeam_active_structure
-    del bpy.types.Scene.beamng_jbeam_structure_props
     del bpy.types.Scene.beamng_jbeam_hidden_elements
     del bpy.types.Scene.beamng_jbeam_instance
     bpy.app.handlers.depsgraph_update_post.remove(on_depsgraph_update)

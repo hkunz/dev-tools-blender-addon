@@ -3,7 +3,7 @@ import bmesh
 
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
 
-class JbeamPropertyItem(bpy.types.PropertyGroup):
+class JbeamStructurePropertyItem(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Property Name")  # type: ignore
     value: bpy.props.StringProperty(name="Value")  # type: ignore
 
@@ -36,6 +36,8 @@ class JbeamStructure(bpy.types.PropertyGroup):
         name="Selection List",
         default=""
     )  # type: ignore
+    
+    prop_items: bpy.props.CollectionProperty(type=JbeamStructurePropertyItem)  # type: ignore # items representing scope modifiers on the strucutre
 
 class JbeamHiddenElements(bpy.types.PropertyGroup):
     num_hidden_nodes: bpy.props.IntProperty(
@@ -82,7 +84,7 @@ class OBJECT_OT_BeamngLoadJbeamPropsBase(bpy.types.Operator):
             #print("No selection or no property data found")
             return {'CANCELLED'}
 
-        scene_props = context.scene.beamng_jbeam_structure_props
+        scene_props = context.scene.beamng_jbeam_active_structure.prop_items
         scene_props.clear()
         properties = {}
 
@@ -151,7 +153,7 @@ class OBJECT_OT_BeamngSaveJbeamProp(bpy.types.Operator):
             layers = getattr(bm, domain).layers
             layer = layers.string.get(attr_name)
             elements = [elem for elem in getattr(bm, domain) if elem.select]
-            prop_collection = context.scene.beamng_jbeam_structure_props
+            prop_collection = context.scene.beamng_jbeam_active_structure.prop_items
         else:
             self.report({'ERROR'}, f"Unknown property type: {self.prop_type}")
             return {'CANCELLED'}
@@ -258,7 +260,7 @@ class OBJECT_OT_BeamngSaveAllJbeamProps(bpy.types.Operator):
         if not selected_elements or not layer:
             return f"No selected {self.prop_type} or no property data found", 'CANCELLED'
         
-        ui_props = {prop.name: prop.value for prop in context.scene.beamng_jbeam_structure_props}
+        ui_props = {prop.name: prop.value for prop in context.scene.beamng_jbeam_active_structure.prop_items}
 
         for reserved in j.RESERVED_KEYWORDS:
             if any(prop_name.lower() == reserved.lower() for prop_name in ui_props):
@@ -311,7 +313,7 @@ class OBJECT_OT_BeamngAddJbeamProp(bpy.types.Operator):
     prop_type = ""
 
     def execute(self, context):
-        prop = context.scene.beamng_jbeam_structure_props.add()
+        prop = context.scene.beamng_jbeam_active_structure.prop_items.add()
         prop.name = f"{self.prop_type.capitalize()}Prop"
         prop.value = "0"
         return {'FINISHED'}
@@ -366,7 +368,7 @@ class OBJECT_OT_BeamngRemoveJbeamProp(bpy.types.Operator):
         # Fetch relevant attributes from subclass
         layer = bm.__getattribute__(self.domain).layers.string.get(self.attr_layer)
         selected_elements = [elem for elem in bm.__getattribute__(self.domain) if elem.select]
-        ui_list = scene.beamng_jbeam_structure_props
+        ui_list = scene.beamng_jbeam_active_structure.prop_items
 
         if layer is None:
             self.report({'WARNING'}, "No property data found")
@@ -461,7 +463,7 @@ class OBJECT_OT_BeamngSelectByPropertyBase(bpy.types.Operator):
             return {'CANCELLED'}
 
         bm = bmesh.from_edit_mesh(obj.data)
-        prop_collection = context.scene.beamng_jbeam_structure_props
+        prop_collection = context.scene.beamng_jbeam_active_structure.prop_items
 
         # Retrieve the property value from the UI
         selected_prop_value = None

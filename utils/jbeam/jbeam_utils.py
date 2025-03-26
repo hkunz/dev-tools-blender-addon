@@ -142,6 +142,8 @@ class JbeamUtils:
 
     @staticmethod
     def get_beam_id(obj, edge_index, bm=None) -> str:
+        if edge_index < 0:
+            return None
         if bm is None:
             mesh = obj.data
             edge = mesh.edges[edge_index]
@@ -156,6 +158,8 @@ class JbeamUtils:
 
     @staticmethod
     def get_triangle_id(obj, face_index, bm=None) -> str:
+        if face_index < 0:
+            return None
         if bm is None:
             mesh = obj.data
             face = mesh.polygons[face_index]

@@ -3,6 +3,10 @@ import bmesh
 
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
 
+class JbeamPropertyItem(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty(name="Property Name")  # type: ignore
+    value: bpy.props.StringProperty(name="Value")  # type: ignore
+
 class JbeamStructure(bpy.types.PropertyGroup):
     id: bpy.props.StringProperty(
         name="Element ID",
@@ -46,11 +50,6 @@ class JbeamHiddenElements(bpy.types.PropertyGroup):
         name="Number of Hidden Faces",
         default=0
     )  # type: ignore
-
-class JbeamPropertyItem(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty(name="Property Name")  # type: ignore
-    value: bpy.props.StringProperty(name="Value")  # type: ignore
-
 
 class OBJECT_OT_BeamngLoadJbeamPropsBase(bpy.types.Operator):
     """Base class for loading JBeam properties"""

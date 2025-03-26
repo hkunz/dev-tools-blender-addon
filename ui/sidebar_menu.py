@@ -19,7 +19,7 @@ from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_node_mesh import 
 from dev_tools.operators.object.beamng.beamng_jbeam_node_props_manager import OBJECT_OT_BeamngSaveJbeamNodeProp, OBJECT_OT_BeamngSaveJbeamBeamProp, OBJECT_OT_BeamngSaveJbeamTriangleProp, OBJECT_OT_BeamngSaveAllJbeamNodeProps, OBJECT_OT_BeamngSaveAllJbeamBeamProps, OBJECT_OT_BeamngSaveAllJbeamTriangleProps, OBJECT_OT_BeamngAddJbeamNodeProp, OBJECT_OT_BeamngAddJbeamBeamProp, OBJECT_OT_BeamngAddJbeamTriangleProp, OBJECT_OT_BeamngRemoveJbeamNodeProp, OBJECT_OT_BeamngRemoveJbeamBeamProp, OBJECT_OT_BeamngRemoveJbeamTriangleProp, OBJECT_OT_BeamngSelectJbeamNodesByProperty, OBJECT_OT_BeamngSelectJbeamBeamsByProperty, OBJECT_OT_BeamngSelectJbeamTrianglesByProperty, JbeamPropertyItem, JbeamStructure, JbeamHiddenElements  # type: ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_rename_selected_nodes import OBJECT_OT_BeamngJbeamRenameSelectedNodes # type:ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_create_node_mesh import OBJECT_OT_BeamngJbeamCreateNodeMesh # type: ignore
-from dev_tools.operators.common.ui.toggle_dynamic_button_operator import ButtonItem, InstanceProperties, ToggleDynamicButtonOperator, ManageDynamicButtonsOperator  # type: ignore
+from dev_tools.operators.common.ui.toggle_dynamic_button_operator import ButtonItem, ButtonItemSelector, ToggleDynamicButtonOperator, ManageDynamicButtonsOperator  # type: ignore
 
 from dev_tools.utils.utils import Utils # type: ignore
 from dev_tools.utils.object_utils import ObjectUtils as o # type: ignore
@@ -324,7 +324,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             #col.operator(OBJECT_OT_BeamngCreateMetaBallCloud.bl_idname, text="Create MetaBall Cloud")
 
     def draw_element_instances_buttons(self, context, layout):
-        settings = context.scene.beamng_jbeam_instance.element_instance_buttons
+        settings = context.scene.beamng_jbeam_instance.buttons
 
         # Create a row and divide it into two parts (80% and 20%)
         split = layout.row(align=True).split(factor=0.8)
@@ -414,7 +414,7 @@ def register() -> None:
     bpy.utils.register_class(JbeamStructure)
     bpy.utils.register_class(JbeamHiddenElements)
     bpy.utils.register_class(ButtonItem)
-    bpy.utils.register_class(InstanceProperties)
+    bpy.utils.register_class(ButtonItemSelector)
     bpy.utils.register_class(ToggleDynamicButtonOperator)
     bpy.utils.register_class(ManageDynamicButtonsOperator)
     #"Identifies one of the repeated occurrences of a structure (beams/triangles) in the JBeam file",
@@ -426,7 +426,7 @@ def register() -> None:
     bpy.types.Scene.beamng_jbeam_active_structure = bpy.props.PointerProperty(type=JbeamStructure)
     bpy.types.Scene.beamng_jbeam_structure_props = bpy.props.CollectionProperty(type=JbeamPropertyItem)
     bpy.types.Scene.beamng_jbeam_hidden_elements = bpy.props.PointerProperty(type=JbeamHiddenElements)
-    bpy.types.Scene.beamng_jbeam_instance = bpy.props.PointerProperty(type=InstanceProperties)
+    bpy.types.Scene.beamng_jbeam_instance = bpy.props.PointerProperty(type=ButtonItemSelector)
     bpy.app.handlers.depsgraph_update_post.append(on_depsgraph_update)
 
 def unregister() -> None:
@@ -436,7 +436,7 @@ def unregister() -> None:
     bpy.utils.unregister_class(JbeamPropertyItem)
     bpy.utils.unregister_class(JbeamStructure)
     bpy.utils.unregister_class(JbeamHiddenElements)
-    bpy.utils.unregister_class(InstanceProperties)  
+    bpy.utils.unregister_class(ButtonItemSelector)  
     bpy.utils.unregister_class(ButtonItem)
     bpy.utils.unregister_class(ToggleDynamicButtonOperator)
     bpy.utils.unregister_class(ManageDynamicButtonsOperator)

@@ -3,8 +3,8 @@ import bpy
 class ButtonItem(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Button Name", default="")  # type: ignore
 
-class InstanceProperties(bpy.types.PropertyGroup):
-    element_instance_buttons: bpy.props.CollectionProperty(type=ButtonItem)  # type: ignore
+class ButtonItemSelector(bpy.types.PropertyGroup):
+    buttons: bpy.props.CollectionProperty(type=ButtonItem)  # type: ignore
     active_instance: bpy.props.IntProperty()  # type: ignore
 
 class ToggleDynamicButtonOperator(bpy.types.Operator):
@@ -16,7 +16,7 @@ class ToggleDynamicButtonOperator(bpy.types.Operator):
     index: bpy.props.IntProperty()  # type: ignore
 
     def invoke(self, context, event):
-        settings = context.scene.beamng_jbeam_instance.element_instance_buttons
+        settings = context.scene.beamng_jbeam_instance.buttons
         is_shift = event.shift
 
         if is_shift:
@@ -47,7 +47,7 @@ class ManageDynamicButtonsOperator(bpy.types.Operator):
     )  # type: ignore
 
     def execute(self, context):
-        settings = context.scene.beamng_jbeam_instance.element_instance_buttons
+        settings = context.scene.beamng_jbeam_instance.buttons
 
         if self.action == 'ADD':
             # Add a new button and deselect others

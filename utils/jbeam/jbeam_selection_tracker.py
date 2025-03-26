@@ -76,18 +76,18 @@ class JbeamSelectionTracker:
         elif reset:
             obj.data.update()
 
-    def update_struct(self, scene, obj, bm, current_selection, bmesh_type, get_id, get_index):
+    def update_struct(self, scene, obj, bm, current_selection, bmesh_type, get_id, set_gn_index):
         active_elem = bm.select_history.active if isinstance(bm.select_history.active, bmesh_type) else None
         active_index = active_elem.index if active_elem else (max(current_selection) if current_selection else -1)
         struct = scene.beamng_jbeam_active_structure
         struct.index = active_index
         ids = [
-            get_id(obj, i) or f"({i})"
+            get_id(obj, i, bm) or f"({i})"
             for i in current_selection
         ]
         struct.selection = ", ".join(ids)
         struct.id = get_id(obj, active_index, bm) or ""
-        get_index(obj, active_index)
+        set_gn_index(obj, active_index)
         return struct
 
     def update_node_data(self, scene, obj, bm):

@@ -23,6 +23,9 @@ class ButtonItemSelector(bpy.types.PropertyGroup):
     buttons: bpy.props.CollectionProperty(type=ButtonItem)  # type: ignore
     active_instance: bpy.props.IntProperty()  # type: ignore
 
+    def get_selected_instances(self):
+        return [i+1 for i, item in enumerate(self.buttons) if item.name != ""]
+
 class ToggleDynamicButtonOperator(bpy.types.Operator):
     """Toggle Buttons with Shift+Click for Multi-Select"""
     bl_idname = "wm.toggle_dynamic_button"
@@ -30,6 +33,7 @@ class ToggleDynamicButtonOperator(bpy.types.Operator):
 
     button_name: bpy.props.StringProperty(default="TheButton#")  # type: ignore
     index: bpy.props.IntProperty()  # type: ignore
+    handler = None  # set this with JbeamSelectionTracker.get_instance()
 
     def invoke(self, context, event):
         settings = context.scene.beamng_jbeam_instance.buttons
@@ -47,12 +51,14 @@ class ToggleDynamicButtonOperator(bpy.types.Operator):
                 item.name = ""
             settings[self.index].name = button_name
 
+        self.handler.on_instance_button_click(context.scene)
         return {'FINISHED'}
 
 class ManageDynamicButtonsOperator(bpy.types.Operator):
     """Add or Remove Buttons"""
     bl_idname = "wm.beamng_jbeam_manage_jbeam_instance_buttons"
     bl_label = "Manage Dynamic Buttons"
+    handler = None  # set this with JbeamSelectionTracker.get_instance()
 
     button_amount: bpy.props.IntProperty(default=1, min=1)  # type: ignore - Number of buttons to add
     button_name: bpy.props.StringProperty(default="Button #")  # type: ignore - Template for button names
@@ -98,5 +104,5 @@ class ManageDynamicButtonsOperator(bpy.types.Operator):
                     settings[next_highlight_index].name = ButtonItem.generate_button_name(next_highlight_index)
             else:
                 self.report({'WARNING'}, "No buttons are highlighted to remove!")
-
+        self.handler.on_instance_button_manage_change(context.scene)
         return {'FINISHED'}

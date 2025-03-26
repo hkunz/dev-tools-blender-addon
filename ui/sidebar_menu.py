@@ -21,6 +21,7 @@ from dev_tools.operators.object.beamng.beamng_jbeam_rename_selected_nodes import
 from dev_tools.operators.object.beamng.beamng_jbeam_create_node_mesh import OBJECT_OT_BeamngJbeamCreateNodeMesh # type: ignore
 from dev_tools.operators.common.ui.toggle_dynamic_button_operator import ButtonItem, ButtonItemSelector, ToggleDynamicButtonOperator, ManageDynamicButtonsOperator  # type: ignore
 
+from dev_tools.utils.jbeam.jbeam_selection_tracker import JbeamSelectionTracker # type: ignore
 from dev_tools.utils.utils import Utils # type: ignore
 from dev_tools.utils.object_utils import ObjectUtils as o # type: ignore
 from dev_tools.utils.icons_manager import IconsManager  # type: ignore
@@ -255,9 +256,6 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                         split.label(text=f"({edge_length:.2f})")
                         box.label(text=f"Selected: {struct.selection}")
 
-                        print("=========== BeamNG JBeam Active Beam: ", struct)
-                        #print("Active Instance Enum: ", s.beamng_jbeam_active_instance)
-
                         # https://blender.stackexchange.com/questions/201360/how-to-control-spacing-alignment-of-label-horizontal-enum-property
                         #box.use_property_split = True
                         box.use_property_decorate = False 
@@ -346,7 +344,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
         o.button_name = button_name
 
         selected = [item.name for item in settings if item.name]
-        print(f"Selected: {', '.join(selected) if selected else 'None'}")
+        #print(f"Selected: {', '.join(selected) if selected else 'None'}")
 
     def draw_expanded_bake_options(self, context, layout):
         ebox = layout.box()
@@ -400,6 +398,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
         return True
 
 def register() -> None:
+    
     bpy.utils.register_class(OBJECT_PT_devtools_addon_panel)
     bpy.utils.register_class(MyPropertyGroup1)
     bpy.utils.register_class(MyPropertyGroup2)
@@ -410,6 +409,7 @@ def register() -> None:
     bpy.utils.register_class(ButtonItemSelector)
     bpy.utils.register_class(ToggleDynamicButtonOperator)
     bpy.utils.register_class(ManageDynamicButtonsOperator)
+    ToggleDynamicButtonOperator.handler = ManageDynamicButtonsOperator.handler = JbeamSelectionTracker.get_instance()
     #"Identifies one of the repeated occurrences of a structure (beams/triangles) in the JBeam file",
     bpy.types.Material.my_slot_setting = bpy.props.PointerProperty(type=MyPropertyGroup2)
     bpy.types.Scene.my_property_group_pointer = bpy.props.PointerProperty(type=MyPropertyGroup1)

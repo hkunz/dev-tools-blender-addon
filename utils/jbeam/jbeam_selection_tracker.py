@@ -17,6 +17,7 @@ class JbeamSelectionTracker:
         self.previous_edge_selection = None
         self.previous_face_selection = None
         self.previous_selection_mode = -1
+        self.previous_instances_selection = []
 
     @classmethod
     def get_instance(cls):
@@ -38,6 +39,15 @@ class JbeamSelectionTracker:
         if not j.is_node_mesh(obj) or obj.mode != 'EDIT':
             return
         self.check_selection_change(scene)
+
+    def on_instance_button_click(self, scene):
+        current_instances_selection = scene.beamng_jbeam_instance.get_selected_instances()
+        self.previous_instances_selection = current_instances_selection
+        for instance in current_instances_selection:
+            bpy.ops.object.devtools_beamng_load_jbeam_beam_props(instance=instance)
+
+    def on_instance_button_manage_change(self, scene):
+        self.on_instance_button_click(scene)
 
     def check_selection_change(self, scene):
         obj = bpy.context.object
@@ -118,7 +128,7 @@ class JbeamSelectionTracker:
     def update_beam_data(self, scene, obj, bm):
         bm.edges.ensure_lookup_table()
         current_selection = {e.index for e in bm.edges if e.select}
-
+        
         if self.previous_edge_selection == current_selection:
             return
 
@@ -127,7 +137,7 @@ class JbeamSelectionTracker:
         o.update_edge_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_edges", "selected_edges", current_selection)
         struct = self.update_struct(scene, obj, bm, current_selection, bmesh.types.BMEdge, j.get_beam_id, j.set_gn_jbeam_active_beam_index)
         self.update_instances(scene, obj, struct, j.get_total_beam_instances)
-        bpy.ops.object.devtools_beamng_load_jbeam_beam_props()
+        bpy.ops.object.devtools_beamng_load_jbeam_beam_props(instance=1)
         UiUtils.force_update_ui(bpy.context)
         obj.data.update()
 

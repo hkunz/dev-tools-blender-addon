@@ -62,6 +62,8 @@ class OBJECT_OT_BeamngLoadJbeamPropsBase(bpy.types.Operator):
     layer_name = ""
     get_props_function = None
 
+    instance: bpy.props.IntProperty(default=1, min=1)  # type: ignore
+
     def execute(self, context):
         obj = context.object
         if not obj or obj.type != 'MESH':
@@ -89,7 +91,7 @@ class OBJECT_OT_BeamngLoadJbeamPropsBase(bpy.types.Operator):
         properties = {}
 
         for elem in selected_elements:
-            props = self.get_props_function(obj, elem.index)
+            props = self.get_props_function(obj, elem.index, self.instance)
             for key, value in props.items():
                 properties[key] = value
 

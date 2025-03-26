@@ -59,7 +59,6 @@ class OBJECT_OT_BeamngLoadJbeamPropsBase(bpy.types.Operator):
     
     domain = None
     layer_name = ""
-    scene_property_name = ""
     get_props_function = None
 
     def execute(self, context):
@@ -84,7 +83,7 @@ class OBJECT_OT_BeamngLoadJbeamPropsBase(bpy.types.Operator):
             #print("No selection or no property data found")
             return {'CANCELLED'}
 
-        scene_props = getattr(context.scene, self.scene_property_name)
+        scene_props = context.scene.beamng_jbeam_structure_props
         scene_props.clear()
         properties = {}
 
@@ -109,7 +108,6 @@ class OBJECT_OT_BeamngLoadJbeamNodeProps(OBJECT_OT_BeamngLoadJbeamPropsBase):
     bl_label = "DevTools: BeamNG Load JBeam Node Properties"
     domain = "verts"
     layer_name = j.ATTR_NODE_PROPS
-    scene_property_name = "beamng_jbeam_node_props"
     get_props_function = staticmethod(j.get_node_props)
 
 class OBJECT_OT_BeamngLoadJbeamBeamProps(OBJECT_OT_BeamngLoadJbeamPropsBase):
@@ -118,7 +116,6 @@ class OBJECT_OT_BeamngLoadJbeamBeamProps(OBJECT_OT_BeamngLoadJbeamPropsBase):
     bl_label = "DevTools: BeamNG Load JBeam Beam Properties"
     domain = "edges"
     layer_name = j.ATTR_BEAM_PROPS
-    scene_property_name = "beamng_jbeam_beam_props"
     get_props_function = staticmethod(j.get_beam_props)
 
 class OBJECT_OT_BeamngLoadJbeamTriangleProps(OBJECT_OT_BeamngLoadJbeamPropsBase):
@@ -127,7 +124,6 @@ class OBJECT_OT_BeamngLoadJbeamTriangleProps(OBJECT_OT_BeamngLoadJbeamPropsBase)
     bl_label = "DevTools: BeamNG Load JBeam Triangle Properties"
     domain = "faces"
     layer_name = j.ATTR_TRIANGLE_PROPS
-    scene_property_name = "beamng_jbeam_triangle_props"
     get_props_function = staticmethod(j.get_triangle_props)
 
 
@@ -146,17 +142,17 @@ class OBJECT_OT_BeamngSaveJbeamProp(bpy.types.Operator):
 
         bm = bmesh.from_edit_mesh(obj.data)
         domain_map = {
-            'NODE': ('verts', 'beamng_jbeam_node_props', j.ATTR_NODE_PROPS, j.get_node_props, j.set_node_props),
-            'BEAM': ('edges', 'beamng_jbeam_beam_props', j.ATTR_BEAM_PROPS, j.get_beam_props, j.set_beam_props),
-            'TRIANGLE': ('faces', 'beamng_jbeam_triangle_props', j.ATTR_TRIANGLE_PROPS, j.get_triangle_props, j.set_triangle_props),
+            'NODE': ('verts', j.ATTR_NODE_PROPS, j.get_node_props, j.set_node_props),
+            'BEAM': ('edges', j.ATTR_BEAM_PROPS, j.get_beam_props, j.set_beam_props),
+            'TRIANGLE': ('faces', j.ATTR_TRIANGLE_PROPS, j.get_triangle_props, j.set_triangle_props),
         }
 
         if self.prop_type in domain_map:
-            domain, prop_collection_name, attr_name, get_props, set_props = domain_map[self.prop_type]
+            domain, attr_name, get_props, set_props = domain_map[self.prop_type]
             layers = getattr(bm, domain).layers
             layer = layers.string.get(attr_name)
             elements = [elem for elem in getattr(bm, domain) if elem.select]
-            prop_collection = getattr(context.scene, prop_collection_name)
+            prop_collection = context.scene.beamng_jbeam_structure_props
         else:
             self.report({'ERROR'}, f"Unknown property type: {self.prop_type}")
             return {'CANCELLED'}
@@ -316,16 +312,7 @@ class OBJECT_OT_BeamngAddJbeamProp(bpy.types.Operator):
     prop_type = ""
 
     def execute(self, context):
-        if self.prop_type == 'NODE':
-            prop = context.scene.beamng_jbeam_node_props.add()
-        elif self.prop_type == 'BEAM':
-            prop = context.scene.beamng_jbeam_beam_props.add()
-        elif self.prop_type == 'TRIANGLE':
-            prop = context.scene.beamng_jbeam_triangle_props.add()
-        else:
-            self.report({'ERROR'}, f"Unknown property type: {self.prop_type}")
-            return {'CANCELLED'}
-        
+        prop = context.scene.beamng_jbeam_structure_props.add()
         prop.name = f"{self.prop_type.capitalize()}Prop"
         prop.value = "0"
         return {'FINISHED'}
@@ -355,7 +342,6 @@ class OBJECT_OT_BeamngRemoveJbeamProp(bpy.types.Operator):
 
     domain = ""  # verts (node), edges (beam), faces (triangle)
     attr_layer = ""
-    ui_list_attr = ""
     get_props = None
     set_props = None
 
@@ -381,7 +367,7 @@ class OBJECT_OT_BeamngRemoveJbeamProp(bpy.types.Operator):
         # Fetch relevant attributes from subclass
         layer = bm.__getattribute__(self.domain).layers.string.get(self.attr_layer)
         selected_elements = [elem for elem in bm.__getattribute__(self.domain) if elem.select]
-        ui_list = getattr(scene, self.ui_list_attr)
+        ui_list = scene.beamng_jbeam_structure_props
 
         if layer is None:
             self.report({'WARNING'}, "No property data found")
@@ -433,7 +419,6 @@ class OBJECT_OT_BeamngRemoveJbeamNodeProp(OBJECT_OT_BeamngRemoveJbeamProp):
     bl_label = "DevTools: BeamNG Remove JBeam Node Property"
     domain = "verts"
     attr_layer = j.ATTR_NODE_PROPS
-    ui_list_attr = "beamng_jbeam_node_props"
     get_props = staticmethod(j.get_node_props)
     set_props = staticmethod(j.set_node_props)
 
@@ -443,7 +428,6 @@ class OBJECT_OT_BeamngRemoveJbeamBeamProp(OBJECT_OT_BeamngRemoveJbeamProp):
     bl_label = "DevTools: BeamNG Remove JBeam Beam Property"
     domain = "edges"
     attr_layer = j.ATTR_BEAM_PROPS
-    ui_list_attr = "beamng_jbeam_beam_props"
     get_props = staticmethod(j.get_beam_props)
     set_props = staticmethod(j.set_beam_props)
 
@@ -453,7 +437,6 @@ class OBJECT_OT_BeamngRemoveJbeamTriangleProp(OBJECT_OT_BeamngRemoveJbeamProp):
     bl_label = "DevTools: BeamNG Remove JBeam Triangle Property"
     domain = "faces"
     attr_layer = j.ATTR_TRIANGLE_PROPS
-    ui_list_attr = "beamng_jbeam_triangle_props"
     get_props = staticmethod(j.get_triangle_props)
     set_props = staticmethod(j.set_triangle_props)
 
@@ -472,10 +455,6 @@ class OBJECT_OT_BeamngSelectByPropertyBase(bpy.types.Operator):
         """Retrieve property data for the given element."""
         pass
 
-    def get_property_collection(self, context):
-        """Determine the correct property collection based on element type."""
-        pass
-
     def execute(self, context):
         obj = context.object
         if not obj or obj.type != 'MESH':
@@ -483,7 +462,7 @@ class OBJECT_OT_BeamngSelectByPropertyBase(bpy.types.Operator):
             return {'CANCELLED'}
 
         bm = bmesh.from_edit_mesh(obj.data)
-        prop_collection = self.get_property_collection(context)
+        prop_collection = context.scene.beamng_jbeam_structure_props
 
         # Retrieve the property value from the UI
         selected_prop_value = None
@@ -534,9 +513,6 @@ class OBJECT_OT_BeamngSelectJbeamNodesByProperty(OBJECT_OT_BeamngSelectByPropert
     def get_property_data(self, obj, element):
         return j.get_node_props(obj, element.index)
 
-    def get_property_collection(self, context):
-        return context.scene.beamng_jbeam_node_props
-
 class OBJECT_OT_BeamngSelectJbeamBeamsByProperty(OBJECT_OT_BeamngSelectByPropertyBase):
     """Select all edges (beams) that share the same JBeam property and value"""
     bl_idname = "object.devtools_beamng_select_jbeam_beams_by_property"
@@ -548,9 +524,6 @@ class OBJECT_OT_BeamngSelectJbeamBeamsByProperty(OBJECT_OT_BeamngSelectByPropert
     def get_property_data(self, obj, element):
         return j.get_beam_props(obj, element.index)
 
-    def get_property_collection(self, context):
-        return context.scene.beamng_jbeam_beam_props
-
 class OBJECT_OT_BeamngSelectJbeamTrianglesByProperty(OBJECT_OT_BeamngSelectByPropertyBase):
     """Select all faces (triangles) that share the same JBeam property and value"""
     bl_idname = "object.devtools_beamng_select_jbeam_triangles_by_property"
@@ -561,6 +534,3 @@ class OBJECT_OT_BeamngSelectJbeamTrianglesByProperty(OBJECT_OT_BeamngSelectByPro
 
     def get_property_data(self, obj, element):
         return j.get_triangle_props(obj, element.index)
-
-    def get_property_collection(self, context):
-        return context.scene.beamng_jbeam_triangle_props

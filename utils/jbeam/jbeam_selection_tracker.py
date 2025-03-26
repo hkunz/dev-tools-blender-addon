@@ -1,9 +1,10 @@
 import bpy
 import bmesh
 
-from dev_tools.utils.object_utils import ObjectUtils as o # type: ignore
-from dev_tools.utils.ui_utils import UiUtils # type: ignore
-from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
+from dev_tools.utils.object_utils import ObjectUtils as o  # type: ignore
+from dev_tools.utils.ui_utils import UiUtils  # type: ignore
+from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
+from dev_tools.operators.common.ui.toggle_dynamic_button_operator import ButtonItem  # type: ignore
 
 class JbeamSelectionTracker:
     _instance = None
@@ -109,6 +110,11 @@ class JbeamSelectionTracker:
         UiUtils.force_update_ui(bpy.context)
         obj.data.update()
 
+    def update_instances(self, scene, obj, struct, get_total_instances):
+        struct.num_instances = get_total_instances(obj, struct.index)
+        scene.beamng_jbeam_instance.buttons.clear()
+        bpy.ops.wm.beamng_jbeam_manage_jbeam_instance_buttons(action='ADD', button_name=ButtonItem.BUTTON_NAME, button_amount=struct.num_instances)
+
     def update_beam_data(self, scene, obj, bm):
         bm.edges.ensure_lookup_table()
         current_selection = {e.index for e in bm.edges if e.select}
@@ -120,7 +126,7 @@ class JbeamSelectionTracker:
         mod = j.get_gn_jbeam_modifier(obj)
         o.update_edge_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_edges", "selected_edges", current_selection)
         struct = self.update_struct(scene, obj, bm, current_selection, bmesh.types.BMEdge, j.get_beam_id, j.set_gn_jbeam_active_beam_index)
-        struct.num_instances = j.get_total_beam_instances(obj, struct.index)
+        self.update_instances(scene, obj, struct, j.get_total_beam_instances)
         bpy.ops.object.devtools_beamng_load_jbeam_beam_props()
         UiUtils.force_update_ui(bpy.context)
         obj.data.update()
@@ -136,7 +142,7 @@ class JbeamSelectionTracker:
         mod = j.get_gn_jbeam_modifier(obj)
         o.update_face_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_faces", "selected_faces", current_selection)
         struct = self.update_struct(scene, obj, bm, current_selection, bmesh.types.BMFace, j.get_triangle_id, j.set_gn_jbeam_active_triangle_index)
-        struct.num_instances = j.get_total_triangle_instances(obj, struct.index)
+        self.update_instances(scene, obj, struct, j.get_total_triangle_instances)
         bpy.ops.object.devtools_beamng_load_jbeam_triangle_props()
         UiUtils.force_update_ui(bpy.context)
         obj.data.update()

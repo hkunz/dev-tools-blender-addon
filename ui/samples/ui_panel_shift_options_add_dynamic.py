@@ -96,8 +96,8 @@ class DynamicButtonPanel(bpy.types.Panel):
 
         # Second part for the `+` and `X` buttons (20%)
         control_row = split.row(align=True)
-        control_row.operator("wm.manage_dynamic_buttons", text="+").action = 'ADD'
-        control_row.operator("wm.manage_dynamic_buttons", text="X").action = 'REMOVE'
+        control_row.operator(ManageDynamicButtonsOperator.bl_idname, text="+").action = 'ADD'
+        control_row.operator(ManageDynamicButtonsOperator.bl_idname, text="X").action = 'REMOVE'
 
         # Display selected buttons
         selected = [item.name for item in settings if item.name]

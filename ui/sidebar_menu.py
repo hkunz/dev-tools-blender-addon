@@ -325,34 +325,27 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
 
     def draw_element_instances_buttons(self, context, layout):
         settings = context.scene.beamng_jbeam_instance.buttons
-
-        # Create a row and divide it into two parts (80% and 20%)
         split = layout.row(align=True).split(factor=0.8)
-
-        # First part for the dynamically created buttons (80%)
         button_row = split.row(align=True)
-        button_name = "Instance"
+        button_name = ButtonItem.BUTTON_NAME
         for i, item in enumerate(settings):
             o = button_row.operator(
                 "wm.toggle_dynamic_button",
-                text=f"{button_name} {i + 1}" if not item.name else item.name,
+                text=button_name.replace("#", str(i + 1)) if not item.name else item.name,
                 depress=bool(item.name)
             )
             o.index = i
             o.button_name = button_name
 
-        # Second part for the `+` and `X` buttons (20%)
         control_row = split.row(align=True)
-        o = control_row.operator("wm.manage_dynamic_buttons", text="", icon="EVENT_PLUS")
+        o = control_row.operator(ManageDynamicButtonsOperator.bl_idname, text="", icon="EVENT_PLUS")
         o.action = 'ADD'
         o.button_name = button_name
-        o = control_row.operator("wm.manage_dynamic_buttons", text="", icon="CANCEL")
+        o = control_row.operator(ManageDynamicButtonsOperator.bl_idname, text="", icon="CANCEL")
         o.action = 'REMOVE'
         o.button_name = button_name
 
-        # Display selected buttons
         selected = [item.name for item in settings if item.name]
-        #layout.label(text=f"Selected: {', '.join(selected) if selected else 'None'}")
         print(f"Selected: {', '.join(selected) if selected else 'None'}")
 
     def draw_expanded_bake_options(self, context, layout):

@@ -3,25 +3,6 @@ import bmesh
 
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
 
-
-
-def update_active_instance(self, context):
-    """Callback to handle changes in the active_instance property."""
-    print(f"Active Instance changed to: {self.active_instance}")
-
-
-
-def get_instance_enum(self, context):
-    """Static list of instances for EnumProperty."""
-    return [
-        ("0", "Instance 1", "Switch to instance 1"),
-        ("1", "Instance 2", "Switch to instance 2"),
-        ("2", "Instance 3", "Switch to instance 3"),
-    ]
-
-
-
-
 class JbeamElement(bpy.types.PropertyGroup):
     id: bpy.props.StringProperty(
         name="Element ID",
@@ -33,27 +14,6 @@ class JbeamElement(bpy.types.PropertyGroup):
         description="Index of the associated vertex/edge/face",
         default=-1
     )  # type: ignore
-
-    dactive_instance_deprecated: bpy.props.IntProperty(
-        name="asdf",
-        description="Identifies repeated occurrences of a structure (beams/triangles) in the JBeam file",
-        default=1
-    )  # type: ignore
-
-    active_instance: bpy.props.EnumProperty(
-        name="Active Instance",
-        description="Select the active instance",
-        items=get_instance_enum
-        #update=update_active_instance
-    )  # type: ignore
-
-    my_enum: bpy.props.EnumProperty(
-        name="Dropdown:",
-        description="Apply Data to attribute.",
-        items=[ ('OP1', "Option 1", ""),
-                ('OP2', "Option 2", ""),
-               ]
-        )   # type: ignore
 
     num_instances: bpy.props.IntProperty(
         name="Number of Instances",

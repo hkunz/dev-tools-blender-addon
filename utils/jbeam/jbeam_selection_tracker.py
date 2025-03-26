@@ -63,7 +63,7 @@ class JbeamSelectionTracker:
         if num_verts > self.previous_vertex_count or num_edges > self.previous_edge_count or num_faces > self.previous_face_count:
             j.validate_and_fix_storage_keys(obj, bm)
 
-        scene.beamng_jbeam_active_beam.active_instance = '1'
+        #scene.beamng_jbeam_active_instance = 1
 
         self.previous_vertex_count = num_verts
         self.previous_edge_count = num_edges
@@ -164,12 +164,3 @@ class JbeamSelectionTracker:
         scene.beamng_jbeam_active_triangle.id = j.get_triangle_id(obj, active_index, bm) or ""
         bpy.ops.object.devtools_beamng_load_jbeam_triangle_props()
         UiUtils.force_update_ui(bpy.context)
-
-
-
-
-
-
-
-
-

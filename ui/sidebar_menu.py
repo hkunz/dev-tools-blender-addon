@@ -261,7 +261,6 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                         box.use_property_decorate = False 
                         box.prop(struct, "id", text="Active Beam ID")
                         r = box.row()
-                        #r.prop(s, "beamng_jbeam_active_instance", expand=True)
                         self.draw_element_instances_buttons(context, r)
                         
                         if s.beamng_jbeam_active_structure.prop_items:
@@ -277,7 +276,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                         else:
                             box.label(text=f"No Scope Modifers on Selection")
 
-                        box.operator(OBJECT_OT_BeamngAddJbeamBeamProp.bl_idname, text="Add Scope Modifier")
+                        box.operator(OBJECT_OT_BeamngAddJbeamBeamProp.bl_idname, text="Add Scope Modifier", icon="RNA_ADD")
                         box.operator(OBJECT_OT_BeamngSaveAllJbeamBeamProps.bl_idname, text="Save All", icon="FILE_TICK")
                     else:
                         msg = "Select elements to view Scope Modifiers" if j.is_node_mesh(obj) else "Convert to Node Mesh"
@@ -294,6 +293,8 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                         split.label(text=f"(area)")
                         box.label(text=f"Selected: {struct.selection}")
                         box.prop(struct, "id", text="Active Triangle ID")
+                        r = box.row()
+                        self.draw_element_instances_buttons(context, r)
 
                         if s.beamng_jbeam_active_structure.prop_items:
                             for prop in s.beamng_jbeam_active_structure.prop_items:
@@ -308,7 +309,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                         else:
                             box.label(text=f"No Scope Modifers on Selection")
 
-                        box.operator(OBJECT_OT_BeamngAddJbeamTriangleProp.bl_idname, text="Add Scope Modifier")
+                        box.operator(OBJECT_OT_BeamngAddJbeamTriangleProp.bl_idname, text="Add Scope Modifier", icon="RNA_ADD")
                         box.operator(OBJECT_OT_BeamngSaveAllJbeamTriangleProps.bl_idname, text="Save All", icon="FILE_TICK")
                     else:
                         msg = "Select elements to view Scope Modifiers" if j.is_node_mesh(obj) else "Convert to Node Mesh"
@@ -323,25 +324,24 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
 
     def draw_element_instances_buttons(self, context, layout):
         settings = context.scene.beamng_jbeam_instance.buttons
-        split = layout.row(align=True).split(factor=0.8)
-        button_row = split.row(align=True)
+        r = layout.row(align=True)
         button_name = ButtonItem.BUTTON_NAME
         for i, item in enumerate(settings):
-            o = button_row.operator(
+            o = r.operator(
                 "wm.toggle_dynamic_button",
                 text=ButtonItem.generate_button_name(i) if not item.name else item.name,
                 depress=bool(item.name)
             )
             o.index = i
             o.button_name = button_name
-
-        control_row = split.row(align=True)
-        o = control_row.operator(ManageDynamicButtonsOperator.bl_idname, text="", icon="EVENT_PLUS")
+        #r.separator()
+        o = r.operator(ManageDynamicButtonsOperator.bl_idname, text="", icon="EVENT_PLUS")
         o.action = 'ADD'
         o.button_name = button_name
-        o = control_row.operator(ManageDynamicButtonsOperator.bl_idname, text="", icon="CANCEL")
-        o.action = 'REMOVE'
-        o.button_name = button_name
+        if len(settings) > 1:
+            o = r.operator(ManageDynamicButtonsOperator.bl_idname, text="", icon="TRASH")
+            o.action = 'REMOVE'
+            o.button_name = button_name
 
         selected = [item.name for item in settings if item.name]
         #print(f"Selected: {', '.join(selected) if selected else 'None'}")

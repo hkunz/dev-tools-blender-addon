@@ -5,9 +5,10 @@ import re
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
 
 class OBJECT_OT_BeamngJbeamRenameSelectedNodes(bpy.types.Operator):
-    """Renames selected vertices using active node ID as prefix"""
+    """Renames selected Nodes using the Active Node ID as a prefix. Use # as a number placeholder."""
     bl_idname = "object.devtools_beamng_jbeam_rename_selected_nodes"
     bl_label = "DevTools: Rename Selected JBeam Nodes"
+    bl_description = ""
     bl_options = {'INTERNAL', 'UNDO'}
 
     def execute(self, context):

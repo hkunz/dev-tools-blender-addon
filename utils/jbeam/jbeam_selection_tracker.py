@@ -52,6 +52,8 @@ class JbeamSelectionTracker:
         self.on_instance_buttons_update(scene)
 
     def on_instance_button_change_remove(self, scene, instance_selection):
+        print("remove === ", instance_selection)
+        return
         for instance in instance_selection:
             pass
         self.on_instance_buttons_update(scene)

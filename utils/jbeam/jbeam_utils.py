@@ -231,7 +231,10 @@ class JbeamUtils:
     @staticmethod
     def delete_props(obj, domain, index, attr_name, instance: int=None):
         key = JbeamUtils.get_attribute_value(obj, index, attr_name, domain)
-        key = JbeamPropsStorage.get_instance().delete_props(domain, key, instance)
+        if key:
+            JbeamPropsStorage.get_instance().delete_props(domain, key, instance)
+        else:
+            print(f"Warning: key '{key}' does not exist")
         JbeamUtils.set_attribute_value(obj, index, attr_name, key, domain=domain)
 
     @staticmethod

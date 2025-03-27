@@ -95,6 +95,9 @@ class ManageDynamicButtonsOperator(bpy.types.Operator):
         elif self.action == 'REMOVE' and settings:
             # Get indices of highlighted buttons
             highlighted_indices = [i for i, item in enumerate(settings) if item.name]
+            if len(highlighted_indices) >= len(settings):
+                self.report({'WARNING'}, "You cannot delete all, one has to remain!")
+                return {'CANCELLED'}
 
             if highlighted_indices:
                 # Remove highlighted buttons in reverse order

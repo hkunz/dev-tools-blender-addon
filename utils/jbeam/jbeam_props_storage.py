@@ -43,7 +43,7 @@ class JbeamPropsStorage:
             self.storage[domain][key] = {}
 
         # Store a deep copy of the instance-specific properties
-        self.storage[domain][key][f"instance_{instance}"] = copy.deepcopy(props)
+        self.storage[domain][key][f"{instance}"] = copy.deepcopy(props)
         return key
 
     def fetch_props(self, domain: str, key: str, instance: int = 1) -> dict:
@@ -55,29 +55,53 @@ class JbeamPropsStorage:
         if key not in self.storage[domain]:
             return {}
 
-        return copy.deepcopy(self.storage[domain][key].get(f"instance_{instance}", {}))
+        return copy.deepcopy(self.storage[domain][key].get(f"{instance}", {}))
 
     def delete_props(self, domain: str, key: str, instance: int = None):
-        """Removes properties from the specified domain. Optionally deletes a specific instance."""
+        """
+        Removes properties from the specified domain. Optionally deletes a specific instance.
+        Ensures remaining instances are renumbered sequentially if an instance is deleted.
+        
+        Args:
+            domain (str): The domain to delete properties from ('verts', 'edges', or 'faces').
+            key (str): The unique key identifying the stored properties.
+            instance (int, optional): The specific instance to delete. If None, deletes the entire key.
+            
+        Raises:
+            KeyError: If the domain is invalid or the key doesn't exist in the domain.
+        """
         domain = self.resolve_domain(domain)
+        
+        # Validate the domain
         if domain not in self.storage:
-            raise ValueError(f"Invalid domain: {domain}")
-
+            raise KeyError(f"Invalid domain: {domain}")
+        
+        # Check if the key exists
         if key not in self.storage[domain]:
-            return
-
+            raise KeyError(f"Key '{key}' not found in domain '{domain}'")
+        
         if instance is None:
             # Delete the entire key
             del self.storage[domain][key]
         else:
             # Delete only the instance-specific properties
-            instance_key = f"instance_{instance}"
+            instance_key = str(instance)
             if instance_key in self.storage[domain][key]:
                 del self.storage[domain][key][instance_key]
-
-            # Clean up the key if no instances remain
-            if not self.storage[domain][key]:
-                del self.storage[domain][key]
+                
+                # Renumber remaining instances
+                remaining_instances = sorted(
+                    self.storage[domain][key].items(), key=lambda x: int(x[0])
+                )
+                self.storage[domain][key] = {
+                    str(i + 1): props for i, (_, props) in enumerate(remaining_instances)
+                }
+                
+                # Clean up the key if no instances remain
+                if not self.storage[domain][key]:
+                    del self.storage[domain][key]
+            else:
+                print(f"Instance {instance} not found for key '{key}' in domain '{domain}'.")
 
     def get_total_instances(self, domain: str, key: str) -> int:
         """Returns the total number of instances for the given key in the specified domain."""

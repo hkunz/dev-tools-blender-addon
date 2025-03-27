@@ -42,14 +42,27 @@ class JbeamSelectionTracker:
             return
         self.check_selection_change(scene)
 
-    def on_instance_button_click(self, scene):
+    def on_instance_buttons_update(self, scene):
         current_instances_selection = scene.beamng_jbeam_instance.get_selected_instances()
         self.previous_instances_selection = current_instances_selection
         for instance in current_instances_selection:
             bpy.ops.object.devtools_beamng_load_jbeam_beam_props(instance=instance)
 
-    def on_instance_button_manage_change(self, scene):
-        self.on_instance_button_click(scene)
+    def on_instance_button_change_add(self, scene):
+        self.on_instance_buttons_update(scene)
+
+    def on_instance_button_change_remove(self, scene, instance_selection):
+        for instance in instance_selection:
+            pass
+        self.on_instance_buttons_update(scene)
+        self.reset_selection(scene)
+        self.check_selection_change(scene)
+
+    def reset_selection(self, scene):
+        scene.beamng_jbeam_active_structure.index = -1
+        self.previous_vertex_selection = None
+        self.previous_edge_selection = None
+        self.previous_face_selection = None
 
     def check_selection_change(self, scene):
         obj = bpy.context.object
@@ -57,10 +70,7 @@ class JbeamSelectionTracker:
         reset = False
         if self.previous_selection_mode != mode:
             self.previous_selection_mode = mode
-            scene.beamng_jbeam_active_structure.index = -1
-            self.previous_vertex_selection = None
-            self.previous_edge_selection = None
-            self.previous_face_selection = None
+            self.reset_selection(scene)
             reset = True
 
         bm = bmesh.from_edit_mesh(obj.data)
@@ -73,8 +83,6 @@ class JbeamSelectionTracker:
 
         if num_verts > self.previous_vertex_count or num_edges > self.previous_edge_count or num_faces > self.previous_face_count:
             j.validate_and_fix_storage_keys(obj, bm)
-
-        #scene.beamng_jbeam_active_instance = 1
 
         self.previous_vertex_count = num_verts
         self.previous_edge_count = num_edges

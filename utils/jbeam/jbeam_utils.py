@@ -190,28 +190,28 @@ class JbeamUtils:
 
     @staticmethod
     def get_node_props(obj, vertex_index, instance=1) -> str:
-        doamin = "verts"
-        key = JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, doamin)
-        return JbeamPropsStorage.get_instance().fetch_props(doamin, key, instance)
+        domain = "verts"
+        key = JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, domain)
+        return JbeamPropsStorage.get_instance().fetch_props(domain, key, instance)
 
     @staticmethod
     def get_beam_props(obj, edge_index, instance=1) -> str:
-        doamin = "edges"
-        key = JbeamUtils.get_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, doamin)
-        return JbeamPropsStorage.get_instance().fetch_props(doamin, key, instance)
+        domain = "edges"
+        key = JbeamUtils.get_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, domain)
+        return JbeamPropsStorage.get_instance().fetch_props(domain, key, instance)
 
     @staticmethod
     def get_triangle_props(obj, face_index, instance=1) -> str:
-        doamin = "faces"
-        key = JbeamUtils.get_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, doamin)
-        return JbeamPropsStorage.get_instance().fetch_props(doamin, key, instance)
+        domain = "faces"
+        key = JbeamUtils.get_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, domain)
+        return JbeamPropsStorage.get_instance().fetch_props(domain, key, instance)
 
     @staticmethod
     def set_node_props(obj, vertex_index, node_props: dict, instance=1):
-        doamin = "verts"
-        key = JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, doamin)
-        key = JbeamPropsStorage.get_instance().store_props(doamin, key, node_props, instance)
-        JbeamUtils.set_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, key, domain=doamin)
+        domain = "verts"
+        key = JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, domain)
+        key = JbeamPropsStorage.get_instance().store_props(domain, key, node_props, instance)
+        JbeamUtils.set_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, key, domain=domain)
 
     @staticmethod
     def set_beam_props(obj, edge_index, beam_props: dict, instance: int=1):
@@ -223,22 +223,36 @@ class JbeamUtils:
 
     @staticmethod
     def set_triangle_props(obj, face_index, triangle_props: dict, instance: int=1):
-        doamin = "faces"
-        key = JbeamUtils.get_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, doamin)
-        key = JbeamPropsStorage.get_instance().store_props(doamin, key, triangle_props, instance)
-        JbeamUtils.set_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, key, domain=doamin)
+        domain = "faces"
+        key = JbeamUtils.get_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, domain)
+        key = JbeamPropsStorage.get_instance().store_props(domain, key, triangle_props, instance)
+        JbeamUtils.set_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, key, domain=domain)
+
+    @staticmethod
+    def delete_props(obj, domain, index, attr_name, instance: int=None):
+        key = JbeamUtils.get_attribute_value(obj, index, attr_name, domain)
+        key = JbeamPropsStorage.get_instance().delete_props(domain, key, instance)
+        JbeamUtils.set_attribute_value(obj, index, attr_name, key, domain=domain)
+
+    @staticmethod
+    def delete_beam_props(obj, edge_index, instance: int=None):
+        JbeamUtils.delete_props(obj, "edges", edge_index, JbeamUtils.ATTR_BEAM_PROPS, instance)
+
+    @staticmethod
+    def delete_triangle_props(obj, face_index, instance: int=None):
+        JbeamUtils.delete_props(obj, "faces", face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, instance)
 
     @staticmethod
     def get_total_beam_instances(obj, edge_index) -> str:
-        doamin = "edges"
-        key = JbeamUtils.get_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, doamin)
-        return JbeamPropsStorage.get_instance().get_total_instances(doamin, key)
+        domain = "edges"
+        key = JbeamUtils.get_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, domain)
+        return JbeamPropsStorage.get_instance().get_total_instances(domain, key)
 
     @staticmethod
     def get_total_triangle_instances(obj, face_index) -> str:
-        doamin = "faces"
-        key = JbeamUtils.get_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, doamin)
-        return JbeamPropsStorage.get_instance().get_total_instances(doamin, key)
+        domain = "faces"
+        key = JbeamUtils.get_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, domain)
+        return JbeamPropsStorage.get_instance().get_total_instances(domain, key)
 
     @staticmethod
     def validate_and_fix_storage_keys(obj, bm):

@@ -52,7 +52,7 @@ class ToggleDynamicButtonOperator(bpy.types.Operator):
                 item.name = ""
             settings[self.index].name = button_name
 
-        self.handler.on_instance_button_click(context.scene)
+        self.handler.on_instance_buttons_update(context.scene)
         return {'FINISHED'}
 
 class ManageDynamicButtonsOperator(bpy.types.Operator):
@@ -89,6 +89,8 @@ class ManageDynamicButtonsOperator(bpy.types.Operator):
             if self.button_amount > 1:
                 for i in range(first_button_index + 1, len(settings)):
                     settings[i].name = ""
+            
+            self.handler.on_instance_button_change_add(context.scene)
 
         elif self.action == 'REMOVE' and settings:
             # Get indices of highlighted buttons
@@ -103,7 +105,9 @@ class ManageDynamicButtonsOperator(bpy.types.Operator):
                 if len(settings) > 0:
                     next_highlight_index = min(highlighted_indices[-1], len(settings) - 1)
                     settings[next_highlight_index].name = ButtonItem.generate_button_name(next_highlight_index)
+
+                instance_selection = [i + 1 for i in highlighted_indices]
+                self.handler.on_instance_button_change_remove(context.scene, instance_selection)
             else:
                 self.report({'WARNING'}, "No buttons are highlighted to remove!")
-        self.handler.on_instance_button_manage_change(context.scene)
         return {'FINISHED'}

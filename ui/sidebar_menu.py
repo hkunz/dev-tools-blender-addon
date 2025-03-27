@@ -397,8 +397,10 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
     def poll(cls, context):
         return True
 
+def on_register_complete():
+    ToggleDynamicButtonOperator.handler = ManageDynamicButtonsOperator.handler = JbeamSelectionTracker.get_instance()
+
 def register() -> None:
-    
     bpy.utils.register_class(OBJECT_PT_devtools_addon_panel)
     bpy.utils.register_class(MyPropertyGroup1)
     bpy.utils.register_class(MyPropertyGroup2)
@@ -409,8 +411,6 @@ def register() -> None:
     bpy.utils.register_class(ButtonItemSelector)
     bpy.utils.register_class(ToggleDynamicButtonOperator)
     bpy.utils.register_class(ManageDynamicButtonsOperator)
-    ToggleDynamicButtonOperator.handler = ManageDynamicButtonsOperator.handler = JbeamSelectionTracker.get_instance()
-    #"Identifies one of the repeated occurrences of a structure (beams/triangles) in the JBeam file",
     bpy.types.Material.my_slot_setting = bpy.props.PointerProperty(type=MyPropertyGroup2)
     bpy.types.Scene.my_property_group_pointer = bpy.props.PointerProperty(type=MyPropertyGroup1)
     bpy.types.Scene.expanded_armature_options = bpy.props.BoolProperty(default=False)
@@ -420,6 +420,7 @@ def register() -> None:
     bpy.types.Scene.beamng_jbeam_hidden_elements = bpy.props.PointerProperty(type=JbeamHiddenElements)
     bpy.types.Scene.beamng_jbeam_instance = bpy.props.PointerProperty(type=ButtonItemSelector)
     bpy.app.handlers.depsgraph_update_post.append(on_depsgraph_update)
+    on_register_complete()
 
 def unregister() -> None:
     bpy.utils.unregister_class(OBJECT_PT_devtools_addon_panel)

@@ -180,13 +180,12 @@ class OBJECT_OT_BeamngSaveJbeamProp(bpy.types.Operator):
             return {'CANCELLED'}
 
         # Apply property to selected elements
+        instances = context.scene.beamng_jbeam_instance.get_selected_instances()
         for element in elements:
-            try:
-                props = get_props(obj, element.index)
+            for instance in instances:
+                props = get_props(obj, element.index, instance)
                 props[self.prop_name] = prop_to_save.value
-                set_props(obj, element.index, props)
-            except Exception as e:
-                self.report({'ERROR'}, f"Failed to save property: {e}")
+                set_props(obj, element.index, props, instance)
 
         bmesh.update_edit_mesh(obj.data)
         self.report({'INFO'}, f"Saved property: {self.prop_name}")
@@ -239,16 +238,16 @@ class OBJECT_OT_BeamngSaveAllJbeamProps(bpy.types.Operator):
         return [elem for elem in getattr(bm, cls.domain, []) if elem.select]
 
     @classmethod
-    def get_props(cls, obj, index):
+    def get_props(cls, obj, index, instance):
         """Retrieve JBeam properties for the given element index."""
-        return getattr(j, f"get_{cls.prop_type}_props", lambda *_: {})(obj, index)
+        return getattr(j, f"get_{cls.prop_type}_props", lambda *_: {})(obj, index, instance)
 
     @classmethod
-    def set_props(cls, obj, index, props):
+    def set_props(cls, obj, index, props, instance):
         """Set JBeam properties for the given element index."""
         setter = getattr(j, f"set_{cls.prop_type}_props", None)
         if setter:
-            setter(obj, index, props)
+            setter(obj, index, props, instance)
 
     def save_jbeam_props(self, context):
         obj = context.object
@@ -268,16 +267,15 @@ class OBJECT_OT_BeamngSaveAllJbeamProps(bpy.types.Operator):
             if any(prop_name.lower() == reserved.lower() for prop_name in ui_props):
                 return f"Keyword '{reserved}' is reserved. Use vertex groups prefixed '{reserved}_' to assign nodes to a {reserved}.", 'CANCELLED'
 
+        instances = context.scene.beamng_jbeam_instance.get_selected_instances()
         for element in selected_elements:
-            try:
-                props = self.get_props(obj, element.index)
+            for instance in instances:
+                props = self.get_props(obj, element.index, instance)
                 props = {k: v for k, v in props.items() if k in ui_props}  # Remove missing properties
                 for prop_name, prop_value in ui_props.items():
                     props[prop_name] = prop_value
-                self.set_props(obj, element.index, props)
-            except Exception as e:
-                return f"Failed to save properties: {e}", 'ERROR'
-        
+                self.set_props(obj, element.index, props, instance)
+
         bmesh.update_edit_mesh(obj.data)
         return f"Saved all {self.prop_type} properties", 'FINISHED'
     
@@ -392,17 +390,16 @@ class OBJECT_OT_BeamngRemoveJbeamProp(bpy.types.Operator):
 
         if self.do_save:
             # Remove property from mesh (SAVE MODE)
+            instances = context.scene.beamng_jbeam_instance.get_selected_instances()
             for element in selected_elements:
-                if element[layer]:  # Ensure there's data before proceeding
-                    try:
-                        props = self.get_props(obj, element.index)
-                        if self.prop_name in props:
-                            del props[self.prop_name]  # Remove property
-                            self.set_props(obj, element.index, props)  # Update stored properties
-                            removed_from_mesh = True
-                    except Exception as e:
-                        self.report({'ERROR'}, f"Failed to remove property: {e}")
-                        return {'CANCELLED'}
+                if not element[layer]:  # Ensure there's data before proceeding
+                    continue
+                for instance in instances:
+                    props = self.get_props(obj, element.index, instance)
+                    if self.prop_name in props:
+                        del props[self.prop_name]  # Remove property
+                        self.set_props(obj, element.index, props, instance)  # Update stored properties
+                        removed_from_mesh = True
 
             bmesh.update_edit_mesh(obj.data)  # Commit changes to mesh
 

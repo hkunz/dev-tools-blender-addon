@@ -1,6 +1,7 @@
 import uuid
 import bpy
 import json
+import copy
 
 class JbeamPropsStorage:
     _instance = None
@@ -41,8 +42,8 @@ class JbeamPropsStorage:
         if key not in self.storage[domain]:
             self.storage[domain][key] = {}
 
-        # Store instance-specific properties
-        self.storage[domain][key][f"instance_{instance}"] = props
+        # Store a deep copy of the instance-specific properties
+        self.storage[domain][key][f"instance_{instance}"] = copy.deepcopy(props)
         return key
 
     def fetch_props(self, domain: str, key: str, instance: int = 1) -> dict:
@@ -54,7 +55,7 @@ class JbeamPropsStorage:
         if key not in self.storage[domain]:
             return {}
 
-        return self.storage[domain][key].get(f"instance_{instance}", {})
+        return copy.deepcopy(self.storage[domain][key].get(f"instance_{instance}", {}))
 
     def delete_props(self, domain: str, key: str, instance: int = None):
         """Removes properties from the specified domain. Optionally deletes a specific instance."""

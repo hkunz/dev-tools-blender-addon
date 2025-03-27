@@ -105,11 +105,15 @@ DEVTOOLS_CLASSES = [
 ]
 
 @persistent
-def on_application_load(a, b):
-    print("DevTools application load post handler ==============>", a, b)
-
 def save_pre_handler(dummy):
+    print("DevTools::save_pre_handler ==============>")
     JbeamPropsStorage.get_instance().save_jbeam_props_to_mesh()
+
+@persistent
+def on_load_post_handler(scene):
+    print("DevTools::on_load_post_handler ==============>")
+    JbeamPropsStorage.get_instance().load_jbeam_props_from_mesh()
+    JbeamSelectionTracker.get_instance().register()
 
 def register() -> None:
     print("DevTools addon Registration Begin ==============>")
@@ -127,7 +131,7 @@ def register() -> None:
     JbeamSelectionTracker.get_instance().register()
 
     bpy.app.handlers.save_pre.append(save_pre_handler)
-    bpy.app.handlers.load_post.append(on_application_load)
+    bpy.app.handlers.load_post.append(on_load_post_handler)
 
     print("DevTools addon Registration Complete <==========\n")
 
@@ -145,5 +149,5 @@ def unregister() -> None:
         bpy.utils.unregister_class(cls)
 
     bpy.app.handlers.save_pre.remove(save_pre_handler)
-    bpy.app.handlers.load_post.remove(on_application_load)
+    bpy.app.handlers.load_post.remove(on_load_post_handler)
     print("DevTools addon Unregistration Complete <========\n")

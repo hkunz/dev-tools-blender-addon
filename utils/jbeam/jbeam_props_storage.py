@@ -101,7 +101,6 @@ class JbeamPropsStorage:
                 del self.storage[domain][key]
 
     def save_jbeam_props_to_mesh(self):
-        # TODO
         """Save JbeamPropsStorage data to mesh custom properties for all objects."""
         print("Saving file... Storing JbeamPropsStorage data.")
         for obj in bpy.data.objects:
@@ -109,6 +108,20 @@ class JbeamPropsStorage:
                 continue
             obj.data["saved_jbeam_props"] = json.dumps(self.storage)
             print(f"Saved JbeamPropsStorage to {obj.name}'s mesh.")
+
+    def load_jbeam_props_from_mesh(self):
+        """Load JbeamPropsStorage data from mesh custom properties for all objects."""
+        print("Loading file... Restoring JbeamPropsStorage data.")
+        for obj in bpy.data.objects:
+            if obj.type != 'MESH' or "saved_jbeam_props" not in obj.data:
+                continue
+            try:
+                # Restore storage from the JSON data in the mesh
+                restored_data = json.loads(obj.data["saved_jbeam_props"])
+                self.storage.update(restored_data)
+                print(f"Restored JbeamPropsStorage from {obj.name}'s mesh.")
+            except (json.JSONDecodeError, TypeError) as e:
+                print(f"Failed to restore JbeamPropsStorage from {obj.name}: {e}")
 
 ''' 
 # Storage will look something like this:

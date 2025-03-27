@@ -29,10 +29,12 @@ class JbeamSelectionTracker:
         return cls._instance
 
     def register(self):
-        bpy.app.handlers.depsgraph_update_post.append(self.selection_update_handler)
+        if self.selection_update_handler not in bpy.app.handlers.depsgraph_update_post:
+            bpy.app.handlers.depsgraph_update_post.append(self.selection_update_handler)
 
     def unregister(self):
-        bpy.app.handlers.depsgraph_update_post.remove(self.selection_update_handler)
+        if self.selection_update_handler in bpy.app.handlers.depsgraph_update_post:
+            bpy.app.handlers.depsgraph_update_post.remove(self.selection_update_handler)
 
     def selection_update_handler(self, scene, depsgraph):
         obj = bpy.context.object

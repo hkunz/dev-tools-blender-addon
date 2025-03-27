@@ -316,7 +316,8 @@ class ObjectUtils:
 
         if ng:
             ng.use_fake_user = True  # Prevent deletion on exit
-            ng[group_node_name] = group_node_name  # Store an attribute for tracking
+            #ng[group_node_name] = group_node_name  # Store an attribute for tracking # This is already stored in the original blend file
+            print(f"Verifying {group_node_name}={ng[group_node_name]}")
             print(f"{'Linked' if link else 'Appended'} node tree: {ng.name}")
         else:
             print(f"Error: Node tree '{group_node_name}' not found after {'linking' if link else 'appending'}.")

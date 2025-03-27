@@ -210,7 +210,7 @@ class JbeamUtils:
     def set_node_props(obj, vertex_index, node_props: dict, instance=1):
         domain = "verts"
         key = JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, domain)
-        key = JbeamPropsStorage.get_instance().store_props(domain, key, node_props, instance)
+        key = JbeamPropsStorage.get_instance().store_props(domain, key, node_props, instance=instance)
         JbeamUtils.set_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, key, domain=domain)
 
     @staticmethod
@@ -225,7 +225,7 @@ class JbeamUtils:
     def set_triangle_props(obj, face_index, triangle_props: dict, instance: int=1):
         domain = "faces"
         key = JbeamUtils.get_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, domain)
-        key = JbeamPropsStorage.get_instance().store_props(domain, key, triangle_props, instance)
+        key = JbeamPropsStorage.get_instance().store_props(domain, key, triangle_props, instance=instance)
         JbeamUtils.set_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, key, domain=domain)
 
     @staticmethod

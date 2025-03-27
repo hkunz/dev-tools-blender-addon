@@ -6,7 +6,6 @@ from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j, JbeamPropsStorage
 
 class OBJECT_OT_PrintJBeamPropsBase(bpy.types.Operator):
     """Base class for printing JBeam properties"""
-    bl_idname = "object.print_jbeam_props_base"
     bl_label = "Print JBeam Properties"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -17,7 +16,7 @@ class OBJECT_OT_PrintJBeamPropsBase(bpy.types.Operator):
     def execute(self, context):
         if bpy.context.object.mode != 'OBJECT':
             bpy.ops.object.mode_set(mode='OBJECT')
-
+        storage_inst = JbeamPropsStorage.get_instance()
         for obj in context.selected_objects:
             if not j.is_node_mesh(obj):
                 self.report({'WARNING'}, f"Object '{obj.name}' ({self.attr_name}): Object is not a Node Mesh")
@@ -29,10 +28,11 @@ class OBJECT_OT_PrintJBeamPropsBase(bpy.types.Operator):
             print(f"{info}:")
 
             for index in range(len(elements)):
-                key = j.get_attribute_value(obj, index, self.attr_name, self.domain)
+                domain = storage_inst.resolve_domain(self.domain)
+                key = j.get_attribute_value(obj, index, self.attr_name, domain)
                 id_str = self.id_function(obj, index)
                 if key:
-                    props = JbeamPropsStorage.get_instance().storage.get(self.domain, {}).get(key, {})
+                    props = storage_inst.storage.get(domain, {}).get(key, {})
                     if props:
                         for instance_key, instance_props in props.items():
                             # Convert properties to a single-line JSON string

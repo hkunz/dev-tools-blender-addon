@@ -286,7 +286,7 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
                 self.report({'ERROR'}, f"No face found for triangle {triangle.id}")
                 continue
 
-            j.set_triangle_props(obj, triangle.index, triangle.props)
+            j.set_triangle_props(obj, triangle.index, triangle.props, triangle.instance)
 
     def execute(self, context):
         obj = context.object

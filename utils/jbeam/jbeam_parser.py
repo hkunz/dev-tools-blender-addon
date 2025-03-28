@@ -2,14 +2,14 @@ import mathutils
 import json
 import os
 
-from typing import List, Dict, Optional
+from typing import Optional, Iterable, Tuple
 
 from dev_tools.utils.json_cleanup import json_cleanup  # type: ignore
 
 NodeID = str
 ElementID = str  # can be NodeID or beam id (i.e. [node_1|node_2]) or triangle id (i.e. [node_1|node_2|node_3])
 ScopeModifier = ScopeModifierValue = str
-Props = Dict[ScopeModifier, ScopeModifierValue]  # i.e. {"frictionCoef":"1.2","nodeMaterial":"|NM_RUBBER","nodeWeight":"1","collision":"true","selfCollision":"true","group":"mattress"}
+Props = dict[ScopeModifier, ScopeModifierValue]  # i.e. {"frictionCoef":"1.2","nodeMaterial":"|NM_RUBBER","nodeWeight":"1","collision":"true","selfCollision":"true","group":"mattress"}
 
 class JBeamElement:
     """Base class for all JBeam elements (Node, Beam, Triangle)."""
@@ -56,10 +56,10 @@ class JbeamParser:
     def __init__(self):
         self.jbeam_data = None
         self.part_data = None
-        self.nodes: Dict[NodeID, Node] = {}
-        self.nodes_list: List[Node] = []
-        self.beams_list: List[Beam] = []
-        self.triangles_list: List[Triangle] = []
+        self.nodes: dict[NodeID, Node] = {}
+        self.nodes_list: list[Node] = []
+        self.beams_list: list[Beam] = []
+        self.triangles_list: list[Triangle] = []
 
     def load_jbeam(self, obj, filepath):
         """Load and clean JBeam file."""
@@ -168,9 +168,6 @@ class JbeamParser:
         print("Parsing triangles ...")
         return self.parse_elements(obj, json_triangles, "triangles")
 
-    def get_nodes(self):
-        return self.nodes
-
     def parse_vertex_indices(self, obj, epsilon=0.0005):
         for node in self.nodes_list:
             closest_vert_idx = None
@@ -193,14 +190,15 @@ class JbeamParser:
                     node.index = None # Explicitly mark nodes with no close vertex
 
     def debug_print_nodes(self):
-        nodes: Dict[NodeID, Node] = self.nodes
+        nodes: dict[NodeID, Node] = self.nodes
         items = nodes.items() # Iterable[Tuple[NodeID, Node]]
         for node_id, node in items:
             print(f"{node_id} => {node}")
             # i.e.: 'node_1' => Node(instance=1, id=a1ll, index=5, pos=<Vector (0.6800, -0.9350, 0.1100)>, props={'frictionCoef': 1.2, 'nodeMaterial': '|NM_RUBBER', 'nodeWeight': 1, 'collision': True, 'selfCollision': True, 'group': 'mattress'})
 
-    def get_nodes(self):
-        return self.nodes.items()  # parse using: for node_id(str), node(Node) in nodes.items():
+    def get_nodes(self) -> Iterable[tuple[NodeID, Node]]:
+        items = self.nodes.items()
+        return items
 
     def get_beams_list(self):
         return self.beams_list

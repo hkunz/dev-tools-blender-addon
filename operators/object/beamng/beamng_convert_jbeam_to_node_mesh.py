@@ -6,6 +6,7 @@ from bpy.types import Operator
 
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
 from dev_tools.utils.jbeam.jbeam_parser import JbeamParser  # type: ignore
+from dev_tools.utils.jbeam.jbeam_mesh_creator import JbeamMeshCreator  # type: ignore
 
 class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
     """Convert object to Node Mesh by removing custom properties and merging by distance"""
@@ -112,13 +113,18 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
             self.parser = JbeamParser()
             self.parser.load_jbeam(obj, jbeam_path)
             nodes = self.parser.get_nodes()
+            beams_list = self.parser.get_beams_list()
+            tris_list = self.parser.get_triangles_list()
             #self.parser.debug_print_nodes()
             ref_nodes = self.parser.get_ref_nodes()
             self.assign_ref_nodes_to_vertex_groups(obj, ref_nodes, nodes)
             self.create_node_mesh_attributes(obj)
             self.store_node_props_in_vertex_attributes(obj)
-            self.store_beam_props_in_edge_attributes(obj, self.parser.get_beams_list())
-            self.store_triangle_props_in_face_attributes(obj, self.parser.get_triangles_list())
+            self.store_beam_props_in_edge_attributes(obj, beams_list)
+            self.store_triangle_props_in_face_attributes(obj, tris_list)
+
+            #jmc = JbeamMeshCreator(nodes, beams_list, tris_list)
+            #jmc.create_mesh()
         else:
             j.setup_default_scope_modifiers_and_node_ids(obj)
 

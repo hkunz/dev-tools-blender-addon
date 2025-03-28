@@ -10,3 +10,5 @@ on_save event, save the jbeam_props_storage.py data into object.data as custom s
 BUGS:
 
 Ctrl+Z not working when saving jbeam props, even though we use bl_options UNDO
+Cannot add 2nd instance to triangles
+Cannot delete instance

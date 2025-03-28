@@ -249,7 +249,6 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
         j.create_node_mesh_attributes(obj)
 
     def store_node_props_in_vertex_attributes(self, obj, verts_dic):
-
         for node_id, node in verts_dic.items():
             if not hasattr(node, "index") or node.index < 0:
                 self.report({'ERROR'}, f"Invalid vertex index for node {node_id}")
@@ -262,31 +261,25 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
                 #flat_data.update({k: v for k, v in node.props.items() if k != "group"})
                 flat_data.update({k: json.dumps(v) for k, v in node.props.items()})
 
-
             j.set_node_id(obj, idx, str(node.id))
             j.set_node_props(obj, idx, flat_data)
 
     def store_beam_props_in_edge_attributes(self, obj, part_data, verts_dic):
-        json_beams = part_data.get("beams", [])
-        beams = self.parse_beams(obj, json_beams, verts_dic)
-
-        for beam in beams:
-            if beam.index is None:
-                self.report({'ERROR'}, f"No edge found for beam {beam.id}")
-                continue
-
-            j.set_beam_props(obj, beam.index, beam.props, beam.instance)
+        self.store_props_in_attributes(obj, part_data, verts_dic, "beams", self.parse_beams, j.set_beam_props)
 
     def store_triangle_props_in_face_attributes(self, obj, part_data, verts_dic):
-        json_triangles = part_data.get("triangles", [])
-        triangles = self.parse_triangles(obj, json_triangles, verts_dic)
+        self.store_props_in_attributes(obj, part_data, verts_dic, "triangles", self.parse_triangles, j.set_triangle_props)
 
-        for triangle in triangles:
-            if triangle.index is None:
-                self.report({'ERROR'}, f"No face found for triangle {triangle.id}")
+    def store_props_in_attributes(self, obj, part_data, verts_dic, data_type, parse_function, set_props_function):
+        json_data = part_data.get(data_type, [])
+        parsed_data = parse_function(obj, json_data, verts_dic)
+
+        for item in parsed_data:
+            if item.index is None:
+                self.report({'ERROR'}, f"Structure missing: No {data_type[:-1]} found for {data_type[:-1]} {item.id}")
                 continue
 
-            j.set_triangle_props(obj, triangle.index, triangle.props, triangle.instance)
+            set_props_function(obj, item.index, item.props, item.instance)
 
     def execute(self, context):
         obj = context.object

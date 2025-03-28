@@ -23,27 +23,31 @@ class DEVTOOLS_JBEAM_EDITOR_OT_import_jbeam_as_node_mesh(Operator, ImportHelper)
     def execute(self, context):
         jbeam_path = self.filepath
         self.parser = JbeamParser()
-        self.parser.load_jbeam(obj, jbeam_path)
-        nodes = self.parser.get_nodes()
-        beams_list = self.parser.get_beams_list()
-        tris_list = self.parser.get_triangles_list()
-        #self.parser.debug_print_nodes()
-        ref_nodes = self.parser.get_ref_nodes()
-        self.assign_ref_nodes_to_vertex_groups(obj, ref_nodes, nodes)
-        self.create_node_mesh_attributes(obj)
-        self.store_node_props_in_vertex_attributes(obj)
-        self.store_beam_props_in_edge_attributes(obj, beams_list)
-        self.store_triangle_props_in_face_attributes(obj, tris_list)
-
         try:
-            with open(filepath, 'r', encoding='utf-8') as file:
-                data = file.read()
-                print(f"Successfully read the .jbeam file: {filepath}")
-                # You can parse or process the data here as needed
-                print(data)
-
+            self.parser.load_jbeam(jbeam_path)
         except Exception as e:
             self.report({'ERROR'}, f"Failed to read file: {e}")
             return {'CANCELLED'}
+
+        nodes_list = self.parser.get_nodes_list()
+        jmc = JbeamMeshCreator()
+        obj = jmc.create_empty_object()
+        jmc.add_vertices(nodes_list)
+        self.parser.parse_data_for_jbeam_object_conversion(obj, False)
+
+        beams_list = self.parser.get_beams_list()
+        print("beams ====", beams_list[0])
+        #tris_list = self.parser.get_triangles_list()
+        #jmc.add_edges(beams_list)
+        #jmc.add_faces(tris_list)
+
+        #self.parser.debug_print_nodes()
+        ref_nodes = self.parser.get_ref_nodes()
+
+        #self.assign_ref_nodes_to_vertex_groups(obj, ref_nodes, nodes)
+        #self.create_node_mesh_attributes(obj)
+        #self.store_node_props_in_vertex_attributes(obj)
+        #self.store_beam_props_in_edge_attributes(obj, beams_list)
+        #self.store_triangle_props_in_face_attributes(obj, tris_list)
 
         return {'FINISHED'}

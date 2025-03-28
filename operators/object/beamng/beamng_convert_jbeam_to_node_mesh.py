@@ -43,10 +43,10 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
         j.create_node_mesh_attributes(obj)
 
     def store_node_props_in_vertex_attributes(self, obj):
-        node_items = self.parser.get_nodes_items()
-        for node_id, node in node_items:
+        nodes_list = self.parser.get_nodes_list()
+        for node in nodes_list:
             if not hasattr(node, "index") or node.index < 0:
-                self.report({'ERROR'}, f"Invalid vertex index for node {node_id}")
+                self.report({'ERROR'}, f"Invalid vertex index for node {node.id}")
                 continue
 
             idx = node.index
@@ -94,7 +94,7 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
 
         jbeam_path = obj.data.get('jbeam_file_path', None)
         ref_nodes = None
-        is_jbeam_part = False
+        is_jbeam_part = False  # flag to check if the jbeam part object is an import from the original jbeam editor from BeamNG team
 
         if not jbeam_path:
             self.report({'WARNING'}, "Object is not a JBeam part or missing JBeam file path!")
@@ -110,8 +110,15 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
         bpy.ops.object.mode_set(mode='OBJECT')
 
         if is_jbeam_part:
+
             self.parser = JbeamParser()
-            self.parser.load_jbeam(obj, jbeam_path)
+            try:
+                self.parser.load_jbeam(jbeam_path)
+                self.parser.parse_data_for_jbeam_object_conversion(obj)
+            except Exception as e:
+                self.report({'ERROR'}, f"Failed to read file: {e}")
+                return {'CANCELLED'}
+
             nodes = self.parser.get_nodes()
             beams_list = self.parser.get_beams_list()
             tris_list = self.parser.get_triangles_list()
@@ -122,9 +129,6 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
             self.store_node_props_in_vertex_attributes(obj)
             self.store_beam_props_in_edge_attributes(obj, beams_list)
             self.store_triangle_props_in_face_attributes(obj, tris_list)
-
-            #jmc = JbeamMeshCreator(nodes, beams_list, tris_list)
-            #jmc.create_mesh()
         else:
             j.setup_default_scope_modifiers_and_node_ids(obj)
 

@@ -61,32 +61,47 @@ class JbeamParser:
         self.nodes_list: list[Node] = []
         self.beams_list: list[Beam] = []
         self.triangles_list: list[Triangle] = []
+        self.json_beams = None
+        self.json_triangles = None
 
-    def load_jbeam(self, obj, filepath):
+    def load_jbeam(self, filepath):
         """Load and clean JBeam file."""
         self.jbeam_data = None
         if not os.path.exists(filepath):
-            self.report({'ERROR'}, f"File not found: {filepath}")
-            return
+            raise FileNotFoundError(f"File not found: {filepath}")
         try:
             with open(filepath, "r", encoding="utf-8") as f:
                 raw_text = f.read()
                 clean_text = json_cleanup(raw_text)
                 self.jbeam_data = json.loads(clean_text)
-                for part_name, part_data in self.jbeam_data.items():
-                    if "nodes" in part_data: # TODO currently only handles 1 part for selected obj, the first partname in the list
-                        break
-                json_nodes = part_data.get("nodes", [])
-                json_beams = part_data.get("beams", [])
-                json_triangles = part_data.get("triangles", [])
-                self.parse_ref_nodes()
-                self.nodes_list = self.parse_nodes(json_nodes)
-                self.parse_vertex_indices(obj)
-                self.beams_list = self.parse_beams(json_beams, obj.data)
-                self.triangles_list = self.parse_triangles(json_triangles, obj.data)
+        except FileNotFoundError as e:
+            raise FileNotFoundError(f"File not found: {filepath}") from e
         except json.JSONDecodeError as e:
-            self.report({'ERROR'}, f"Error loading JBeam file: {e}")
-            return
+            raise ValueError(f"Error decoding JSON from JBeam file: {e}") from e
+        
+        for part_name, part_data in self.jbeam_data.items():
+            if "nodes" in part_data:  # TODO currently only handles 1 part for selected obj, the first partname in the list
+                break
+
+        json_nodes = part_data.get("nodes", [])
+        self.json_beams = part_data.get("beams", [])
+        self.json_triangles = part_data.get("triangles", [])
+        try:
+            self.parse_ref_nodes()
+            self.nodes_list = self.parse_nodes(json_nodes)
+        except Exception as e:
+            raise RuntimeError(f"An error occurred while processing the JBeam nodes: {e}") from e
+
+    def parse_data_for_jbeam_object_conversion(self, obj, get_vertex_indices=True):
+        mesh = obj.data
+        try:
+            if get_vertex_indices:
+                self.retrieve_closest_vertex_indices(obj)
+            self.nodes.update({node.id: node for node in self.nodes_list})
+            self.beams_list = self.parse_beams(self.json_beams, mesh)
+            self.triangles_list = self.parse_triangles(self.json_triangles, mesh)
+        except Exception as e:
+            raise RuntimeError(f"An error occurred while processing the remaining JBeam data: {e}") from e
 
     def parse_ref_nodes(self):
         """Extract reference nodes from the JBeam data, trimming colons from keys."""
@@ -123,7 +138,7 @@ class JbeamParser:
 
         return nodes
 
-    def parse_elements(self, json_data, structure_type, lookup): # parse beams or triangles
+    def parse_elements(self, json_data, structure_type, lookup=None): # parse beams or triangles
         """ Generic parser for beams and triangles """
         structures, current_props = [], {}
         seen_structures = {}  # Track unique beams/triangles and their instance counts
@@ -143,7 +158,7 @@ class JbeamParser:
                     print(f"Warning: Missing nodes {entry[:len(entry)]} in nodes and possibly in jbeam nodes")
                     continue
 
-                index = get_index([n.index for n in nodes])
+                index = get_index([n.index for n in nodes]) if lookup else -1 # TODO get index
                 struct_id = tuple(sorted(entry[:len(entry)]))  # Store as a tuple (order-independent)
 
                 # Determine instance count
@@ -164,17 +179,17 @@ class JbeamParser:
 
         return structures
 
-    def parse_beams(self, json_beams, mesh):
+    def parse_beams(self, json_beams, mesh=None):
         print("Parsing beams ...")
-        lookup = {tuple(sorted((e.vertices[0], e.vertices[1]))): e.index for e in mesh.edges}
+        lookup = {tuple(sorted((e.vertices[0], e.vertices[1]))): e.index for e in mesh.edges} if mesh else None
         return self.parse_elements(json_beams, "beams", lookup)
 
-    def parse_triangles(self, json_triangles, mesh):
+    def parse_triangles(self, json_triangles, mesh=None):
         print("Parsing triangles ...")
-        lookup = {tuple(sorted(f.vertices)): f.index for f in mesh.polygons}
+        lookup = {tuple(sorted(f.vertices)): f.index for f in mesh.polygons} if mesh else None
         return self.parse_elements(json_triangles, "triangles", lookup)
 
-    def parse_vertex_indices(self, obj, epsilon=0.0005):
+    def retrieve_closest_vertex_indices(self, obj, epsilon=0.0005):
         for node in self.nodes_list:
             closest_vert_idx = None
             closest_dist_sq = float('inf')
@@ -190,10 +205,11 @@ class JbeamParser:
             if closest_vert_idx is not None:
                 if closest_dist_sq < epsilon ** 2:  # Check if closest vertex is within range
                     node.index = closest_vert_idx
-                    self.nodes[node.id] = node  # generate nodes dictionary
                 else:
-                    self.report({'ERROR'}, f"No vertex found within proximity of {node.id}")
-                    node.index = None # Explicitly mark nodes with no close vertex
+                    raise ValueError(f"No vertex found within proximity of {node.id}")
+            else:
+                # Handle the case where no vertex is found (this is redundant unless obj.data.vertices is empty)
+                raise ValueError(f"No vertex found at all for node {node.id}")
 
     def debug_print_nodes(self):
         nodes: dict[NodeID, Node] = self.nodes
@@ -202,18 +218,17 @@ class JbeamParser:
             print(f"{node_id} => {node}")
             # i.e.: 'node_1' => Node(instance=1, id=a1ll, index=5, pos=<Vector (0.6800, -0.9350, 0.1100)>, props={'frictionCoef': 1.2, 'nodeMaterial': '|NM_RUBBER', 'nodeWeight': 1, 'collision': True, 'selfCollision': True, 'group': 'mattress'})
 
-    def get_nodes(self) -> Iterable[tuple[NodeID, Node]]:
+    def get_nodes(self) -> dict[NodeID, Node]:
         return self.nodes
 
-    def get_nodes_items(self) -> Iterable[tuple[NodeID, Node]]:
-        items = self.nodes.items()
-        return items
+    def get_nodes_list(self) -> list[Node]:
+        return self.nodes_list
 
-    def get_beams_list(self):
+    def get_beams_list(self) -> list[Beam]:
         return self.beams_list
 
-    def get_triangles_list(self):
+    def get_triangles_list(self) -> list[Triangle]:
         return self.triangles_list
 
-    def get_ref_nodes(self):
+    def get_ref_nodes(self) -> dict[str, str]:
         return self.refnodes

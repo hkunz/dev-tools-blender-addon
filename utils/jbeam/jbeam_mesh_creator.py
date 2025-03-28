@@ -6,7 +6,7 @@ class JbeamMeshCreator:
         self.mesh = None  # To store the mesh object
         self.obj = None   # To store the Blender object
 
-    def create_object(self, mesh_name="EmptyJBeamMesh"):
+    def create_object(self, mesh_name="JBeamMesh"):
         """Create an empty mesh object."""
         self.mesh = bpy.data.meshes.new(mesh_name)
         self.obj = bpy.data.objects.new(mesh_name, self.mesh)
@@ -20,10 +20,10 @@ class JbeamMeshCreator:
             raise RuntimeError("Mesh object has not been created yet. Call 'create_object' first.")
 
         vertices = []
-        for i, node in enumerate(nodes_list):
+        for i, node in enumerate(nodes_list):  # `i` will serve as the vertex index
             print(f"Processing NodeID: {node.id}, Position: {node.position}")
-            node.index = i  # Set the node's index
-            vertices.append(node.position)  # Add node position (Vector)
+            node.index = i
+            vertices.append(node.position)
             self.vertex_indices[node.id] = i  # Map NodeID to its vertex index
 
         # Update the mesh with vertices
@@ -32,15 +32,24 @@ class JbeamMeshCreator:
         print(f"Added {len(vertices)} vertices to the mesh.")
 
     def add_edges(self, beam_list: list[object]):
-        """Add edges to the existing mesh from the beam list."""
+        """Add edges to the existing mesh from the beam list, ensuring duplicates are handled."""
         if not self.mesh:
             raise RuntimeError("Mesh object has not been created yet. Call 'create_object' first.")
 
         edges = []
-        for beam in beam_list:
+        unique_beams = {}  # Dictionary to store unique beams and their assigned indices
+        for i, beam in enumerate(beam_list):  # Enumerate to generate indices
             # Get the node IDs for both ends of the beam
             node_id1 = beam.node_id1
             node_id2 = beam.node_id2
+
+            beam_key = tuple(sorted([node_id1, node_id2]))  # Generate a key for the beam based on node IDs (order doesn't matter)
+
+            # Check if the beam is unique or already exists in the dictionary
+            if beam_key not in unique_beams:
+                unique_beams[beam_key] = i  # If it's a new beam, assign a new index and add it to the dictionary
+
+            beam.index = unique_beams[beam_key]  # Use the same index for duplicate beams
 
             # Check if the node IDs exist in vertex_indices (which maps NodeID to vertex index)
             if node_id1 in self.vertex_indices and node_id2 in self.vertex_indices:
@@ -54,18 +63,28 @@ class JbeamMeshCreator:
         self.mesh.from_pydata([], edges, [])
         self.mesh.update()
         print(f"Added {len(edges)} edges to the mesh.")
+
     
     def add_faces(self, tris_list: list[object]):
-        """Add faces to the existing mesh from the triangle list."""
+        """Add faces to the existing mesh from the triangle list, ensuring duplicates are handled."""
         if not self.mesh:
             raise RuntimeError("Mesh object has not been created yet. Call 'create_object' first.")
 
         faces = []
-        for triangle in tris_list:
+        unique_faces = {}  # Dictionary to store unique faces and their assigned indices
+        for i, triangle in enumerate(tris_list):  # Enumerate to generate indices
             # Get the node IDs for the three vertices of the triangle
             node_id1 = triangle.node_id1
             node_id2 = triangle.node_id2
             node_id3 = triangle.node_id3
+
+            face_key = tuple(sorted([node_id1, node_id2, node_id3]))  # Generate a key for the triangle based on the sorted node IDs (order doesn't matter)
+
+            # Check if the face is unique or already exists in the dictionary
+            if face_key not in unique_faces:
+                unique_faces[face_key] = i  # If it's a new face, assign a new index and add it to the dictionary
+
+            triangle.index = unique_faces[face_key]  # Use the same index for duplicate triangles
 
             # Check if the node IDs exist in vertex_indices (which maps NodeID to vertex index)
             if node_id1 in self.vertex_indices and node_id2 in self.vertex_indices and node_id3 in self.vertex_indices:

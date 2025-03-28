@@ -86,7 +86,7 @@ class JbeamMeshHandler:
     @staticmethod
     def store_props_in_attributes(obj, parsed_data, data_type, element_type, set_props_function):
         for item in parsed_data:
-            if item.index is None:
+            if item.index < 0 or item.index is None:
                 print(f"Error: Structure missing: No {element_type} found for {data_type[:-1]} {item.id}")
                 continue
             set_props_function(obj, item.index, item.props, item.instance)

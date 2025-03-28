@@ -31,48 +31,53 @@ class JbeamMeshCreator:
         self.mesh.update()
         print(f"Added {len(vertices)} vertices to the mesh.")
 
-    def add_edges(self, beams_list: list[object]):
-        """Add edges to the existing mesh."""
+    def add_edges(self, beam_list: list[object]):
+        """Add edges to the existing mesh from the beam list."""
         if not self.mesh:
             raise RuntimeError("Mesh object has not been created yet. Call 'create_empty_object' first.")
 
         edges = []
-        for beam in beams_list:
-            start_index = self.vertex_indices.get(beam.node_id1.id)
-            end_index = self.vertex_indices.get(beam.node_id2.id)
+        for beam in beam_list:
+            # Get the node IDs for both ends of the beam
+            node_id1 = beam.node_id1.id
+            node_id2 = beam.node_id2.id
 
-            if start_index is None or end_index is None:
-                print(f"Skipping beam {beam.id}: One or both nodes not found in vertices.")
-                continue
+            # Check if the node IDs exist in vertex_indices (which maps NodeID to vertex index)
+            if node_id1 in self.vertex_indices and node_id2 in self.vertex_indices:
+                index1 = self.vertex_indices[node_id1]
+                index2 = self.vertex_indices[node_id2]
+                edges.append((index1, index2))  # Add the edge as a tuple of vertex indices
+            else:
+                print(f"Warning: Could not find vertices for Beam with NodeIDs {node_id1} and {node_id2}")
 
-            edges.append((start_index, end_index))  # Add edge based on indices
-
-        # Ensure there are edges to add
-        if not edges:
-            print("No valid edges to add.")
-            return
-
-        # Update the mesh with edges
-        self.mesh.from_pydata(self.mesh.vertices[:], edges, [])
+        # Update the mesh with the edges
+        self.mesh.from_pydata([], edges, [])
         self.mesh.update()
         print(f"Added {len(edges)} edges to the mesh.")
     
     def add_faces(self, tris_list: list[object]):
-        """Add faces to the existing mesh."""
+        """Add faces to the existing mesh from the triangle list."""
         if not self.mesh:
             raise RuntimeError("Mesh object has not been created yet. Call 'create_empty_object' first.")
 
         faces = []
-        for tri in tris_list:
-            try:
-                vertex_1 = self.vertex_indices[tri.node_id1.id]
-                vertex_2 = self.vertex_indices[tri.node_id2.id]
-                vertex_3 = self.vertex_indices[tri.node_id3.id]
-                faces.append((vertex_1, vertex_2, vertex_3))
-            except KeyError as e:
-                print(f"Warning: Missing node ID {e} for triangle {tri}. Skipping.")
+        for triangle in tris_list:
+            # Get the node IDs for the three vertices of the triangle
+            node_id1 = triangle.node_id1.id
+            node_id2 = triangle.node_id2.id
+            node_id3 = triangle.node_id3.id
 
-        # Update the mesh with faces
-        self.mesh.from_pydata(self.mesh.vertices[:], self.mesh.edges[:], faces)
+            # Check if the node IDs exist in vertex_indices (which maps NodeID to vertex index)
+            if node_id1 in self.vertex_indices and node_id2 in self.vertex_indices and node_id3 in self.vertex_indices:
+                index1 = self.vertex_indices[node_id1]
+                index2 = self.vertex_indices[node_id2]
+                index3 = self.vertex_indices[node_id3]
+                faces.append((index1, index2, index3))  # Add the face as a tuple of vertex indices
+            else:
+                print(f"Warning: Could not find vertices for Triangle with NodeIDs {node_id1}, {node_id2}, and {node_id3}")
+
+        # Update the mesh with the faces
+        self.mesh.from_pydata([], [], faces)
         self.mesh.update()
         print(f"Added {len(faces)} faces to the mesh.")
+

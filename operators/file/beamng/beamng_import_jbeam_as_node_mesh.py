@@ -36,10 +36,9 @@ class DEVTOOLS_JBEAM_EDITOR_OT_import_jbeam_as_node_mesh(Operator, ImportHelper)
         self.parser.parse_data_for_jbeam_object_conversion(obj, False)
 
         beams_list = self.parser.get_beams_list()
-        print("beams ====", beams_list[0])
-        #tris_list = self.parser.get_triangles_list()
-        #jmc.add_edges(beams_list)
-        #jmc.add_faces(tris_list)
+        tris_list = self.parser.get_triangles_list()
+        jmc.add_edges(beams_list)
+        jmc.add_faces(tris_list)
 
         #self.parser.debug_print_nodes()
         ref_nodes = self.parser.get_ref_nodes()

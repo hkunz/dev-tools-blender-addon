@@ -2,15 +2,22 @@ import mathutils
 import json
 import os
 
+from typing import List, Dict, Optional
+
 from dev_tools.utils.json_cleanup import json_cleanup  # type: ignore
+
+NodeID = str
+ElementID = str  # can be NodeID or beam id (i.e. [node_1|node_2]) or triangle id (i.e. [node_1|node_2|node_3])
+ScopeModifier = ScopeModifierValue = str
+Props = Dict[ScopeModifier, ScopeModifierValue]  # i.e. {"frictionCoef":"1.2","nodeMaterial":"|NM_RUBBER","nodeWeight":"1","collision":"true","selfCollision":"true","group":"mattress"}
 
 class JBeamElement:
     """Base class for all JBeam elements (Node, Beam, Triangle)."""
     def __init__(self, instance, element_id, index, props=None):
-        self.instance = instance
-        self.id = element_id
-        self.index = index
-        self.props = props or {}
+        self.instance: int = instance  # you can have multiple instances of a beam or a triangle in jbeam
+        self.id: ElementID  = element_id
+        self.index: int = index  # vertex, edge, or face index
+        self.props: Props = props if props is not None else {}
 
     def __repr__(self):
         return f"{self.__class__.__name__}(instance={self.instance}, id={self.id}, index={self.index}, props={self.props})"
@@ -29,8 +36,8 @@ class Node(JBeamElement):
 class Beam(JBeamElement):
     def __init__(self, instance, beam_id, node_id1, node_id2, index, props=None):
         super().__init__(instance, beam_id, index, props)
-        self.node_id1 = node_id1
-        self.node_id2 = node_id2
+        self.node_id1: str = node_id1
+        self.node_id2: str = node_id2
 
     def __repr__(self):
         return f"Beam(instance={self.instance}, id={self.id}, node_id1={self.node_id1}, node_id2={self.node_id2}, index={self.index}, props={self.props})"
@@ -38,9 +45,9 @@ class Beam(JBeamElement):
 class Triangle(JBeamElement):
     def __init__(self, instance, triangle_id, node_id1, node_id2, node_id3, index, props=None):
         super().__init__(instance, triangle_id, index, props)
-        self.node_id1 = node_id1
-        self.node_id2 = node_id2
-        self.node_id3 = node_id3
+        self.node_id1: str = node_id1
+        self.node_id2: str = node_id2
+        self.node_id3: str = node_id3
 
     def __repr__(self):
         return f"Triangle(id={self.id}, node_id1={self.node_id1}, node_id2={self.node_id2}, node_id3={self.node_id3}, index={self.index}, props={self.props})"
@@ -49,10 +56,10 @@ class JbeamParser:
     def __init__(self):
         self.jbeam_data = None
         self.part_data = None
-        self.verts_dic = None
-        self.nodes = None
-        self.beams = None
-        self.triangles = None
+        self.nodes: Dict[NodeID, Node] = {}
+        self.nodes_list: List[Node] = []
+        self.beams_list: List[Beam] = []
+        self.triangles_list: List[Triangle] = []
 
     def load_jbeam(self, obj, filepath):
         """Load and clean JBeam file."""
@@ -71,10 +78,10 @@ class JbeamParser:
                 json_nodes = part_data.get("nodes", [])
                 json_beams = part_data.get("beams", [])
                 json_triangles = part_data.get("triangles", [])
-                self.nodes = self.parse_nodes(json_nodes)
+                self.nodes_list = self.parse_nodes(json_nodes)
                 self.parse_vertex_indices(obj)
-                self.beams = self.parse_beams(obj, json_beams)
-                self.triangles = self.parse_triangles(obj, json_triangles)
+                self.beams_list = self.parse_beams(obj, json_beams)
+                self.triangles_list = self.parse_triangles(obj, json_triangles)
         except json.JSONDecodeError as e:
             self.report({'ERROR'}, f"Error loading JBeam file: {e}")
             return
@@ -127,7 +134,7 @@ class JbeamParser:
                 if all(isinstance(item, str) and item.startswith("id") and item.endswith(":") for item in entry):
                     print(f"Header detected: {entry} (ignored)")
                     continue
-                nodes = [self.verts_dic.get(n) for n in entry[:len(entry)]]
+                nodes = [self.nodes.get(n) for n in entry[:len(entry)]]
                 if any(n is None for n in nodes):
                     print(f"Warning: Missing nodes {entry[:len(entry)]} in nodes and possibly in jbeam nodes")
                     continue
@@ -154,17 +161,18 @@ class JbeamParser:
         return structures
 
     def parse_beams(self, obj, json_beams):
+        print("Parsing beams ...")
         return self.parse_elements(obj, json_beams, "beams")
 
     def parse_triangles(self, obj, json_triangles):
+        print("Parsing triangles ...")
         return self.parse_elements(obj, json_triangles, "triangles")
 
-    def get_vertex_indices(self):
-        return self.verts_dic
+    def get_nodes(self):
+        return self.nodes
 
     def parse_vertex_indices(self, obj, epsilon=0.0005):
-        self.verts_dic = {}
-        for node in self.nodes:
+        for node in self.nodes_list:
             closest_vert_idx = None
             closest_dist_sq = float('inf')
 
@@ -179,23 +187,26 @@ class JbeamParser:
             if closest_vert_idx is not None:
                 if closest_dist_sq < epsilon ** 2:  # Check if closest vertex is within range
                     node.index = closest_vert_idx
-                    self.verts_dic[node.id] = node
+                    self.nodes[node.id] = node  # generate nodes dictionary
                 else:
                     self.report({'ERROR'}, f"No vertex found within proximity of {node.id}")
                     node.index = None # Explicitly mark nodes with no close vertex
 
-    def debug_print_verts_dic(self):
-        for node_id, props in self.verts_dic.items():
-            print(f"Key: {node_id}, Value: {props}")
+    def debug_print_nodes(self):
+        nodes: Dict[NodeID, Node] = self.nodes
+        items = nodes.items() # Iterable[Tuple[NodeID, Node]]
+        for node_id, node in items:
+            print(f"{node_id} => {node}")
+            # i.e.: 'node_1' => Node(instance=1, id=a1ll, index=5, pos=<Vector (0.6800, -0.9350, 0.1100)>, props={'frictionCoef': 1.2, 'nodeMaterial': '|NM_RUBBER', 'nodeWeight': 1, 'collision': True, 'selfCollision': True, 'group': 'mattress'})
 
     def get_nodes(self):
-        return self.verts_dic.items()  # parse using: for node_id(str), node(Node) in nodes.items():
+        return self.nodes.items()  # parse using: for node_id(str), node(Node) in nodes.items():
 
-    def get_beams(self):
-        return self.beams
+    def get_beams_list(self):
+        return self.beams_list
 
-    def get_triangles(self):
-        return self.triangles
+    def get_triangles_list(self):
+        return self.triangles_list
 
     def get_ref_nodes(self):
         """Extract reference nodes from the JBeam data, trimming colons from keys."""

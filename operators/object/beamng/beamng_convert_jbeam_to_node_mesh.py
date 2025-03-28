@@ -4,8 +4,8 @@ import json
 from pprint import pprint
 from bpy.types import Operator
 
-from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
-from dev_tools.utils.jbeam.jbeam_parser import JbeamParser # type: ignore
+from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
+from dev_tools.utils.jbeam.jbeam_parser import JbeamParser  # type: ignore
 
 class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
     """Convert object to Node Mesh by removing custom properties and merging by distance"""
@@ -19,16 +19,16 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
         for key in list(obj.data.keys()):
             del obj.data[key]
 
-    def assign_ref_nodes_to_vertex_groups(self, obj, ref_nodes, verts_dic):
+    def assign_ref_nodes_to_vertex_groups(self, obj, ref_nodes, nodes):
         for group_name, node_id in ref_nodes.items():
             vg = obj.vertex_groups.get(group_name)
             if vg is None:
                 print(f"Vertex group '{group_name}' not found, creating it.")
                 vg = obj.vertex_groups.new(name=group_name)
 
-            node = verts_dic.get(node_id)
+            node = nodes.get(node_id)
             if node is None:
-                print(f"Node ID '{node_id}' not found in verts_dic, skipping.")
+                print(f"Node ID '{node_id}' not found in 'jbeam_parser::nodes', skipping.")
                 continue
             idx = node.index
             if idx < 0:
@@ -52,7 +52,6 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
             flat_data = {}
 
             if hasattr(node, "props") and isinstance(node.props, dict):
-                #flat_data.update({k: v for k, v in node.props.items() if k != "group"})
                 flat_data.update({k: json.dumps(v) for k, v in node.props.items()})
 
             j.set_node_id(obj, idx, str(node.id))
@@ -69,7 +68,6 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
             if item.index is None:
                 self.report({'ERROR'}, f"Structure missing: No {element_type} found for {data_type[:-1]} {item.id}")
                 continue
-
             set_props_function(obj, item.index, item.props, item.instance)
 
     def execute(self, context):
@@ -113,14 +111,14 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
         if is_jbeam_part:
             self.parser = JbeamParser()
             self.parser.load_jbeam(obj, jbeam_path)
-            verts_dic = self.parser.get_vertex_indices()
-            #self.parser.debug_print_verts_dic()
+            nodes = self.parser.get_nodes()
+            #self.parser.debug_print_nodes()
             ref_nodes = self.parser.get_ref_nodes()
-            self.assign_ref_nodes_to_vertex_groups(obj, ref_nodes, verts_dic)
+            self.assign_ref_nodes_to_vertex_groups(obj, ref_nodes, nodes)
             self.create_node_mesh_attributes(obj)
             self.store_node_props_in_vertex_attributes(obj)
-            self.store_beam_props_in_edge_attributes(obj, self.parser.get_beams())
-            self.store_triangle_props_in_face_attributes(obj, self.parser.get_triangles())
+            self.store_beam_props_in_edge_attributes(obj, self.parser.get_beams_list())
+            self.store_triangle_props_in_face_attributes(obj, self.parser.get_triangles_list())
         else:
             j.setup_default_scope_modifiers_and_node_ids(obj)
 

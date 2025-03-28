@@ -39,8 +39,8 @@ class JbeamMeshCreator:
         edges = []
         for beam in beam_list:
             # Get the node IDs for both ends of the beam
-            node_id1 = beam.node_id1.id
-            node_id2 = beam.node_id2.id
+            node_id1 = beam.node_id1
+            node_id2 = beam.node_id2
 
             # Check if the node IDs exist in vertex_indices (which maps NodeID to vertex index)
             if node_id1 in self.vertex_indices and node_id2 in self.vertex_indices:
@@ -63,9 +63,9 @@ class JbeamMeshCreator:
         faces = []
         for triangle in tris_list:
             # Get the node IDs for the three vertices of the triangle
-            node_id1 = triangle.node_id1.id
-            node_id2 = triangle.node_id2.id
-            node_id3 = triangle.node_id3.id
+            node_id1 = triangle.node_id1
+            node_id2 = triangle.node_id2
+            node_id3 = triangle.node_id3
 
             # Check if the node IDs exist in vertex_indices (which maps NodeID to vertex index)
             if node_id1 in self.vertex_indices and node_id2 in self.vertex_indices and node_id3 in self.vertex_indices:

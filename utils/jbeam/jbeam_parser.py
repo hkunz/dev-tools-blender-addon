@@ -170,10 +170,12 @@ class JbeamParser:
                 instance = seen_structures[struct_id]
                 #print(f"{structure_type[:-1].capitalize()} detected: {struct_id} (Instance: {instance}) => {current_props}")
 
-                # Add Beam or Triangle
                 structures.append(
                     (Beam if structure_type == "beams" else Triangle)(
-                        instance, struct_id, *nodes, index, current_props.copy()
+                        instance, struct_id,
+                        nodes[0].id, nodes[1].id,  # For Beam, pass only two node IDs (node_id1, node_id2)
+                        *([nodes[2].id] if len(nodes) > 2 else []),  # For Triangle, pass three node IDs if available, otherwise just pass two valid IDs
+                        index, current_props.copy()
                     )
                 )
 

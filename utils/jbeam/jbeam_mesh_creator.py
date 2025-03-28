@@ -6,7 +6,7 @@ class JbeamMeshCreator:
         self.mesh = None  # To store the mesh object
         self.obj = None   # To store the Blender object
 
-    def create_empty_object(self, mesh_name="EmptyJBeamMesh"):
+    def create_object(self, mesh_name="EmptyJBeamMesh"):
         """Create an empty mesh object."""
         self.mesh = bpy.data.meshes.new(mesh_name)
         self.obj = bpy.data.objects.new(mesh_name, self.mesh)
@@ -17,7 +17,7 @@ class JbeamMeshCreator:
     def add_vertices(self, nodes_list: list[object]):
         """Add vertices to the existing mesh."""
         if not self.mesh:
-            raise RuntimeError("Mesh object has not been created yet. Call 'create_empty_object' first.")
+            raise RuntimeError("Mesh object has not been created yet. Call 'create_object' first.")
 
         vertices = []
         for i, node in enumerate(nodes_list):
@@ -34,7 +34,7 @@ class JbeamMeshCreator:
     def add_edges(self, beam_list: list[object]):
         """Add edges to the existing mesh from the beam list."""
         if not self.mesh:
-            raise RuntimeError("Mesh object has not been created yet. Call 'create_empty_object' first.")
+            raise RuntimeError("Mesh object has not been created yet. Call 'create_object' first.")
 
         edges = []
         for beam in beam_list:
@@ -58,7 +58,7 @@ class JbeamMeshCreator:
     def add_faces(self, tris_list: list[object]):
         """Add faces to the existing mesh from the triangle list."""
         if not self.mesh:
-            raise RuntimeError("Mesh object has not been created yet. Call 'create_empty_object' first.")
+            raise RuntimeError("Mesh object has not been created yet. Call 'create_object' first.")
 
         faces = []
         for triangle in tris_list:

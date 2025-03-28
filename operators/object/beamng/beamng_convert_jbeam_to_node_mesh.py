@@ -43,7 +43,7 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
         j.create_node_mesh_attributes(obj)
 
     def store_node_props_in_vertex_attributes(self, obj):
-        node_items = self.parser.get_nodes()
+        node_items = self.parser.get_nodes_items()
         for node_id, node in node_items:
             if not hasattr(node, "index") or node.index < 0:
                 self.report({'ERROR'}, f"Invalid vertex index for node {node_id}")

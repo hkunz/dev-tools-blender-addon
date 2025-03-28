@@ -52,6 +52,7 @@ from dev_tools.ui.sidebar_menu import register as register_devtools_panel, unreg
 from dev_tools.operators.common.operator_generic_popup import register as register_generic_popup, unregister as unregister_generic_popup # type: ignore
 from dev_tools.operators.file.beamng.beamng_export_node_mesh_to_jbeam import OBJECT_OT_BeamngCreateRefnodesVertexGroups, EXPORT_OT_BeamngExportNodeMeshToJbeam # type: ignore
 
+from dev_tools.operators.file.beamng.beamng_import_jbeam_as_node_mesh import DEVTOOLS_JBEAM_EDITOR_OT_import_jbeam_as_node_mesh  # type: ignore
 from dev_tools.operators.object.armature.armature_create_bones_random_vertices_operator import OBJECT_OT_ArmatureCreateBonesRandomVertices # type: ignore
 from dev_tools.operators.object.armature.armature_create_bones_from_edge_selection_operator import OBJECT_OT_ArmatureCreateBonesFromEdgeSelection # type: ignore
 from dev_tools.operators.object.armature.armature_assign_closest_vertex_to_bone_tails_operator import OBJECT_OT_ArmatureAssignClosestVertexToBoneTails # type: ignore
@@ -67,6 +68,7 @@ from dev_tools.operators.object.beamng.beamng_jbeam_create_node_mesh import OBJE
 from dev_tools.operators.object.beamng.utils.beamng_jbeam_print_attributes_operators import OBJECT_OT_BeamngPrintJbeamNodeProps, OBJECT_OT_BeamngPrintJbeamBeamProps, OBJECT_OT_BeamngPrintJbeamTriangleProps  # type: ignore
 
 DEVTOOLS_CLASSES = [
+    DEVTOOLS_JBEAM_EDITOR_OT_import_jbeam_as_node_mesh,
     OBJECT_OT_ArmatureCreateBonesRandomVertices,
     OBJECT_OT_ArmatureAssignClosestVertexToBoneTails,
     OBJECT_OT_ArmatureCreateBonesFromEdgeSelection,
@@ -115,6 +117,9 @@ def on_load_post_handler(scene):
     JbeamPropsStorage.get_instance().load_jbeam_props_from_mesh()
     JbeamSelectionTracker.get_instance().register()
 
+def menu_func_import(self, context):
+    self.layout.operator(DEVTOOLS_JBEAM_EDITOR_OT_import_jbeam_as_node_mesh.bl_idname, text="JBeam File (.jbeam)")
+
 def register() -> None:
     print("DevTools addon Registration Begin ==============>")
     #add_executable_permission(FileUtils.get_executable_filepath())
@@ -129,6 +134,7 @@ def register() -> None:
     TempFileManager().init()
     IconsManager().init()
     JbeamSelectionTracker.get_instance().register()
+    bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
 
     bpy.app.handlers.save_pre.append(save_pre_handler)
     bpy.app.handlers.load_post.append(on_load_post_handler)
@@ -148,6 +154,7 @@ def unregister() -> None:
     for cls in reversed(DEVTOOLS_CLASSES):
         bpy.utils.unregister_class(cls)
 
+    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
     bpy.app.handlers.save_pre.remove(save_pre_handler)
     bpy.app.handlers.load_post.remove(on_load_post_handler)
     print("DevTools addon Unregistration Complete <========\n")

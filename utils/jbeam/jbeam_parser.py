@@ -56,6 +56,7 @@ class JbeamParser:
     def __init__(self):
         self.jbeam_data = None
         self.part_data = None
+        self.refnodes: dict[str, str] = {}
         self.nodes: dict[NodeID, Node] = {}
         self.nodes_list: list[Node] = []
         self.beams_list: list[Beam] = []
@@ -78,13 +79,24 @@ class JbeamParser:
                 json_nodes = part_data.get("nodes", [])
                 json_beams = part_data.get("beams", [])
                 json_triangles = part_data.get("triangles", [])
+                self.parse_ref_nodes()
                 self.nodes_list = self.parse_nodes(json_nodes)
                 self.parse_vertex_indices(obj)
-                self.beams_list = self.parse_beams(obj, json_beams)
-                self.triangles_list = self.parse_triangles(obj, json_triangles)
+                self.beams_list = self.parse_beams(json_beams, obj.data)
+                self.triangles_list = self.parse_triangles(json_triangles, obj.data)
         except json.JSONDecodeError as e:
             self.report({'ERROR'}, f"Error loading JBeam file: {e}")
             return
+
+    def parse_ref_nodes(self):
+        """Extract reference nodes from the JBeam data, trimming colons from keys."""
+        if not self.jbeam_data:
+            print("No jbeam data loaded")
+            return
+        for key, value in self.jbeam_data.items():
+            if "refNodes" in value:
+                headers, values = value["refNodes"]
+                self.refnodes = {h[:-1]: v for h, v in zip(headers[1:], values[1:])}  # Trim last char from keys
 
     def parse_nodes(self, json_nodes):
         nodes = []
@@ -111,18 +123,10 @@ class JbeamParser:
 
         return nodes
 
-    def parse_elements(self, obj, json_data, structure_type): # parse beams or triangles
+    def parse_elements(self, json_data, structure_type, lookup): # parse beams or triangles
         """ Generic parser for beams and triangles """
         structures, current_props = [], {}
         seen_structures = {}  # Track unique beams/triangles and their instance counts
-        mesh = obj.data
-
-        if structure_type == "beams":
-            lookup = {tuple(sorted((e.vertices[0], e.vertices[1]))): e.index for e in mesh.edges}
-        elif structure_type == "triangles":
-            lookup = {tuple(sorted(f.vertices)): f.index for f in mesh.polygons}
-        else:
-            raise ValueError("Invalid structure type")
 
         def get_index(indices):
             return lookup.get(tuple(sorted(indices)))
@@ -160,13 +164,15 @@ class JbeamParser:
 
         return structures
 
-    def parse_beams(self, obj, json_beams):
+    def parse_beams(self, json_beams, mesh):
         print("Parsing beams ...")
-        return self.parse_elements(obj, json_beams, "beams")
+        lookup = {tuple(sorted((e.vertices[0], e.vertices[1]))): e.index for e in mesh.edges}
+        return self.parse_elements(json_beams, "beams", lookup)
 
-    def parse_triangles(self, obj, json_triangles):
+    def parse_triangles(self, json_triangles, mesh):
         print("Parsing triangles ...")
-        return self.parse_elements(obj, json_triangles, "triangles")
+        lookup = {tuple(sorted(f.vertices)): f.index for f in mesh.polygons}
+        return self.parse_elements(json_triangles, "triangles", lookup)
 
     def parse_vertex_indices(self, obj, epsilon=0.0005):
         for node in self.nodes_list:
@@ -197,6 +203,9 @@ class JbeamParser:
             # i.e.: 'node_1' => Node(instance=1, id=a1ll, index=5, pos=<Vector (0.6800, -0.9350, 0.1100)>, props={'frictionCoef': 1.2, 'nodeMaterial': '|NM_RUBBER', 'nodeWeight': 1, 'collision': True, 'selfCollision': True, 'group': 'mattress'})
 
     def get_nodes(self) -> Iterable[tuple[NodeID, Node]]:
+        return self.nodes
+
+    def get_nodes_items(self) -> Iterable[tuple[NodeID, Node]]:
         items = self.nodes.items()
         return items
 
@@ -207,12 +216,4 @@ class JbeamParser:
         return self.triangles_list
 
     def get_ref_nodes(self):
-        """Extract reference nodes from the JBeam data, trimming colons from keys."""
-        if not self.jbeam_data:
-            print("No jbeam data loaded")
-            return {}
-        for key, value in self.jbeam_data.items():
-            if "refNodes" in value:
-                headers, values = value["refNodes"]
-                return {h[:-1]: v for h, v in zip(headers[1:], values[1:])}  # Trim last char from keys
-        return {}
+        return self.refnodes

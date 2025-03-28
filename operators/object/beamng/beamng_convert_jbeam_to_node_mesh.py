@@ -211,39 +211,6 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
             vg.add([idx], 1.0, 'REPLACE')
             print(f"Assigned vertex {idx} to vertex group '{group_name}'.")
 
-    def assign_flex_groups_to_vertex_groups(self, obj, json_part_data, verts_dic):       
-        current_group = None
-        group_vertices = {}
-        for node in json_part_data["nodes"]:
-            if isinstance(node, dict) and "group" in node:
-                current_group = node["group"] or None  # Could be a list or None
-            elif isinstance(node, list) and current_group:
-                node_name = node[0]
-                if node_name in verts_dic:
-                    index = verts_dic[node_name].index
-                    if index < 0:
-                        self.report({'ERROR'}, f"No vertex index assigned to {node_name}")
-                        continue
-                    
-                    # Ensure `current_group` is always a list
-                    groups = [current_group] if isinstance(current_group, str) else current_group
-                    
-                    for group in groups:
-                        if not group:
-                            continue
-                        if group not in group_vertices:
-                            group_vertices[group] = []
-                        group_vertices[group].append(index)
-
-        for group_name, vertex_indices in group_vertices.items():
-            if not group_name:
-                continue
-            vg = obj.vertex_groups.get(group_name)
-            if vg is None:
-                vg = obj.vertex_groups.new(name=group_name)
-            vg.add(vertex_indices, 1.0, 'REPLACE')
-            print(f"Assigned {len(vertex_indices)} vertices to the '{group_name}' vertex group.")
-
     def create_node_mesh_attributes(self, obj):
         j.remove_old_jbeam_attributes(obj)
         j.create_node_mesh_attributes(obj)
@@ -328,7 +295,6 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
         if is_jbeam_part:
             verts_dic = self.get_vertex_indices(obj, part_data)
             self.assign_ref_nodes_to_vertex_groups(obj, ref_nodes, verts_dic)
-            #self.assign_flex_groups_to_vertex_groups(obj, part_data, verts_dic) #  groups are now also part of the scope modifiers instead of vertex groups
             self.create_node_mesh_attributes(obj)
             self.store_node_props_in_vertex_attributes(obj, verts_dic)
             self.store_beam_props_in_edge_attributes(obj, part_data, verts_dic)

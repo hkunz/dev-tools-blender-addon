@@ -32,9 +32,6 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
             self.report({'WARNING'}, f"{repr(obj)} is not a mesh object!")
             return {'CANCELLED'}
 
-        j.set_jbeam_visuals(obj)
-        j.add_gn_jbeam_visualizer_modifier(obj)
-
         jbeam_path = obj.data.get('jbeam_file_path', None)
         is_jbeam_part = bool(jbeam_path)  # flag to check if the jbeam part object is an import from the original jbeam editor from BeamNG team
 
@@ -42,12 +39,7 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
             self.report({'WARNING'}, "Object is not a JBeam part or missing JBeam file path! Proceeding with regular conversion..")
 
         JbeamMeshHandler.remove_custom_data_props(obj)
-
-        bpy.context.view_layer.objects.active = obj
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.select_all(action='SELECT')
-        bpy.ops.mesh.remove_doubles(threshold=0.0005)
-        bpy.ops.object.mode_set(mode='OBJECT')
+        JbeamMeshHandler.remove_double_vertices(obj)
 
         if is_jbeam_part:
             self.setup_jbeam_part(obj, jbeam_path)

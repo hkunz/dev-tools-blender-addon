@@ -1,3 +1,4 @@
+import bpy
 import json
 
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
@@ -5,7 +6,17 @@ from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
 class JbeamMeshHandler:
 
     @staticmethod
+    def remove_double_vertices(obj):
+        bpy.context.view_layer.objects.active = obj
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.remove_doubles(threshold=0.0005)
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+    @staticmethod
     def process_jbeam_mesh_properties(obj, parser):
+        j.set_jbeam_visuals(obj)
+        j.add_gn_jbeam_visualizer_modifier(obj)
         ref_nodes = parser.get_ref_nodes()
         nodes = parser.get_nodes()
         nodes_list = parser.get_nodes_list()

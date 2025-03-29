@@ -67,15 +67,15 @@ class JbeamUtils:
 
     @staticmethod
     def create_attribute_node_props(obj):
-        return JbeamUtils.create_attribute(obj, "jbeam_node_props", domain="POINT")
+        return JbeamUtils.create_attribute(obj, JbeamUtils.ATTR_NODE_PROPS, domain="POINT")
 
     @staticmethod
     def create_attribute_beam_props(obj):
-        return JbeamUtils.create_attribute(obj, "jbeam_beam_props", domain="EDGE")
+        return JbeamUtils.create_attribute(obj, JbeamUtils.ATTR_BEAM_PROPS, domain="EDGE")
 
     @staticmethod
     def create_attribute_triangle_props(obj):
-        return JbeamUtils.create_attribute(obj, "jbeam_triangle_props", domain="FACE")
+        return JbeamUtils.create_attribute(obj, JbeamUtils.ATTR_TRIANGLE_PROPS, domain="FACE")
 
     @staticmethod
     def create_node_mesh_attributes(obj):

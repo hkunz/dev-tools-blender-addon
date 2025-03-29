@@ -164,7 +164,7 @@ class OBJECT_OT_BeamngSaveJbeamProp(bpy.types.Operator):
         # Reserved keyword check
         for reserved in j.RESERVED_KEYWORDS:
             if any(prop.name.lower() == reserved.lower() for prop in prop_collection):
-                self.report({'WARNING'}, f"Keyword '{reserved}' is reserved. Use vertex groups prefixed '{reserved}_' to assign nodes to a {reserved}.")
+                self.report({'WARNING'}, f"Keyword '{reserved}' is reserved.")
                 return {'CANCELLED'}
 
         # Find the property to apply
@@ -266,7 +266,7 @@ class OBJECT_OT_BeamngSaveAllJbeamProps(bpy.types.Operator):
 
         for reserved in j.RESERVED_KEYWORDS:
             if any(prop_name.lower() == reserved.lower() for prop_name in ui_props):
-                return f"Keyword '{reserved}' is reserved. Use vertex groups prefixed '{reserved}_' to assign nodes to a {reserved}.", 'CANCELLED'
+                return f"Keyword '{reserved}' is reserved.", 'CANCELLED'
 
         instances = context.scene.beamng_jbeam_instance.get_selected_instances()
         for element in selected_elements:

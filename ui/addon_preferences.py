@@ -5,11 +5,14 @@ from bpy.types import UILayout
 from typing import List
 
 from dev_tools.utils.utils import Utils # type: ignore
+from dev_tools.utils.ui_utils import UiUtils  # type: ignore
 
-def on_addon_preferences_change() -> None:
+def on_addon_preferences_change(update_ui=True) -> None:
     addon: bpy.types.Addon = bpy.context.preferences.addons[MyAddonPreferences.bl_idname]
     prefs: MyAddonPreferences = addon.preferences
     print(f"on_addon_preferences_change: {prefs}: update any menus when preferences have changed")
+    if update_ui:
+        UiUtils.force_update_ui(bpy.context)
 
 def on_property_update(self, _: bpy_types.Context, sample_type: str) -> None:
     print(f"on_property_update: {self}::{sample_type}")
@@ -42,13 +45,25 @@ class PREFERENCES_OT_ClearCheckboxesOperator(bpy.types.Operator):
 class MyAddonPreferences(bpy.types.AddonPreferences):
     bl_idname = Utils.get_addon_module_name() # __name__ if the class is defined inside __init__.py
 
-    type_vox: bpy.props.BoolProperty(
-        name="*.vox (MagicaVoxel)",
-        default=True,
-        update=lambda self, context: on_property_update(self, context, "vox")
+    armature_options: bpy.props.BoolProperty(
+        name="Show Armature Options",
+        default=False,
+        update=lambda self, context: on_property_update(self, context, "armature")
     ) # type: ignore
 
-    CHECKBOXES: List[str] = ["type_vox"]
+    bake_options: bpy.props.BoolProperty(
+        name="Show Bake Options",
+        default=False,
+        update=lambda self, context: on_property_update(self, context, "bake")
+    ) # type: ignore
+
+    empty_options: bpy.props.BoolProperty(
+        name="Show Empty Object Options",
+        default=False,
+        update=lambda self, context: on_property_update(self, context, "empty")
+    ) # type: ignore
+
+    CHECKBOXES: List[str] = ["armature_options", "bake_options", "empty_options"]
 
     def set_checkbox(self, prop_name: str, value: bool) -> None:
         if getattr(self, prop_name) != value:
@@ -65,22 +80,23 @@ class MyAddonPreferences(bpy.types.AddonPreferences):
     def draw(self, _: bpy_types.Context) -> None:
         layout: UILayout = self.layout
         options_box: UILayout = layout.box()
-        box: UILayout = options_box.box()
-
-        split: UILayout = box.split(factor=0.5)
-        col1: UILayout = split.column()
-        col1.operator(PREFERENCES_OT_ClearCheckboxesOperator.bl_idname, text="Uncheck All Boxes")
-        col2 = split.column()
-        col2.operator(PREFERENCES_OT_CheckCheckboxesOperator.bl_idname, text="Check All Boxes")
+        #box: UILayout = options_box.box()
+        #split: UILayout = box.split(factor=0.5)
+        #col1: UILayout = split.column()
+        #col1.operator(PREFERENCES_OT_ClearCheckboxesOperator.bl_idname, text="Uncheck All Boxes")
+        #col2 = split.column()
+        #col2.operator(PREFERENCES_OT_CheckCheckboxesOperator.bl_idname, text="Check All Boxes")
 
         box = options_box.box()
         box.prop(self, self.CHECKBOXES[0])
+        box.prop(self, self.CHECKBOXES[1])
+        box.prop(self, self.CHECKBOXES[2])
 
 def register() -> None:
     bpy.utils.register_class(MyAddonPreferences)
     bpy.utils.register_class(PREFERENCES_OT_CheckCheckboxesOperator)
     bpy.utils.register_class(PREFERENCES_OT_ClearCheckboxesOperator)
-    on_addon_preferences_change()
+    on_addon_preferences_change(False)
 
 def unregister() -> None:
     bpy.utils.unregister_class(MyAddonPreferences)

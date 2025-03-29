@@ -135,13 +135,21 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
     #bl_context = "object"
     #https://blender.stackexchange.com/questions/201360/how-to-control-spacing-alignment-of-label-horizontal-enum-property
 
+    def get_prefs(self):
+        addon_name = Utils.get_addon_module_name()
+        prefs = bpy.context.preferences.addons.get(addon_name).preferences
+        return prefs
+
     def draw(self, context) -> None:
+        prefs = self.get_prefs()
         layout: bpy.types.UILayout = self.layout
         # box.label(text="Icon Label", icon=IconsManager.BUILTIN_ICON_MESH_DATA)
         # self.draw_sample_modifier_exposed_props(context, layout, "GeometryNodes")
         self.draw_expanded_beamng_options(context, layout, context.active_object)
-        self.draw_expanded_armature_options(context, layout)
-        self.draw_expanded_bake_options(context, layout)
+        if prefs.armature_options:
+            self.draw_expanded_armature_options(context, layout)
+        if prefs.bake_options:
+            self.draw_expanded_bake_options(context, layout)
         # self.draw_sample_color_picker(context, layout)
 
     def draw_sample_modifier_exposed_props(self, context, layout, md_name = "GeometryNodes"):
@@ -185,13 +193,15 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
         if not s.expanded_beamng_options:
             return
 
+        prefs = self.get_prefs()
         col = layout.column()
-        col.operator(OBJECT_OT_BeamngCreateEmptiesBase.bl_idname, text="Create Empties")
-        row = col.row(align=True)
-        row.operator(OBJECT_OT_BeamngClearChildrenStart01Empty.bl_idname, text="Clear Empty")
-        row.separator()
-        row.operator(OBJECT_OT_BeamngParentToStart01Empty.bl_idname, text="Parent Empty")
-        col.separator()
+        if prefs.empty_options:
+            col.operator(OBJECT_OT_BeamngCreateEmptiesBase.bl_idname, text="Create Empties")
+            row = col.row(align=True)
+            row.operator(OBJECT_OT_BeamngClearChildrenStart01Empty.bl_idname, text="Clear Empty")
+            row.separator()
+            row.operator(OBJECT_OT_BeamngParentToStart01Empty.bl_idname, text="Parent Empty")
+            col.separator()
         if not context.selected_objects:
             col.operator(OBJECT_OT_BeamngJbeamCreateNodeMesh.bl_idname, text="Create Node Mesh", icon="OUTLINER_OB_MESH")
         elif len(context.selected_objects) == 1:
@@ -384,7 +394,7 @@ def register() -> None:
     bpy.types.Scene.my_property_group_pointer = bpy.props.PointerProperty(type=MyPropertyGroup1)
     bpy.types.Scene.expanded_armature_options = bpy.props.BoolProperty(default=False)
     bpy.types.Scene.expanded_bake_options = bpy.props.BoolProperty(default=False)
-    bpy.types.Scene.expanded_beamng_options = bpy.props.BoolProperty(default=False)
+    bpy.types.Scene.expanded_beamng_options = bpy.props.BoolProperty(default=True)
     bpy.types.Scene.beamng_jbeam_active_structure = bpy.props.PointerProperty(type=JbeamStructure)
     bpy.types.Scene.beamng_jbeam_hidden_elements = bpy.props.PointerProperty(type=JbeamHiddenElements)
     bpy.types.Scene.beamng_jbeam_instance = bpy.props.PointerProperty(type=ButtonItemSelector)

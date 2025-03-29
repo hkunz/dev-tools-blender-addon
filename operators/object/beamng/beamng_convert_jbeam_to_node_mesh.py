@@ -5,7 +5,7 @@ from pprint import pprint
 from bpy.types import Operator
 
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
-from dev_tools.utils.jbeam.jbeam_mesh_handler import JbeamMeshHandler  # type: ignore
+from dev_tools.utils.jbeam.jbeam_node_mesh_configurator import JbeamNodeMeshConfigurator  # type: ignore
 from dev_tools.utils.jbeam.jbeam_parser import JbeamParser  # type: ignore
 
 class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
@@ -38,8 +38,8 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
         if not jbeam_path:
             self.report({'WARNING'}, "Object is not a JBeam part or missing JBeam file path! Proceeding with regular conversion..")
 
-        JbeamMeshHandler.remove_custom_data_props(obj)
-        JbeamMeshHandler.remove_double_vertices(obj)
+        JbeamNodeMeshConfigurator.remove_custom_data_props(obj)
+        JbeamNodeMeshConfigurator.remove_double_vertices(obj)
 
         if is_jbeam_part:
             self.setup_jbeam_part(obj, jbeam_path)
@@ -60,7 +60,7 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
             self.report({'ERROR'}, f"Failed to read file: {e}")
             return {'CANCELLED'}
 
-        JbeamMeshHandler.process_jbeam_mesh_properties(obj, self.parser)
+        JbeamNodeMeshConfigurator.process_jbeam_mesh_properties(obj, self.parser)
 
         bpy.ops.object.select_all(action='DESELECT')
         obj.select_set(True)

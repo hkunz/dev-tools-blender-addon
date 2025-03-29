@@ -3,7 +3,7 @@ import json
 
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
 
-class JbeamMeshHandler:
+class JbeamNodeMeshConfigurator:
 
     @staticmethod
     def remove_double_vertices(obj):
@@ -22,11 +22,11 @@ class JbeamMeshHandler:
         nodes_list = parser.get_nodes_list()
         beams_list = parser.get_beams_list()
         tris_list = parser.get_triangles_list()
-        JbeamMeshHandler.assign_ref_nodes_to_vertex_groups(obj, ref_nodes, nodes)
-        JbeamMeshHandler.create_node_mesh_attributes(obj)
-        JbeamMeshHandler.store_node_props_in_vertex_attributes(obj, nodes_list)
-        JbeamMeshHandler.store_beam_props_in_edge_attributes(obj, beams_list)
-        JbeamMeshHandler.store_triangle_props_in_face_attributes(obj, tris_list)
+        JbeamNodeMeshConfigurator.assign_ref_nodes_to_vertex_groups(obj, ref_nodes, nodes)
+        JbeamNodeMeshConfigurator.create_node_mesh_attributes(obj)
+        JbeamNodeMeshConfigurator.store_node_props_in_vertex_attributes(obj, nodes_list)
+        JbeamNodeMeshConfigurator.store_beam_props_in_edge_attributes(obj, beams_list)
+        JbeamNodeMeshConfigurator.store_triangle_props_in_face_attributes(obj, tris_list)
 
     @staticmethod
     def remove_custom_data_props(obj):
@@ -77,11 +77,11 @@ class JbeamMeshHandler:
 
     @staticmethod
     def store_beam_props_in_edge_attributes(obj, beams):
-        JbeamMeshHandler.store_props_in_attributes(obj, beams, "beams", "edge", j.set_beam_props)
+        JbeamNodeMeshConfigurator.store_props_in_attributes(obj, beams, "beams", "edge", j.set_beam_props)
 
     @staticmethod
     def store_triangle_props_in_face_attributes(obj, triangles):
-        JbeamMeshHandler.store_props_in_attributes(obj, triangles, "triangles", "face", j.set_triangle_props)
+        JbeamNodeMeshConfigurator.store_props_in_attributes(obj, triangles, "triangles", "face", j.set_triangle_props)
 
     @staticmethod
     def store_props_in_attributes(obj, parsed_data, data_type, element_type, set_props_function):

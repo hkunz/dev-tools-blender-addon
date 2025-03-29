@@ -41,6 +41,6 @@ class DEVTOOLS_JBEAM_EDITOR_OT_import_jbeam_as_node_mesh(Operator, ImportHelper)
         jmc.add_edges(beams_list)
         jmc.add_faces(tris_list)
 
-        JbeamNodeMeshConfigurator.process_jbeam_mesh_properties(obj, self.parser)
+        JbeamNodeMeshConfigurator.process_node_mesh_props(obj, self.parser)
 
         return {'FINISHED'}

@@ -44,12 +44,19 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
         if is_jbeam_part:
             self.setup_jbeam_part(obj, jbeam_path)
         else:
-            j.setup_default_scope_modifiers_and_node_ids(obj)
+            self.setup_jbeam_blender_mesh(obj)
 
+        bpy.ops.object.select_all(action='DESELECT')
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
         bpy.ops.object.devtools_beamng_create_refnodes_vertex_groups()
 
         self.report({'INFO'}, f"Converted {obj.name} to Node Mesh!")
         return {'FINISHED'}
+
+    def setup_jbeam_blender_mesh(self, obj):
+        j.setup_default_scope_modifiers_and_node_ids(obj)
+        JbeamNodeMeshConfigurator.process_node_mesh_props(obj)
 
     def setup_jbeam_part(self, obj, jbeam_path):
         self.parser = JbeamParser()
@@ -60,8 +67,4 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
             self.report({'ERROR'}, f"Failed to read file: {e}")
             return {'CANCELLED'}
 
-        JbeamNodeMeshConfigurator.process_jbeam_mesh_properties(obj, self.parser)
-
-        bpy.ops.object.select_all(action='DESELECT')
-        obj.select_set(True)
-        bpy.context.view_layer.objects.active = obj
+        JbeamNodeMeshConfigurator.process_node_mesh_props(obj, self.parser)

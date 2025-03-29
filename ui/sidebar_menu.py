@@ -219,39 +219,64 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
 
     def draw_jbeam_editor_options(self, context, box, obj):
         s = context.scene
+        struct = None
+
+        def draw_scope_modifier_list(select, save, remove):
+            if not s.beamng_jbeam_active_structure.prop_items:
+                box.label(text=f"No Scope Modifers on Selection")
+                return
+            for prop in s.beamng_jbeam_active_structure.prop_items:
+                r = box.row(align=True)
+                split = r.split(factor=0.55, align=True)
+                split.prop(prop, "name", text="")
+                split.prop(prop, "value", text="")
+                button_row = r.row(align=True)
+                button_row.operator(select, text="", icon="RESTRICT_SELECT_OFF").prop_name = prop.name
+                button_row.operator(save, text="", icon="FILE_TICK").prop_name = prop.name
+                button_row.operator(remove, text="", icon="TRASH").prop_name = prop.name
+
+        def draw_element_instances_buttons(layout):
+            settings = context.scene.beamng_jbeam_instance.buttons
+            r = layout.row(align=True)
+            button_name = ButtonItem.BUTTON_NAME
+            for i, item in enumerate(settings):
+                o = r.operator(
+                    "wm.toggle_dynamic_button",
+                    text=ButtonItem.generate_button_name(i) if not item.name else item.name,
+                    depress=bool(item.name)
+                )
+                o.index = i
+                o.button_name = button_name
+            #r.separator()
+            o = r.operator(ManageDynamicButtonsOperator.bl_idname, text="", icon="EVENT_PLUS")
+            o.action = 'ADD'
+            o.button_name = button_name
+            if len(settings) > 1:
+                o = r.operator(ManageDynamicButtonsOperator.bl_idname, text="", icon="TRASH")
+                o.action = 'REMOVE'
+                o.button_name = button_name
+
+            #selected = [item.name for item in settings if item.name]
+            #print(f"Selected: {', '.join(selected) if selected else 'None'}")
+
+        def draw_bottom_options(add, save):
+            box.operator(add, text="Add Scope Modifier", icon="RNA_ADD")
+            box.operator(save, text="Save All", icon="FILE_TICK")
+
         if o.is_vertex_selection_mode():
             struct = s.beamng_jbeam_active_structure
             index = struct.index
             if index > -1:
                 node_id = struct.id
-                pos = struct.position
-                row = box.row()
-                split = row.split(factor=0.5)
+                split = box.row().split(factor=0.5)
                 split.label(text=f"Active Node: {node_id} ({index})")
                 split.alignment = 'RIGHT'
-                split.label(text=f"({pos.x:.2f}, {pos.y:.2f}, {pos.z:.2f})")
+                split.label(text=f"({struct.position.x:.2f}, {struct.position.y:.2f}, {struct.position.z:.2f})")
                 box.label(text=f"Selected: {struct.selection}")
                 box.prop(struct, "id", text="Active Node ID")
                 box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign Node ID", icon="GREASEPENCIL")
-
-                if s.beamng_jbeam_active_structure.prop_items:
-                    for prop in s.beamng_jbeam_active_structure.prop_items:
-                        r = box.row(align=True)
-                        split = r.split(factor=0.55, align=True)
-                        split.prop(prop, "name", text="")
-                        split.prop(prop, "value", text="")
-                        button_row = r.row(align=True)
-                        button_row.operator(OBJECT_OT_BeamngSelectJbeamNodesByProperty.bl_idname, text="", icon="RESTRICT_SELECT_OFF").prop_name = prop.name
-                        button_row.operator(OBJECT_OT_BeamngSaveJbeamNodeProp.bl_idname, text="", icon="FILE_TICK").prop_name = prop.name
-                        button_row.operator(OBJECT_OT_BeamngRemoveJbeamNodeProp.bl_idname, text="", icon="TRASH").prop_name = prop.name
-                else:
-                    box.label(text=f"No Scope Modifers on Selection")
-
-                box.operator(OBJECT_OT_BeamngAddJbeamNodeProp.bl_idname, text="Add Scope Modifier", icon="RNA_ADD")
-                box.operator(OBJECT_OT_BeamngSaveAllJbeamNodeProps.bl_idname, text="Save All", icon="FILE_TICK")
-            else:
-                msg = "Select elements to view Scope Modifiers" if j.is_node_mesh(obj) else "Convert to Node Mesh"
-                box.label(text=msg)
+                draw_scope_modifier_list(OBJECT_OT_BeamngSelectJbeamNodesByProperty.bl_idname, OBJECT_OT_BeamngSaveJbeamNodeProp.bl_idname, OBJECT_OT_BeamngRemoveJbeamNodeProp.bl_idname)
+                draw_bottom_options(OBJECT_OT_BeamngAddJbeamNodeProp.bl_idname, OBJECT_OT_BeamngSaveAllJbeamNodeProps.bl_idname)
 
         elif o.is_edge_selection_mode():
             struct = s.beamng_jbeam_active_structure
@@ -261,95 +286,34 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                 bm.edges.ensure_lookup_table()
                 edge = bm.edges[index]
                 edge_length = edge.calc_length()
-                row = box.row()
-                split = row.split(factor=0.67)
+                split = box.row().split(factor=0.67)
                 split.label(text=f"Active Beam: {struct.id} ({index})")
                 split.alignment = 'RIGHT'
                 split.label(text=f"({edge_length:.2f})")
                 box.label(text=f"Selected: {struct.selection}")
-
-                # https://blender.stackexchange.com/questions/201360/how-to-control-spacing-alignment-of-label-horizontal-enum-property
-                #box.use_property_split = True
                 box.use_property_decorate = False 
                 box.prop(struct, "id", text="Active Beam ID")
-                r = box.row()
-                self.draw_element_instances_buttons(context, r)
-                
-                if s.beamng_jbeam_active_structure.prop_items:
-                    for prop in s.beamng_jbeam_active_structure.prop_items:  
-                        r = box.row(align=True)
-                        split = r.split(factor=0.55, align=True)
-                        split.prop(prop, "name", text="")
-                        split.prop(prop, "value", text="")
-                        button_row = r.row(align=True)
-                        button_row.operator(OBJECT_OT_BeamngSelectJbeamBeamsByProperty.bl_idname, text="", icon="RESTRICT_SELECT_OFF").prop_name = prop.name
-                        button_row.operator(OBJECT_OT_BeamngSaveJbeamBeamProp.bl_idname, text="", icon="FILE_TICK").prop_name = prop.name
-                        button_row.operator(OBJECT_OT_BeamngRemoveJbeamBeamProp.bl_idname, text="", icon="TRASH").prop_name = prop.name
-                else:
-                    box.label(text=f"No Scope Modifers on Selection")
-
-                box.operator(OBJECT_OT_BeamngAddJbeamBeamProp.bl_idname, text="Add Scope Modifier", icon="RNA_ADD")
-                box.operator(OBJECT_OT_BeamngSaveAllJbeamBeamProps.bl_idname, text="Save All", icon="FILE_TICK")
-            else:
-                msg = "Select elements to view Scope Modifiers" if j.is_node_mesh(obj) else "Convert to Node Mesh"
-                box.label(text=msg)
+                draw_element_instances_buttons(box.row())
+                draw_scope_modifier_list(OBJECT_OT_BeamngSelectJbeamBeamsByProperty.bl_idname, OBJECT_OT_BeamngSaveJbeamBeamProp.bl_idname, OBJECT_OT_BeamngRemoveJbeamBeamProp.bl_idname)
+                draw_bottom_options(OBJECT_OT_BeamngAddJbeamBeamProp.bl_idname, OBJECT_OT_BeamngSaveAllJbeamBeamProps.bl_idname)
 
         elif o.is_face_selection_mode():
             struct = s.beamng_jbeam_active_structure
             index = struct.index
             if index > -1:
-                row = box.row()
-                split = row.split(factor=0.8)
+                split = box.row().split(factor=0.8)
                 split.label(text=f"Active Triangle: {struct.id} ({index})")
                 split.alignment = 'RIGHT'
                 split.label(text=f"(area)")
                 box.label(text=f"Selected: {struct.selection}")
                 box.prop(struct, "id", text="Active Triangle ID")
-                r = box.row()
-                self.draw_element_instances_buttons(context, r)
+                draw_element_instances_buttons(box.row())
+                draw_scope_modifier_list(OBJECT_OT_BeamngSelectJbeamTrianglesByProperty.bl_idname, OBJECT_OT_BeamngSaveJbeamTriangleProp.bl_idname, OBJECT_OT_BeamngRemoveJbeamTriangleProp.bl_idname)
+                draw_bottom_options(OBJECT_OT_BeamngAddJbeamTriangleProp.bl_idname, OBJECT_OT_BeamngSaveAllJbeamTriangleProps.bl_idname)
 
-                if s.beamng_jbeam_active_structure.prop_items:
-                    for prop in s.beamng_jbeam_active_structure.prop_items:
-                        r = box.row(align=True)
-                        split = r.split(factor=0.55, align=True)
-                        split.prop(prop, "name", text="")
-                        split.prop(prop, "value", text="")
-                        button_row = r.row(align=True)
-                        button_row.operator(OBJECT_OT_BeamngSelectJbeamTrianglesByProperty.bl_idname, text="", icon="RESTRICT_SELECT_OFF").prop_name = prop.name
-                        button_row.operator(OBJECT_OT_BeamngSaveJbeamTriangleProp.bl_idname, text="", icon="FILE_TICK").prop_name = prop.name
-                        button_row.operator(OBJECT_OT_BeamngRemoveJbeamTriangleProp.bl_idname, text="", icon="TRASH").prop_name = prop.name
-                else:
-                    box.label(text=f"No Scope Modifers on Selection")
-
-                box.operator(OBJECT_OT_BeamngAddJbeamTriangleProp.bl_idname, text="Add Scope Modifier", icon="RNA_ADD")
-                box.operator(OBJECT_OT_BeamngSaveAllJbeamTriangleProps.bl_idname, text="Save All", icon="FILE_TICK")
-            else:
-                msg = "Select elements to view Scope Modifiers" if j.is_node_mesh(obj) else "Convert to Node Mesh"
-                box.label(text=msg)
-
-    def draw_element_instances_buttons(self, context, layout):
-        settings = context.scene.beamng_jbeam_instance.buttons
-        r = layout.row(align=True)
-        button_name = ButtonItem.BUTTON_NAME
-        for i, item in enumerate(settings):
-            o = r.operator(
-                "wm.toggle_dynamic_button",
-                text=ButtonItem.generate_button_name(i) if not item.name else item.name,
-                depress=bool(item.name)
-            )
-            o.index = i
-            o.button_name = button_name
-        #r.separator()
-        o = r.operator(ManageDynamicButtonsOperator.bl_idname, text="", icon="EVENT_PLUS")
-        o.action = 'ADD'
-        o.button_name = button_name
-        if len(settings) > 1:
-            o = r.operator(ManageDynamicButtonsOperator.bl_idname, text="", icon="TRASH")
-            o.action = 'REMOVE'
-            o.button_name = button_name
-
-        selected = [item.name for item in settings if item.name]
-        #print(f"Selected: {', '.join(selected) if selected else 'None'}")
+        if struct and struct.index < 0:
+            msg = "Select elements to view Scope Modifiers" if j.is_node_mesh(obj) else "Convert to Node Mesh"
+            box.label(text=msg)
 
     def draw_expanded_bake_options(self, context, layout):
         ebox = layout.box()

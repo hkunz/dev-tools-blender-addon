@@ -5,7 +5,7 @@ import bmesh
 from typing import List, Tuple
 from bpy.app.handlers import persistent
 
-from dev_tools.operators.file.beamng.beamng_export_node_mesh_to_jbeam import OBJECT_OT_BeamngCreateRefnodesVertexGroups, EXPORT_OT_BeamngExportNodeMeshToJbeam # type: ignore
+from dev_tools.operators.file.beamng.beamng_export_node_mesh_to_jbeam import DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam # type: ignore
 from dev_tools.operators.object.armature.armature_create_bones_random_vertices_operator import OBJECT_OT_ArmatureCreateBonesRandomVertices # type: ignore
 from dev_tools.operators.object.armature.armature_create_bones_from_edge_selection_operator import OBJECT_OT_ArmatureCreateBonesFromEdgeSelection # type: ignore
 from dev_tools.operators.object.armature.armature_assign_closest_vertex_to_bone_tails_operator import OBJECT_OT_ArmatureAssignClosestVertexToBoneTails # type: ignore
@@ -319,7 +319,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                 msg = "Edit Node Mesh in Edit Mode" if j.is_node_mesh(obj) else ("Convert to Node Mesh" if j.has_jbeam_node_id(obj) else "No Node Mesh selected")
                 box.label(text=msg)
 
-            box.operator(EXPORT_OT_BeamngExportNodeMeshToJbeam.bl_idname, text="Export JBeam", icon="EXPORT")
+            box.operator(DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam.bl_idname, text="Export JBeam", icon="EXPORT")
             #col.operator(OBJECT_OT_BeamngCreateMetaBallCloud.bl_idname, text="Create MetaBall Cloud")
 
     def draw_element_instances_buttons(self, context, layout):

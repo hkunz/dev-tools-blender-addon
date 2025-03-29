@@ -3,10 +3,10 @@ import bpy
 class JbeamNodeMeshCreator:
     def __init__(self):
         self.vertex_indices: dict[str, int] = {}  # Map NodeID to vertex index
-        self.mesh = None  # To store the mesh object
-        self.obj = None   # To store the Blender object
+        self.mesh = None
+        self.obj = None
 
-    def create_object(self, mesh_name="JBeamMesh"):
+    def create_object(self, mesh_name="NodeMesh"):
         """Create an empty mesh object."""
         self.mesh = bpy.data.meshes.new(mesh_name)
         self.obj = bpy.data.objects.new(mesh_name, self.mesh)
@@ -99,4 +99,3 @@ class JbeamNodeMeshCreator:
         self.mesh.from_pydata([], [], faces)
         self.mesh.update()
         print(f"Added {len(faces)} faces to the mesh.")
-

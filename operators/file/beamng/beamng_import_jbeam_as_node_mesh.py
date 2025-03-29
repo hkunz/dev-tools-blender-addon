@@ -9,9 +9,9 @@ from dev_tools.utils.jbeam.jbeam_parser import JbeamParser  # type: ignore
 from dev_tools.utils.jbeam.jbeam_node_mesh_creator import JbeamNodeMeshCreator  # type: ignore
 from dev_tools.utils.jbeam.jbeam_node_mesh_configurator import JbeamNodeMeshConfigurator  # type: ignore
 
-class DEVTOOLS_JBEAM_EDITOR_OT_import_jbeam_as_node_mesh(Operator, ImportHelper):
+class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, ImportHelper):
     """Import a .jbeam file"""
-    bl_idname = "devtools_jbeam_editor.beamng_import_jbeam_file_as_node_mesh"
+    bl_idname = "devtools_jbeam_editor.beamng_import_jbeam_file_to_node_mesh"
     bl_label = "DevTools: Import Jbeam File"
 
     filename_ext = ".jbeam"
@@ -22,6 +22,7 @@ class DEVTOOLS_JBEAM_EDITOR_OT_import_jbeam_as_node_mesh(Operator, ImportHelper)
     )  # type: ignore
 
     def execute(self, context):
+        bpy.ops.object.select_all(action='DESELECT')
         jbeam_path = self.filepath
         self.parser = JbeamParser()
         try:
@@ -42,5 +43,7 @@ class DEVTOOLS_JBEAM_EDITOR_OT_import_jbeam_as_node_mesh(Operator, ImportHelper)
         jmc.add_faces(tris_list)
 
         JbeamNodeMeshConfigurator.process_node_mesh_props(obj, self.parser)
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
 
         return {'FINISHED'}

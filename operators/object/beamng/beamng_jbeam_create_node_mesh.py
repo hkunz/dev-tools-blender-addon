@@ -1,15 +1,18 @@
 import bpy
-import json
 
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
 
 class JbeamNodeMesh:
-    def __init__(self, name="jbeam_mesh"):
+    def __init__(self, name="NodeMesh"):
         self.name = name
+        self.obj = None
+
+    def create(self):
         self.obj = self.create_triangulated_cube()
         self.setup()
         self.set_jbeam_attributes()
         self.create_vertex_groups()
+        return self.obj
 
     def setup(self):
         j.set_jbeam_visuals(self.obj)
@@ -58,5 +61,8 @@ class OBJECT_OT_BeamngJbeamCreateNodeMesh(bpy.types.Operator):
 
     def execute(self, context):
         bpy.ops.object.select_all(action='DESELECT')
-        JbeamNodeMesh()
+        nm = JbeamNodeMesh()
+        obj = nm.create()
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
         return {'FINISHED'}

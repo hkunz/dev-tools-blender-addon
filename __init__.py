@@ -4,7 +4,7 @@
 # ##### BEGIN LICENSE BLOCK #####
 #
 # Dev Tools
-# Copyright (c) 2024 Harry McKenzie
+# Copyright (c) 2025 Harry McKenzie
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,9 +50,9 @@ from dev_tools.utils.jbeam.jbeam_selection_tracker import JbeamSelectionTracker 
 from dev_tools.translation.translations import register as register_translations, unregister as unregister_translations # type: ignore
 from dev_tools.ui.sidebar_menu import register as register_devtools_panel, unregister as unregister_devtools_panel # type: ignore
 from dev_tools.operators.common.operator_generic_popup import register as register_generic_popup, unregister as unregister_generic_popup # type: ignore
-from dev_tools.operators.file.beamng.beamng_export_node_mesh_to_jbeam import OBJECT_OT_BeamngCreateRefnodesVertexGroups, EXPORT_OT_BeamngExportNodeMeshToJbeam # type: ignore
+from dev_tools.operators.file.beamng.beamng_export_node_mesh_to_jbeam import DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam, OBJECT_OT_BeamngCreateRefnodesVertexGroups # type: ignore
+from dev_tools.operators.file.beamng.beamng_import_jbeam_as_node_mesh import DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh  # type: ignore
 
-from dev_tools.operators.file.beamng.beamng_import_jbeam_as_node_mesh import DEVTOOLS_JBEAM_EDITOR_OT_import_jbeam_as_node_mesh  # type: ignore
 from dev_tools.operators.object.armature.armature_create_bones_random_vertices_operator import OBJECT_OT_ArmatureCreateBonesRandomVertices # type: ignore
 from dev_tools.operators.object.armature.armature_create_bones_from_edge_selection_operator import OBJECT_OT_ArmatureCreateBonesFromEdgeSelection # type: ignore
 from dev_tools.operators.object.armature.armature_assign_closest_vertex_to_bone_tails_operator import OBJECT_OT_ArmatureAssignClosestVertexToBoneTails # type: ignore
@@ -68,18 +68,18 @@ from dev_tools.operators.object.beamng.beamng_jbeam_create_node_mesh import OBJE
 from dev_tools.operators.object.beamng.utils.beamng_jbeam_print_attributes_operators import OBJECT_OT_BeamngPrintJbeamNodeProps, OBJECT_OT_BeamngPrintJbeamBeamProps, OBJECT_OT_BeamngPrintJbeamTriangleProps  # type: ignore
 
 DEVTOOLS_CLASSES = [
-    DEVTOOLS_JBEAM_EDITOR_OT_import_jbeam_as_node_mesh,
     OBJECT_OT_ArmatureCreateBonesRandomVertices,
     OBJECT_OT_ArmatureAssignClosestVertexToBoneTails,
     OBJECT_OT_ArmatureCreateBonesFromEdgeSelection,
     OBJECT_OT_BakePrepareObject,
     OBJECT_OT_BakeGenerateObject,
+    DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh,
+    DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam,
     OBJECT_OT_BeamngCreateEmptiesBase,
     OBJECT_OT_BeamngCreateMetaBallCloud,
     OBJECT_OT_BeamngParentToStart01Empty,
     OBJECT_OT_BeamngClearChildrenStart01Empty,
     OBJECT_OT_BeamngCreateRefnodesVertexGroups,
-    EXPORT_OT_BeamngExportNodeMeshToJbeam,
     OBJECT_OT_BeamngConvertJbeamToNodeMesh,
     OBJECT_OT_BeamngLoadJbeamNodeProps,
     OBJECT_OT_BeamngLoadJbeamBeamProps,
@@ -118,7 +118,7 @@ def on_load_post_handler(scene):
     JbeamSelectionTracker.get_instance().register()
 
 def menu_func_import(self, context):
-    self.layout.operator(DEVTOOLS_JBEAM_EDITOR_OT_import_jbeam_as_node_mesh.bl_idname, text="JBeam File (.jbeam)")
+    self.layout.operator(DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh.bl_idname, text="JBeam File (.jbeam)")
 
 def register() -> None:
     print("DevTools addon Registration Begin ==============>")
@@ -135,7 +135,6 @@ def register() -> None:
     IconsManager().init()
     JbeamSelectionTracker.get_instance().register()
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
-
     bpy.app.handlers.save_pre.append(save_pre_handler)
     bpy.app.handlers.load_post.append(on_load_post_handler)
 

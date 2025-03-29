@@ -1,6 +1,6 @@
 import bpy
 
-class JbeamMeshCreator:
+class JbeamNodeMeshCreator:
     def __init__(self):
         self.vertex_indices: dict[str, int] = {}  # Map NodeID to vertex index
         self.mesh = None  # To store the mesh object

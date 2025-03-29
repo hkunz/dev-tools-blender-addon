@@ -6,7 +6,7 @@ from bpy_extras.io_utils import ImportHelper
 
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
 from dev_tools.utils.jbeam.jbeam_parser import JbeamParser  # type: ignore
-from dev_tools.utils.jbeam.jbeam_mesh_creator import JbeamMeshCreator  # type: ignore
+from dev_tools.utils.jbeam.jbeam_node_mesh_creator import JbeamNodeMeshCreator  # type: ignore
 from dev_tools.utils.jbeam.jbeam_node_mesh_configurator import JbeamNodeMeshConfigurator  # type: ignore
 
 class DEVTOOLS_JBEAM_EDITOR_OT_import_jbeam_as_node_mesh(Operator, ImportHelper):
@@ -31,7 +31,7 @@ class DEVTOOLS_JBEAM_EDITOR_OT_import_jbeam_as_node_mesh(Operator, ImportHelper)
             return {'CANCELLED'}
 
         nodes_list = self.parser.get_nodes_list()
-        jmc = JbeamMeshCreator()
+        jmc = JbeamNodeMeshCreator()
         obj = jmc.create_object()
         jmc.add_vertices(nodes_list)
         self.parser.parse_data_for_jbeam_object_conversion(obj, False)

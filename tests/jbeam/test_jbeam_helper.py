@@ -4,7 +4,7 @@ import difflib
 import unittest
 import pprint
 
-from dev_tools.utils.jbeam.jbeam_helper import PreJbeamStructureHelper, RedundancyReducerJbeamNodesGenerator # type: ignore
+from dev_tools.utils.jbeam.jbeam_helper import PreJbeamStructureHelper, RedundancyReducerJbeamGenerator # type: ignore
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
 
 class JbeamTestObject:
@@ -171,7 +171,7 @@ class TestJBeamHelper(unittest.TestCase):
     
         jbeam = PreJbeamStructureHelper(self.obj, domain="vertex")
         data = jbeam.structure_data()
-        reducer = RedundancyReducerJbeamNodesGenerator(bpy.context.object, data, domain="vertex")
+        reducer = RedundancyReducerJbeamGenerator(bpy.context.object, data, domain="vertex")
         data_actual = reducer.reduce_redundancy()
 
         data_expected = [

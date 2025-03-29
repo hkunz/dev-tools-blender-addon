@@ -145,7 +145,7 @@ class PreJbeamStructureHelper:
         return OrderedDict((k, json.loads(v)) for k, v in sorted_items)
 
 
-class RedundancyReducerJbeamNodesGenerator:
+class RedundancyReducerJbeamGenerator:
     def __init__(self, obj, data, domain="vertex"):
         self.obj = obj
         self.data = data

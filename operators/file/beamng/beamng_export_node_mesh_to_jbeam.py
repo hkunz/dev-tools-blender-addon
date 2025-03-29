@@ -7,95 +7,9 @@ from pprint import pprint
 
 from dev_tools.utils.object_utils import ObjectUtils as o  # type: ignore
 from dev_tools.utils.json_cleanup import json_cleanup  # type: ignore
-from dev_tools.utils.jbeam.jbeam_helper import PreJbeamStructureHelper, RedundancyReducerJbeamNodesGenerator  # type: ignore
+from dev_tools.utils.jbeam.jbeam_helper import PreJbeamStructureHelper, RedundancyReducerJbeamGenerator  # type: ignore
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
-
-import io
-import json
-
-class JBeamProcessor:
-    def __init__(self, json_data):
-        self.json_data = json_data
-        self.input_stream = None
-        self.output_stream = io.StringIO()
-        self.modified_data = json_data
-
-    def remove_node_contents(self, key):
-        self.output_stream = io.StringIO()
-        self.input_stream = io.StringIO(self.modified_data)
-
-        depth = 0
-        skipping = False
-        key_buffer = []
-        inside_string = False
-
-        while True:
-            ch = self.input_stream.read(1)
-            if not ch:
-                break
-
-            if ch == '"':
-                inside_string = not inside_string
-
-            if inside_string and depth == 0:
-                key_buffer.append(ch)
-                if len(key_buffer) > 255:
-                    key_buffer = key_buffer[:255]
-
-            if not inside_string and key_buffer:
-                key_str = ''.join(key_buffer)
-                key_buffer = []
-                if key_str[1:] == key:
-                    skipping = True
-                    self.output_stream.write('"' + ':' + ' ')
-
-            if ch == '[' and not inside_string:
-                if skipping:
-                    depth += 1
-                    if depth == 1:
-                        self.output_stream.write('[')
-                    continue
-
-            if ch == ']' and not inside_string:
-                if depth > 0:
-                    depth -= 1
-                    if depth == 0:
-                        skipping = False
-
-            if not skipping:
-                self.output_stream.write(ch)
-
-        return self.output_stream.getvalue()
-
-
-    def get_key_indent(self, key):
-        current_pos = self.input_stream.tell()
-        self.input_stream.seek(0)
-
-        for line in self.input_stream:
-            stripped_line = line.lstrip()
-            if stripped_line.startswith(f'"{key}"'):
-                indent = len(line) - len(stripped_line)
-                self.input_stream.seek(current_pos)
-                return indent
-
-        self.input_stream.seek(current_pos) 
-        return -1
-
-    def insert_node_contents(self, key, new_contents):
-        self.remove_node_contents(key)
-        spaces = self.get_key_indent(key)
-        indent = " " * spaces
-        result = self.get_result()
-        if spaces < 0:
-            return result
-        indented_contents = "\n".join(indent + line for line in new_contents.splitlines())
-        result = result.replace(f'"{key}": []', f'"{key}": [\n    {indented_contents}\n{indent}]')
-        self.modified_data = result
-        return result
-
-    def get_result(self):
-        return self.output_stream.getvalue()
+from dev_tools.utils.jbeam.jbeam_export_processor import JbeamExportProcessor  # type: ignore
 
 
 class OBJECT_OT_BeamngCreateRefnodesVertexGroups(bpy.types.Operator):
@@ -151,49 +65,6 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
 
         return True, "All nodes have unique names."
 
-
-    def check_vertex_groups(self, obj: bpy.types.Object) -> tuple[bool, str]:
-        """Checks if each required vertex group has exactly one assigned vertex 
-        and that no vertex is assigned to more than one required group.
-        """
-        required_groups = set(j.get_required_vertex_group_names(minimal=True))
-        existing_groups = {vg.name for vg in obj.vertex_groups}
-
-        # Ensure all required groups exist
-        if not required_groups.issubset(existing_groups):
-            missing = required_groups - existing_groups
-            return False, f"Missing vertex groups: {', '.join(missing)}"
-
-        vertex_assignment = {}  # {vertex_index: group_name}
-        
-        # Check vertex assignments
-        for group_name in required_groups:
-            vgroup = obj.vertex_groups.get(group_name)
-            if not vgroup:
-                continue  # Shouldn't happen due to poll, but just in case
-
-            # Get assigned vertices
-            assigned_verts = [
-                v.index for v in obj.data.vertices
-                if any(g.group == vgroup.index for g in v.groups)
-            ]
-            count = len(assigned_verts)
-
-            if count == 0:
-                return False, f"Vertex Group '{group_name}' has no vertex/node assigned."
-            elif count > 1:
-                return False, f"Vertex Group '{group_name}' has {count} vertices assigned (should be 1 only)."
-
-            # Ensure unique vertex assignment
-            vertex_index = assigned_verts[0]
-            if vertex_index in vertex_assignment:
-                return False, f"Vertex {vertex_index} is assigned to both '{vertex_assignment[vertex_index]}' and '{group_name}', which is not allowed."
-            
-            vertex_assignment[vertex_index] = group_name  # Store assigned vertex
-
-        return True, "All vertex groups are correctly assigned."
-
-    
     def execute(self, context):
         success = self.export_jbeam_format(self.filepath)
         return {'FINISHED'} if success else {'CANCELLED'} 
@@ -214,7 +85,7 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
             return {'CANCELLED'}
 
         # Check vertex groups
-        is_valid, message = self.check_vertex_groups(active_object)
+        is_valid, message = j.check_vertex_groups(active_object)
         if not is_valid:
             self.report({'WARNING'}, message)
             return {'CANCELLED'}
@@ -242,7 +113,7 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
 
         jbeam = PreJbeamStructureHelper(obj, domain="vertex")
         data = jbeam.structure_data()
-        reducer = RedundancyReducerJbeamNodesGenerator(obj, data, domain="vertex")
+        reducer = RedundancyReducerJbeamGenerator(obj, data, domain="vertex")
         data_actual = reducer.reduce_redundancy()
 
         node_data = [] #[["id", "posX", "posY", "posZ"]]
@@ -254,7 +125,7 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
 
         jbeam = PreJbeamStructureHelper(obj, domain="edge")
         data = jbeam.structure_data()
-        reducer = RedundancyReducerJbeamNodesGenerator(obj, data, domain="edge")
+        reducer = RedundancyReducerJbeamGenerator(obj, data, domain="edge")
         data_actual = reducer.reduce_redundancy()
 
         beam_data = [] #[["id1:", "id2:"]]
@@ -266,7 +137,7 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
 
         jbeam = PreJbeamStructureHelper(obj, domain="face")
         data = jbeam.structure_data()
-        reducer = RedundancyReducerJbeamNodesGenerator(obj, data, domain="face")
+        reducer = RedundancyReducerJbeamGenerator(obj, data, domain="face")
         data_actual = reducer.reduce_redundancy()
 
         beam_data = [] #[["id1:", "id2:", "id3:"]]
@@ -351,7 +222,7 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
             if quads: quads_str = "" #self.get_final_struct(existing_data, quads, "quads", [["id1:","id2:","id3:","id4:"]])
             if ngons: ngons_str = "" #self.get_final_struct(existing_data, ngons, "ngons", [["ngons:"]])
             
-            processor = JBeamProcessor(existing_data_str)
+            processor = JbeamExportProcessor(existing_data_str)
 
             # Modify "nodes", then "beams", and "triangles" successively:
             existing_data_str = processor.insert_node_contents("refNodes", refnodes_str)
@@ -397,9 +268,9 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
 
     @classmethod
     def poll(cls, context: bpy_types.Context) -> bool:
-        active_object: bpy_types.Object = context.active_object
+        obj: bpy_types.Object = context.active_object
 
-        if not active_object or active_object.type != "MESH" or len(context.selected_objects) != 1:
+        if not obj or not j.is_node_mesh(obj) or len(context.selected_objects) > 1:
             return False
 
         # Check if required vertex groups exist
@@ -407,32 +278,3 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
         #existing_groups = {vg.name for vg in active_object.vertex_groups}
         
         return True #required_groups.issubset(existing_groups)
-
-
-
-# Test
-
-json_data = """
-{
-    "manual_datfa_file": "you need to manually copy these nodes to the .jbeam file",
-    "partname": {
-        "refNodes": [
-            ["ref:", "back:", "left:", "up:", "leftCorner:", "rightCorner:"],
-            ["ref", "", "", "", "", ""]
-        ],
-        "nodes": [
-            ["id", "posX", "posY", "posZ"],
-            {"asdf":"asdf"},
-            {"asdf":"asdf2"},
-            ["ref", 0, 0, 0],
-            ["b7", -1.0, -1.0, 1.0],
-            ["b8", -1.0, -1.0, -1.0],
-            {"asdf":"asdf"},
-            {"asdf":"asdf3"}
-        ]
-    }
-}
-"""
-#processor = JBeamProcessor(json_data)
-#result = processor.remove_node_contents("nodes")
-#print("Processed JSON:\n", result)

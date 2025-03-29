@@ -218,12 +218,17 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                 split.label(text=f"Hidden: {h_nodes} {h_beams} {h_faces}")
                 split.operator("mesh.reveal", text="Unhide", icon="HIDE_OFF")
 
+        msg = None
         if obj and obj.mode == 'EDIT' and obj.type == 'MESH' and j.is_node_mesh(obj):
             self.draw_jbeam_editor_options(context, box, obj)
+        elif len(context.selected_objects) > 1:
+            msg = "Select one Node Mesh"
+        elif j.is_node_mesh(obj):
+            msg = "Edit Node Mesh in Edit Mode"
         else:
-            msg = "Edit Node Mesh in Edit Mode" if j.is_node_mesh(obj) else ("Convert to Node Mesh" if j.has_jbeam_node_id(obj) else "No Node Mesh selected")
+            msg = "Convert to Node Mesh" if j.has_jbeam_node_id(obj) else "No Node Mesh selected"
+        if msg:
             box.label(text=msg)
-
         box.operator(DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam.bl_idname, text="Export JBeam", icon="EXPORT")
         #col.operator(OBJECT_OT_BeamngCreateMetaBallCloud.bl_idname, text="Create MetaBall Cloud")
 

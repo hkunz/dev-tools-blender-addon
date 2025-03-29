@@ -1,5 +1,6 @@
 import bpy
 import bmesh
+import json
 
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
 
@@ -62,12 +63,20 @@ class OBJECT_OT_BeamngLoadJbeamPropsBase(bpy.types.Operator):
     layer_name = ""
     get_props_function = None
 
-    instance: bpy.props.IntProperty(default=1, min=1)  # type: ignore
+    instances: bpy.props.StringProperty(default="[]")  # JSON-encoded list of instances # type: ignore
 
     def execute(self, context):
         obj = context.object
         if not obj or obj.type != 'MESH':
             self.report({'WARNING'}, "No valid mesh object selected")
+            return {'CANCELLED'}
+
+        try:
+            instance_list = json.loads(self.instances)
+            if not instance_list:
+                instance_list = [1]
+        except json.JSONDecodeError:
+            self.report({'ERROR'}, "Invalid format for instances")
             return {'CANCELLED'}
 
         bm = bmesh.from_edit_mesh(obj.data)
@@ -83,20 +92,19 @@ class OBJECT_OT_BeamngLoadJbeamPropsBase(bpy.types.Operator):
             self.report({'WARNING'}, "No layer found")
 
         if not selected_elements:
-            #print("No selection or no property data found")
             return {'CANCELLED'}
 
         scene_props = context.scene.beamng_jbeam_active_structure.prop_items
         scene_props.clear()
         properties = {}
 
-        for elem in selected_elements:
-            props = self.get_props_function(obj, elem.index, self.instance)
-            for key, value in props.items():
-                properties[key] = value
+        for instance in instance_list:  # Loop through all provided instances
+            for elem in selected_elements:
+                props = self.get_props_function(obj, elem.index, instance)
+                for key, value in props.items():
+                    properties[key] = value
 
-        
-        sorted_props = sorted(properties.items(), key=lambda item: item[0].lower()) # Sort properties alphabetically (case-insensitive)
+        sorted_props = sorted(properties.items(), key=lambda item: item[0].lower())  # Sort properties alphabetically
 
         for key, value in sorted_props:
             prop = scene_props.add()

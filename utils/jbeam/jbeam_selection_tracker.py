@@ -1,5 +1,6 @@
 import bpy
 import bmesh
+import json
 
 from typing import Optional
 
@@ -44,11 +45,17 @@ class JbeamSelectionTracker:
             return
         self.check_selection_change(scene)
 
-    def on_instance_buttons_update(self, scene):
+    def get_instances_selection_str(self, scene) -> str:
         instances_selection = scene.beamng_jbeam_instance.get_selected_instances()
         self.instances_selection = instances_selection
-        for instance in instances_selection:
-            bpy.ops.object.devtools_beamng_load_jbeam_beam_props(instance=instance)
+        return json.dumps(instances_selection)
+
+    def on_instance_buttons_update(self, scene):
+        instances = self.get_instances_selection_str(scene)
+        if o.is_edge_selection_mode():
+            bpy.ops.object.devtools_beamng_load_jbeam_beam_props(instances=instances)
+        elif o.is_face_selection_mode():
+            bpy.ops.object.devtools_beamng_load_jbeam_triangle_props(instances=instances)
 
     def on_instance_button_change_add(self, scene):
         self.on_instance_buttons_update(scene)
@@ -152,7 +159,7 @@ class JbeamSelectionTracker:
         o.update_edge_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_edges", "selected_edges", selection)
         struct = self.update_struct(scene, obj, bm, selection, bmesh.types.BMEdge, j.get_beam_id, j.set_gn_jbeam_active_beam_index)
         self.update_instances(scene, obj, struct, j.get_total_beam_instances)
-        bpy.ops.object.devtools_beamng_load_jbeam_beam_props(instance=1)
+        bpy.ops.object.devtools_beamng_load_jbeam_beam_props()
         UiUtils.force_update_ui(bpy.context)
         obj.data.update()
 

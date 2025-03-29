@@ -29,7 +29,7 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
             self.report({'INFO'}, "Object is already a Node Mesh")
             return {'CANCELLED'}
         elif obj.type != 'MESH':
-            self.report({'WARNING'}, f"{repr(obj)} is not a mesh object!")
+            self.report({'WARNING'}, f"{repr(obj)} is not a mesh or curve object!")
             return {'CANCELLED'}
 
         jbeam_path = obj.data.get('jbeam_file_path', None)

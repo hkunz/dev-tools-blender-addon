@@ -21,18 +21,18 @@ class JbeamUtils:
 
     @staticmethod
     def has_jbeam_node_id(obj):
-        return JbeamUtils.ATTR_NODE_ID in obj.data.attributes if obj else False
+        return obj.type == 'MESH' and JbeamUtils.ATTR_NODE_ID in obj.data.attributes if obj else False
 
     @staticmethod
     def has_jbeam_node_props(obj):
-        return JbeamUtils.ATTR_NODE_PROPS in obj.data.attributes if obj else False
+        return obj.type == 'MESH' and JbeamUtils.ATTR_NODE_PROPS in obj.data.attributes if obj else False
 
     @staticmethod
     def has_jbeam_beam_props(obj):
-        return JbeamUtils.ATTR_BEAM_PROPS in obj.data.attributes if obj else False
+        return obj.type == 'MESH' and JbeamUtils.ATTR_BEAM_PROPS in obj.data.attributes if obj else False
 
     def is_node_mesh(obj):
-        return obj and obj.type == 'MESH' and JbeamUtils.has_jbeam_node_id(obj) and JbeamUtils.has_jbeam_node_props(obj) and JbeamUtils.has_jbeam_beam_props(obj)
+        return obj and JbeamUtils.has_jbeam_node_id(obj) and JbeamUtils.has_jbeam_node_props(obj) and JbeamUtils.has_jbeam_beam_props(obj)
 
     @staticmethod
     def remove_old_jbeam_attributes(obj):

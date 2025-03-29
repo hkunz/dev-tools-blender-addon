@@ -459,12 +459,30 @@ class JbeamUtils:
 
         print(f"Assigned '{node_tree.name}' to '{repr(obj)}' via modifier '{mod.name}'")
 
+    @staticmethod
+    def check_unique_node_names(obj: bpy.types.Object) -> tuple[bool, str]:
+        """Checks if all nodes have a unique name."""
+        node_names = set()
+
+        for index in range(len(obj.data.vertices)):
+            node_name = JbeamUtils.get_node_id(obj, index).strip()
+
+            if not node_name:
+                return False, f"Node at index {index} has an empty name."
+
+            if node_name in node_names:
+                return False, f"Duplicate node name detected: '{node_name}' at index {index}."
+
+            node_names.add(node_name)
+
+        return True
+
     @staticmethod  # deprecated method
-    def check_vertex_groups(self, obj: bpy.types.Object) -> tuple[bool, str]:
+    def check_vertex_groups(obj: bpy.types.Object) -> tuple[bool, str]:
             """Checks if each required vertex group has exactly one assigned vertex 
             and that no vertex is assigned to more than one required group.
             """
-            required_groups = set(j.get_required_vertex_group_names(minimal=True))
+            required_groups = set(JbeamUtils.get_required_vertex_group_names(minimal=True))
             existing_groups = {vg.name for vg in obj.vertex_groups}
 
             # Ensure all required groups exist

@@ -70,35 +70,49 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
         return {'FINISHED'} if success else {'CANCELLED'} 
 
     def invoke(self, context, event):
-        bpy.ops.object.mode_set(mode='OBJECT')
-        active_object: bpy.types.Object = context.active_object
+        mode = context.object.mode
+        if mode != 'OBJECT':
+            bpy.ops.object.mode_set(mode='OBJECT')
+
+        def restore_mode():
+            if mode != context.object.mode:
+                bpy.ops.object.mode_set(mode=mode)
+
+        obj = context.object
         if not context.active_object or not context.selected_objects:
             self.report({'WARNING'}, "No objects selected!")
+            restore_mode()
             return {'CANCELLED'}
 
-        if not j.is_node_mesh(active_object):
-            self.report({'WARNING'}, f"{repr(active_object)} is not a Node Mesh")
+        if not j.is_node_mesh(obj):
+            self.report({'WARNING'}, f"{repr(obj)} is not a Node Mesh")
+            restore_mode()
             return {'CANCELLED'}
 
-        if o.has_ngons(active_object):
+        if o.has_ngons(obj):
             self.report({'ERROR'}, "Jbeam does not support quads and N-gons. Triangulate these faces with Ctrl+T")
+            restore_mode()
             return {'CANCELLED'}
 
         # Check vertex groups
-        is_valid, message = j.check_vertex_groups(active_object)
+        is_valid, message = j.check_vertex_groups(obj)
         if not is_valid:
             self.report({'WARNING'}, message)
+            restore_mode()
             return {'CANCELLED'}
 
         # Check unique node names
-        is_valid, message = self.check_unique_node_names(active_object)
+        is_valid, message = self.check_unique_node_names(obj)
         if not is_valid:
             self.report({'WARNING'}, message)
+            restore_mode()
             return {'CANCELLED'}
 
         self.report({'INFO'}, message)
         context.window_manager.fileselect_add(self)
         #context.window_manager.operators[-1].bl_label = "Save JBeam File"
+        restore_mode()
+
         return {'RUNNING_MODAL'}
 
     def get_final_struct(self, json, items, jbeam_prop, prepend=[]):

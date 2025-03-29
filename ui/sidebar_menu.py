@@ -5,20 +5,21 @@ import bmesh
 from typing import List, Tuple
 from bpy.app.handlers import persistent
 
-from dev_tools.operators.file.beamng.beamng_export_node_mesh_to_jbeam import DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam # type: ignore
-from dev_tools.operators.object.armature.armature_create_bones_random_vertices_operator import OBJECT_OT_ArmatureCreateBonesRandomVertices # type: ignore
-from dev_tools.operators.object.armature.armature_create_bones_from_edge_selection_operator import OBJECT_OT_ArmatureCreateBonesFromEdgeSelection # type: ignore
-from dev_tools.operators.object.armature.armature_assign_closest_vertex_to_bone_tails_operator import OBJECT_OT_ArmatureAssignClosestVertexToBoneTails # type: ignore
-from dev_tools.operators.object.bake.bake_prepare_object_operator import OBJECT_OT_BakePrepareObject # type: ignore
-from dev_tools.operators.object.bake.bake_generate_object_operator import OBJECT_OT_BakeGenerateObject # type: ignore
-from dev_tools.operators.object.beamng.beamng_create_empties_base_operator import OBJECT_OT_BeamngCreateEmptiesBase # type: ignore
+from dev_tools.operators.file.beamng.beamng_export_node_mesh_to_jbeam import DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam  # type: ignore
+from dev_tools.operators.object.armature.armature_create_bones_random_vertices_operator import OBJECT_OT_ArmatureCreateBonesRandomVertices  # type: ignore
+from dev_tools.operators.object.armature.armature_create_bones_from_edge_selection_operator import OBJECT_OT_ArmatureCreateBonesFromEdgeSelection  # type: ignore
+from dev_tools.operators.object.armature.armature_assign_closest_vertex_to_bone_tails_operator import OBJECT_OT_ArmatureAssignClosestVertexToBoneTails  # type: ignore
+from dev_tools.operators.object.bake.bake_prepare_object_operator import OBJECT_OT_BakePrepareObject  # type: ignore
+from dev_tools.operators.object.bake.bake_generate_object_operator import OBJECT_OT_BakeGenerateObject  # type: ignore
+from dev_tools.operators.object.beamng.utils.beamng_jbeam_print_attributes_operators import OBJECT_OT_BeamngPrintJbeamNodeProps,  OBJECT_OT_BeamngPrintJbeamBeamProps, OBJECT_OT_BeamngPrintJbeamTriangleProps # type: ignore
+from dev_tools.operators.object.beamng.beamng_create_empties_base_operator import OBJECT_OT_BeamngCreateEmptiesBase  # type: ignore
 from dev_tools.operators.object.beamng.beamng_create_metaball_cloud_operator import OBJECT_OT_BeamngCreateMetaBallCloud # type: ignore
-from dev_tools.operators.object.beamng.beamng_parent_to_start01_empty_operator import OBJECT_OT_BeamngParentToStart01Empty, OBJECT_OT_BeamngClearChildrenStart01Empty # type: ignore
-from dev_tools.operators.object.beamng.beamng_parent_to_start01_empty_operator import OBJECT_OT_BeamngClearChildrenStart01Empty, OBJECT_OT_BeamngParentToStart01Empty # type: ignore
-from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_node_mesh import OBJECT_OT_BeamngConvertJbeamToNodeMesh # type: ignore
+from dev_tools.operators.object.beamng.beamng_parent_to_start01_empty_operator import OBJECT_OT_BeamngParentToStart01Empty, OBJECT_OT_BeamngClearChildrenStart01Empty  # type: ignore
+from dev_tools.operators.object.beamng.beamng_parent_to_start01_empty_operator import OBJECT_OT_BeamngClearChildrenStart01Empty, OBJECT_OT_BeamngParentToStart01Empty  # type: ignore
+from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_node_mesh import OBJECT_OT_BeamngConvertJbeamToNodeMesh  # type: ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_node_props_manager import OBJECT_OT_BeamngSaveJbeamNodeProp, OBJECT_OT_BeamngSaveJbeamBeamProp, OBJECT_OT_BeamngSaveJbeamTriangleProp, OBJECT_OT_BeamngSaveAllJbeamNodeProps, OBJECT_OT_BeamngSaveAllJbeamBeamProps, OBJECT_OT_BeamngSaveAllJbeamTriangleProps, OBJECT_OT_BeamngAddJbeamNodeProp, OBJECT_OT_BeamngAddJbeamBeamProp, OBJECT_OT_BeamngAddJbeamTriangleProp, OBJECT_OT_BeamngRemoveJbeamNodeProp, OBJECT_OT_BeamngRemoveJbeamBeamProp, OBJECT_OT_BeamngRemoveJbeamTriangleProp, OBJECT_OT_BeamngSelectJbeamNodesByProperty, OBJECT_OT_BeamngSelectJbeamBeamsByProperty, OBJECT_OT_BeamngSelectJbeamTrianglesByProperty, JbeamStructurePropertyItem, JbeamStructure, JbeamHiddenElements  # type: ignore
-from dev_tools.operators.object.beamng.beamng_jbeam_rename_selected_nodes import OBJECT_OT_BeamngJbeamRenameSelectedNodes # type:ignore
-from dev_tools.operators.object.beamng.beamng_jbeam_create_node_mesh import OBJECT_OT_BeamngJbeamCreateNodeMesh # type: ignore
+from dev_tools.operators.object.beamng.beamng_jbeam_rename_selected_nodes import OBJECT_OT_BeamngJbeamRenameSelectedNodes  # type:ignore
+from dev_tools.operators.object.beamng.beamng_jbeam_create_node_mesh import OBJECT_OT_BeamngJbeamCreateNodeMesh  # type: ignore
 from dev_tools.operators.common.ui.toggle_dynamic_button_operator import ButtonItem, ButtonItemSelector, ToggleDynamicButtonOperator, ManageDynamicButtonsOperator  # type: ignore
 
 from dev_tools.utils.jbeam.jbeam_selection_tracker import JbeamSelectionTracker # type: ignore
@@ -205,7 +206,16 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
         if not context.selected_objects:
             col.operator(OBJECT_OT_BeamngJbeamCreateNodeMesh.bl_idname, text="Create Node Mesh", icon="OUTLINER_OB_MESH")
         elif len(context.selected_objects) == 1:
-            col.operator(OBJECT_OT_BeamngConvertJbeamToNodeMesh.bl_idname, text="Convert to Node Mesh", icon="OUTLINER_OB_MESH")
+            if j.is_node_mesh(context.selected_objects[0]):
+                r = col.row(align=True)
+                r.operator(OBJECT_OT_BeamngPrintJbeamNodeProps.bl_idname, text="Nodes Debug", icon="CONSOLE")
+                r.operator(OBJECT_OT_BeamngPrintJbeamBeamProps.bl_idname, text="Beams Debug", icon="CONSOLE")
+                r.operator(OBJECT_OT_BeamngPrintJbeamTriangleProps.bl_idname, text="Triangles Debug", icon="CONSOLE")
+            else:
+                col.operator(OBJECT_OT_BeamngConvertJbeamToNodeMesh.bl_idname, text="Convert to Node Mesh", icon="OUTLINER_OB_MESH")
+        else:
+            pass
+            
         box = col.box()
 
         if obj and obj.mode == 'EDIT':
@@ -229,8 +239,8 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             msg = "Convert to Node Mesh" if j.has_jbeam_node_id(obj) else "No Node Mesh selected"
         if msg:
             box.label(text=msg)
+
         box.operator(DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam.bl_idname, text="Export JBeam", icon="EXPORT")
-        #col.operator(OBJECT_OT_BeamngCreateMetaBallCloud.bl_idname, text="Create MetaBall Cloud")
 
     def draw_jbeam_editor_options(self, context, box, obj):
         s = context.scene

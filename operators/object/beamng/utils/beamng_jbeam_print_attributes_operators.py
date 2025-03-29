@@ -14,8 +14,14 @@ class OBJECT_OT_PrintJBeamPropsBase(bpy.types.Operator):
     id_function = None
 
     def execute(self, context):
-        if bpy.context.object.mode != 'OBJECT':
+        mode = context.object.mode
+        if mode != 'OBJECT':
             bpy.ops.object.mode_set(mode='OBJECT')
+        
+        def restore_mode():
+            if mode != context.object.mode:
+                bpy.ops.object.mode_set(mode=mode)
+
         storage_inst = JbeamPropsStorage.get_instance()
         for obj in context.selected_objects:
             if not j.is_node_mesh(obj):
@@ -45,12 +51,15 @@ class OBJECT_OT_PrintJBeamPropsBase(bpy.types.Operator):
 
         if len(context.selected_objects) > 0:
             self.report({'INFO'}, "Node Mesh Attributes have been printed. Check the console for detailed output.")
+
+        restore_mode()
+
         return {'FINISHED'}
 
 
 class OBJECT_OT_BeamngPrintJbeamNodeProps(OBJECT_OT_PrintJBeamPropsBase):
     """Prints the jbeam_node_props attribute values of selected objects"""
-    bl_idname = "object.beamng_jbeam_print_jbeam_node_props"
+    bl_idname = "devtools_jbeameditor.beamng_jbeam_print_jbeam_node_props"
     bl_label = "Print JBeam Node Props"
     attr_name = j.ATTR_NODE_PROPS
     domain = "vertices"
@@ -59,7 +68,7 @@ class OBJECT_OT_BeamngPrintJbeamNodeProps(OBJECT_OT_PrintJBeamPropsBase):
 
 class OBJECT_OT_BeamngPrintJbeamBeamProps(OBJECT_OT_PrintJBeamPropsBase):
     """Prints the jbeam_beam_props attribute values of selected objects"""
-    bl_idname = "object.beamng_jbeam_print_jbeam_beam_props"
+    bl_idname = "devtools_jbeameditor.beamng_jbeam_print_jbeam_beam_props"
     bl_label = "Print JBeam Beam Props"
     attr_name = j.ATTR_BEAM_PROPS
     domain = "edges"
@@ -68,7 +77,7 @@ class OBJECT_OT_BeamngPrintJbeamBeamProps(OBJECT_OT_PrintJBeamPropsBase):
 
 class OBJECT_OT_BeamngPrintJbeamTriangleProps(OBJECT_OT_PrintJBeamPropsBase):
     """Prints the jbeam_triangle_props attribute values of selected objects"""
-    bl_idname = "object.beamng_jbeam_print_jbeam_triangle_props"
+    bl_idname = "devtools_jbeameditor.beamng_jbeam_print_jbeam_triangle_props"
     bl_label = "Print JBeam Triangle Props"
     attr_name = j.ATTR_TRIANGLE_PROPS
     domain = "polygons"

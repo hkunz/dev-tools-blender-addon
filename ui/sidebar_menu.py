@@ -139,9 +139,9 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
         layout: bpy.types.UILayout = self.layout
         # box.label(text="Icon Label", icon=IconsManager.BUILTIN_ICON_MESH_DATA)
         # self.draw_sample_modifier_exposed_props(context, layout, "GeometryNodes")
+        self.draw_expanded_beamng_options(context, layout, context.active_object)
         self.draw_expanded_armature_options(context, layout)
         self.draw_expanded_bake_options(context, layout)
-        self.draw_expanded_beamng_options(context, layout, context.active_object)
         # self.draw_sample_color_picker(context, layout)
 
     def draw_sample_modifier_exposed_props(self, context, layout, md_name = "GeometryNodes"):

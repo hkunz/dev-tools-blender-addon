@@ -20,6 +20,7 @@ from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_node_mesh import 
 from dev_tools.operators.object.beamng.beamng_jbeam_node_props_manager import OBJECT_OT_BeamngSaveJbeamNodeProp, OBJECT_OT_BeamngSaveJbeamBeamProp, OBJECT_OT_BeamngSaveJbeamTriangleProp, OBJECT_OT_BeamngSaveAllJbeamNodeProps, OBJECT_OT_BeamngSaveAllJbeamBeamProps, OBJECT_OT_BeamngSaveAllJbeamTriangleProps, OBJECT_OT_BeamngAddJbeamNodeProp, OBJECT_OT_BeamngAddJbeamBeamProp, OBJECT_OT_BeamngAddJbeamTriangleProp, OBJECT_OT_BeamngRemoveJbeamNodeProp, OBJECT_OT_BeamngRemoveJbeamBeamProp, OBJECT_OT_BeamngRemoveJbeamTriangleProp, OBJECT_OT_BeamngSelectJbeamNodesByProperty, OBJECT_OT_BeamngSelectJbeamBeamsByProperty, OBJECT_OT_BeamngSelectJbeamTrianglesByProperty, JbeamStructurePropertyItem, JbeamStructure, JbeamHiddenElements  # type: ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_rename_selected_nodes import OBJECT_OT_BeamngJbeamRenameSelectedNodes  # type:ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_create_node_mesh import OBJECT_OT_BeamngJbeamCreateNodeMesh  # type: ignore
+from dev_tools.operators.object.beamng.utils.beamng_jbeam_select_element_operator import OBJECT_OT_SelectSpecificElement  # type: ignore
 from dev_tools.operators.common.ui.toggle_dynamic_button_operator import ButtonItem, ButtonItemSelector, ToggleDynamicButtonOperator, ManageDynamicButtonsOperator  # type: ignore
 
 from dev_tools.utils.jbeam.jbeam_selection_tracker import JbeamSelectionTracker # type: ignore
@@ -136,13 +137,13 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
     #bl_context = "object"
     #https://blender.stackexchange.com/questions/201360/how-to-control-spacing-alignment-of-label-horizontal-enum-property
 
-    def get_prefs(self):
+    def get_prefs(self, context):
         addon_name = Utils.get_addon_module_name()
-        prefs = bpy.context.preferences.addons.get(addon_name).preferences
+        prefs = context.preferences.addons.get(addon_name).preferences
         return prefs
 
     def draw(self, context) -> None:
-        prefs = self.get_prefs()
+        prefs = self.get_prefs(context)
         layout: bpy.types.UILayout = self.layout
         # box.label(text="Icon Label", icon=IconsManager.BUILTIN_ICON_MESH_DATA)
         # self.draw_sample_modifier_exposed_props(context, layout, "GeometryNodes")
@@ -194,7 +195,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
         if not s.expanded_beamng_options:
             return
 
-        prefs = self.get_prefs()
+        prefs = self.get_prefs(context)
         col = layout.column()
         if prefs.empty_options:
             col.operator(OBJECT_OT_BeamngCreateEmptiesBase.bl_idname, text="Create Empties")
@@ -203,34 +204,34 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             row.separator()
             row.operator(OBJECT_OT_BeamngParentToStart01Empty.bl_idname, text="Parent Empty")
             col.separator()
+
+        col = col.box().column()
+
         if not context.selected_objects:
             col.operator(OBJECT_OT_BeamngJbeamCreateNodeMesh.bl_idname, text="Create Node Mesh", icon="OUTLINER_OB_MESH")
         elif len(context.selected_objects) == 1:
             if j.is_node_mesh(context.selected_objects[0]):
-                r = col.row(align=True)
-                r.operator(OBJECT_OT_BeamngPrintJbeamNodeProps.bl_idname, text="Nodes Debug", icon="CONSOLE")
-                r.operator(OBJECT_OT_BeamngPrintJbeamBeamProps.bl_idname, text="Beams Debug", icon="CONSOLE")
-                r.operator(OBJECT_OT_BeamngPrintJbeamTriangleProps.bl_idname, text="Triangles Debug", icon="CONSOLE")
+                if prefs.debug_options:
+                    r = col.row(align=True)
+                    r.operator(OBJECT_OT_BeamngPrintJbeamNodeProps.bl_idname, text="Nodes Debug", icon="CONSOLE")
+                    r.operator(OBJECT_OT_BeamngPrintJbeamBeamProps.bl_idname, text="Beams Debug", icon="CONSOLE")
+                    r.operator(OBJECT_OT_BeamngPrintJbeamTriangleProps.bl_idname, text="Triangles Debug", icon="CONSOLE")
             else:
                 col.operator(OBJECT_OT_BeamngConvertJbeamToNodeMesh.bl_idname, text="Convert to Node Mesh", icon="OUTLINER_OB_MESH")
-        else:
-            pass
-            
-        box = col.box()
 
         if obj and obj.mode == 'EDIT':
             if s.beamng_jbeam_hidden_elements.num_hidden_nodes or s.beamng_jbeam_hidden_elements.num_hidden_beams or s.beamng_jbeam_hidden_elements.num_hidden_faces:
                 h_nodes = f"Nodes({s.beamng_jbeam_hidden_elements.num_hidden_nodes}) " if s.beamng_jbeam_hidden_elements.num_hidden_nodes else ""
                 h_beams = f"Beams({s.beamng_jbeam_hidden_elements.num_hidden_beams}) " if s.beamng_jbeam_hidden_elements.num_hidden_beams else ""
                 h_faces = f"Faces({s.beamng_jbeam_hidden_elements.num_hidden_faces}) " if s.beamng_jbeam_hidden_elements.num_hidden_faces else ""
-                row = box.row()
+                row = col.row()
                 split = row.split(factor=0.7)
                 split.label(text=f"Hidden: {h_nodes} {h_beams} {h_faces}")
                 split.operator("mesh.reveal", text="Unhide", icon="HIDE_OFF")
 
         msg = None
         if obj and obj.mode == 'EDIT' and obj.type == 'MESH' and j.is_node_mesh(obj):
-            self.draw_jbeam_editor_options(context, box, obj)
+            self.draw_jbeam_editor_options(context, col, obj)
         elif len(context.selected_objects) > 1:
             msg = "Select one Node Mesh"
         elif j.is_node_mesh(obj):
@@ -238,13 +239,32 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
         else:
             msg = "Convert to Node Mesh" if j.has_jbeam_node_id(obj) else "No Node Mesh selected"
         if msg:
-            box.label(text=msg)
+            col.label(text=msg)
 
-        box.operator(DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam.bl_idname, text="Export JBeam", icon="EXPORT")
+        col.operator(DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam.bl_idname, text="Export JBeam", icon="EXPORT")
 
     def draw_jbeam_editor_options(self, context, box, obj):
         s = context.scene
         struct = None
+
+        def draw_active_element(box, struct, info, factor=0.5):
+            split = box.row().split(factor=factor)
+            split.label(text=f"Active: {struct.name}")
+            split.alignment = 'RIGHT'
+            split.label(text=f"({info})")
+            box.label(text=f"Selected: {struct.selection}")
+            r = box.row(align=True)
+            label_col = r.column(align=True)
+            label_col.scale_x = 0.35
+            label_col.label(text="ID:")
+            text_col = r.column(align=True)
+            text_col.scale_x = 1.6  # Slightly increased to keep it maximized
+            text_col.prop(struct, "id", text="")
+            action_col = r.column(align=True)
+            action_col.scale_x = 1
+            sub_r = action_col.row(align=True)
+            sub_r.prop(struct, "index", text="", emboss=True)
+            sub_r.operator(OBJECT_OT_SelectSpecificElement.bl_idname, text="", icon="RESTRICT_SELECT_OFF")
 
         def draw_scope_modifier_list(select, save, remove):
             if not s.beamng_jbeam_active_structure.prop_items:
@@ -288,57 +308,37 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             box.operator(add, text="Add Scope Modifier", icon="RNA_ADD")
             box.operator(save, text="Save All", icon="FILE_TICK")
 
-        if o.is_vertex_selection_mode():
-            struct = s.beamng_jbeam_active_structure
-            index = struct.index
-            if index > -1:
-                node_id = struct.id
-                split = box.row().split(factor=0.5)
-                split.label(text=f"Active Node: {node_id} ({index})")
-                split.alignment = 'RIGHT'
-                split.label(text=f"({struct.position.x:.2f}, {struct.position.y:.2f}, {struct.position.z:.2f})")
-                box.label(text=f"Selected: {struct.selection}")
-                box.prop(struct, "id", text="Active Node ID")
-                box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign Node ID", icon="GREASEPENCIL")
-                draw_scope_modifier_list(OBJECT_OT_BeamngSelectJbeamNodesByProperty.bl_idname, OBJECT_OT_BeamngSaveJbeamNodeProp.bl_idname, OBJECT_OT_BeamngRemoveJbeamNodeProp.bl_idname)
-                draw_bottom_options(OBJECT_OT_BeamngAddJbeamNodeProp.bl_idname, OBJECT_OT_BeamngSaveAllJbeamNodeProps.bl_idname)
+        struct = s.beamng_jbeam_active_structure
+        index = struct.index
 
-        elif o.is_edge_selection_mode():
-            struct = s.beamng_jbeam_active_structure
-            index = struct.index
-            if index > -1:
-                bm = bmesh.from_edit_mesh(obj.data)
-                bm.edges.ensure_lookup_table()
-                edge = bm.edges[index]
-                edge_length = edge.calc_length()
-                split = box.row().split(factor=0.67)
-                split.label(text=f"Active Beam: {struct.id} ({index})")
-                split.alignment = 'RIGHT'
-                split.label(text=f"({edge_length:.2f})")
-                box.label(text=f"Selected: {struct.selection}")
-                box.use_property_decorate = False 
-                box.prop(struct, "id", text="Active Beam ID")
-                draw_element_instances_buttons(box.row())
-                draw_scope_modifier_list(OBJECT_OT_BeamngSelectJbeamBeamsByProperty.bl_idname, OBJECT_OT_BeamngSaveJbeamBeamProp.bl_idname, OBJECT_OT_BeamngRemoveJbeamBeamProp.bl_idname)
-                draw_bottom_options(OBJECT_OT_BeamngAddJbeamBeamProp.bl_idname, OBJECT_OT_BeamngSaveAllJbeamBeamProps.bl_idname)
-
-        elif o.is_face_selection_mode():
-            struct = s.beamng_jbeam_active_structure
-            index = struct.index
-            if index > -1:
-                split = box.row().split(factor=0.8)
-                split.label(text=f"Active Triangle: {struct.id} ({index})")
-                split.alignment = 'RIGHT'
-                split.label(text=f"(area)")
-                box.label(text=f"Selected: {struct.selection}")
-                box.prop(struct, "id", text="Active Triangle ID")
-                draw_element_instances_buttons(box.row())
-                draw_scope_modifier_list(OBJECT_OT_BeamngSelectJbeamTrianglesByProperty.bl_idname, OBJECT_OT_BeamngSaveJbeamTriangleProp.bl_idname, OBJECT_OT_BeamngRemoveJbeamTriangleProp.bl_idname)
-                draw_bottom_options(OBJECT_OT_BeamngAddJbeamTriangleProp.bl_idname, OBJECT_OT_BeamngSaveAllJbeamTriangleProps.bl_idname)
-
-        if struct and struct.index < 0:
+        if index < 0:
             msg = "Select elements to view Scope Modifiers" if j.is_node_mesh(obj) else "Convert to Node Mesh"
             box.label(text=msg)
+            return
+
+        if o.is_vertex_selection_mode():
+            draw_active_element(box, struct, f"{struct.position.x:.2f}, {struct.position.y:.2f}, {struct.position.z:.2f}", 0.35)
+            box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign Node ID", icon="GREASEPENCIL")
+            draw_scope_modifier_list(OBJECT_OT_BeamngSelectJbeamNodesByProperty.bl_idname, OBJECT_OT_BeamngSaveJbeamNodeProp.bl_idname, OBJECT_OT_BeamngRemoveJbeamNodeProp.bl_idname)
+            draw_bottom_options(OBJECT_OT_BeamngAddJbeamNodeProp.bl_idname, OBJECT_OT_BeamngSaveAllJbeamNodeProps.bl_idname)
+
+        elif o.is_edge_selection_mode():
+            bm = bmesh.from_edit_mesh(obj.data)
+            bm.edges.ensure_lookup_table()
+            edge = bm.edges[index]
+            draw_active_element(box, struct, f"Length={edge.calc_length():.2f}", 0.35)
+            draw_element_instances_buttons(box.row())
+            draw_scope_modifier_list(OBJECT_OT_BeamngSelectJbeamBeamsByProperty.bl_idname, OBJECT_OT_BeamngSaveJbeamBeamProp.bl_idname, OBJECT_OT_BeamngRemoveJbeamBeamProp.bl_idname)
+            draw_bottom_options(OBJECT_OT_BeamngAddJbeamBeamProp.bl_idname, OBJECT_OT_BeamngSaveAllJbeamBeamProps.bl_idname)
+
+        elif o.is_face_selection_mode():
+            bm = bmesh.from_edit_mesh(obj.data)
+            bm.faces.ensure_lookup_table()
+            face = bm.faces[index] 
+            draw_active_element(box, struct, f"Area={face.calc_area():.2f}")
+            draw_element_instances_buttons(box.row())
+            draw_scope_modifier_list(OBJECT_OT_BeamngSelectJbeamTrianglesByProperty.bl_idname, OBJECT_OT_BeamngSaveJbeamTriangleProp.bl_idname, OBJECT_OT_BeamngRemoveJbeamTriangleProp.bl_idname)
+            draw_bottom_options(OBJECT_OT_BeamngAddJbeamTriangleProp.bl_idname, OBJECT_OT_BeamngSaveAllJbeamTriangleProps.bl_idname)
 
     def draw_expanded_bake_options(self, context, layout):
         ebox = layout.box()

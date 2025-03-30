@@ -9,6 +9,11 @@ class JbeamStructurePropertyItem(bpy.types.PropertyGroup):
     value: bpy.props.StringProperty(name="Value")  # type: ignore
 
 class JbeamStructure(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty(
+        name="Element Name",
+        default=""  # Node, Beam, Triangle
+    )  # type: ignore
+
     id: bpy.props.StringProperty(
         name="Element ID",
         default=""

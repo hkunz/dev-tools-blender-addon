@@ -66,6 +66,7 @@ from dev_tools.operators.object.beamng.beamng_jbeam_node_props_manager import OB
 from dev_tools.operators.object.beamng.beamng_jbeam_rename_selected_nodes import OBJECT_OT_BeamngJbeamRenameSelectedNodes # type: ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_create_node_mesh import OBJECT_OT_BeamngJbeamCreateNodeMesh # type: ignore
 from dev_tools.operators.object.beamng.utils.beamng_jbeam_print_attributes_operators import OBJECT_OT_BeamngPrintJbeamNodeProps, OBJECT_OT_BeamngPrintJbeamBeamProps, OBJECT_OT_BeamngPrintJbeamTriangleProps  # type: ignore
+from dev_tools.operators.object.beamng.utils.beamng_jbeam_select_element_operator import OBJECT_OT_SelectSpecificElement  # type: ignore
 
 DEVTOOLS_CLASSES = [
     OBJECT_OT_ArmatureCreateBonesRandomVertices,
@@ -73,6 +74,7 @@ DEVTOOLS_CLASSES = [
     OBJECT_OT_ArmatureCreateBonesFromEdgeSelection,
     OBJECT_OT_BakePrepareObject,
     OBJECT_OT_BakeGenerateObject,
+    OBJECT_OT_SelectSpecificElement,
     DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh,
     DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam,
     OBJECT_OT_BeamngCreateEmptiesBase,

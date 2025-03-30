@@ -45,6 +45,12 @@ class PREFERENCES_OT_ClearCheckboxesOperator(bpy.types.Operator):
 class MyAddonPreferences(bpy.types.AddonPreferences):
     bl_idname = Utils.get_addon_module_name() # __name__ if the class is defined inside __init__.py
 
+    debug_options: bpy.props.BoolProperty(
+        name="Show Debug Options",
+        default=True,
+        update=lambda self, context: on_property_update(self, context, "debug")
+    ) # type: ignore
+
     armature_options: bpy.props.BoolProperty(
         name="Show Armature Options",
         default=False,
@@ -63,7 +69,7 @@ class MyAddonPreferences(bpy.types.AddonPreferences):
         update=lambda self, context: on_property_update(self, context, "empty")
     ) # type: ignore
 
-    CHECKBOXES: List[str] = ["armature_options", "bake_options", "empty_options"]
+    CHECKBOXES: List[str] = ["debug_options", "armature_options", "bake_options", "empty_options"]
 
     def set_checkbox(self, prop_name: str, value: bool) -> None:
         if getattr(self, prop_name) != value:
@@ -79,7 +85,7 @@ class MyAddonPreferences(bpy.types.AddonPreferences):
 
     def draw(self, _: bpy_types.Context) -> None:
         layout: UILayout = self.layout
-        options_box: UILayout = layout.box()
+        #options_box: UILayout = layout.box()
         #box: UILayout = options_box.box()
         #split: UILayout = box.split(factor=0.5)
         #col1: UILayout = split.column()
@@ -87,10 +93,10 @@ class MyAddonPreferences(bpy.types.AddonPreferences):
         #col2 = split.column()
         #col2.operator(PREFERENCES_OT_CheckCheckboxesOperator.bl_idname, text="Check All Boxes")
 
-        box = options_box.box()
-        box.prop(self, self.CHECKBOXES[0])
-        box.prop(self, self.CHECKBOXES[1])
-        box.prop(self, self.CHECKBOXES[2])
+        box = layout.box()
+        for checkbox in self.CHECKBOXES:
+            box.prop(self, checkbox)
+
 
 def register() -> None:
     bpy.utils.register_class(MyAddonPreferences)

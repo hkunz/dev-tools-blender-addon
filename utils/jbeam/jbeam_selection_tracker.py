@@ -109,10 +109,11 @@ class JbeamSelectionTracker:
         elif reset:
             obj.data.update()
 
-    def update_struct(self, scene, obj, bm, selection, bmesh_type, get_id, set_gn_index):
+    def update_struct(self, scene, obj, bm, name, selection, bmesh_type, get_id, set_gn_index):
         active_elem = bm.select_history.active if isinstance(bm.select_history.active, bmesh_type) else None
         active_index = active_elem.index if active_elem else (max(selection) if selection else -1)
         struct = scene.beamng_jbeam_active_structure
+        struct.name = name
         struct.index = active_index
         ids = [
             get_id(obj, i, bm) or f"({i})"
@@ -133,7 +134,7 @@ class JbeamSelectionTracker:
         self.vertex_selection = selection
         mod = j.get_gn_jbeam_modifier(obj)
         o.update_vertex_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_vertices", "selected_vertices", selection)
-        struct = self.update_struct(scene, obj, bm, selection, bmesh.types.BMVert, j.get_node_id, j.set_gn_jbeam_active_node_index)
+        struct = self.update_struct(scene, obj, bm, "Node", selection, bmesh.types.BMVert, j.get_node_id, j.set_gn_jbeam_active_node_index)
         x, y, z = o.get_vertex_position_by_index(obj, bm, struct.index)
         struct.position.x = x
         struct.position.y = y
@@ -157,7 +158,7 @@ class JbeamSelectionTracker:
         self.edge_selection = selection
         mod = j.get_gn_jbeam_modifier(obj)
         o.update_edge_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_edges", "selected_edges", selection)
-        struct = self.update_struct(scene, obj, bm, selection, bmesh.types.BMEdge, j.get_beam_id, j.set_gn_jbeam_active_beam_index)
+        struct = self.update_struct(scene, obj, bm, "Beam", selection, bmesh.types.BMEdge, j.get_beam_id, j.set_gn_jbeam_active_beam_index)
         self.update_instances(scene, obj, struct, j.get_total_beam_instances)
         bpy.ops.object.devtools_beamng_load_jbeam_beam_props()
         UiUtils.force_update_ui(bpy.context)
@@ -173,7 +174,12 @@ class JbeamSelectionTracker:
         self.face_selection = selection
         mod = j.get_gn_jbeam_modifier(obj)
         o.update_face_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_faces", "selected_faces", selection)
-        struct = self.update_struct(scene, obj, bm, selection, bmesh.types.BMFace, j.get_triangle_id, j.set_gn_jbeam_active_triangle_index)
+        active_elem = bm.select_history.active
+        active_face = active_elem if isinstance(active_elem, bmesh.types.BMFace) else None
+        active_index = active_face.index if active_face else (max(selection) if selection else -1)
+        active_face = bm.faces[active_index] if active_index != -1 else None
+        name = {3: "Triangle", 4: "Quad"}.get(len(active_face.verts), "Ngon") if active_face else "Triangle"
+        struct = self.update_struct(scene, obj, bm, name, selection, bmesh.types.BMFace, j.get_triangle_id, j.set_gn_jbeam_active_triangle_index)
         self.update_instances(scene, obj, struct, j.get_total_triangle_instances)
         bpy.ops.object.devtools_beamng_load_jbeam_triangle_props()
         UiUtils.force_update_ui(bpy.context)

@@ -266,7 +266,9 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             action_col.scale_x = 1
             sub_r = action_col.row(align=True)
             sub_r.prop(struct, "index", text="", emboss=True)
-            sub_r.operator(OBJECT_OT_SelectSpecificElement.bl_idname, text="", icon="RESTRICT_SELECT_OFF").element_index = struct.index
+            op = sub_r.operator(OBJECT_OT_SelectSpecificElement.bl_idname, text="", icon="RESTRICT_SELECT_OFF")
+            op.element_index = struct.index
+            op.element_id = struct.id
 
         def draw_scope_modifier_list(select, save, remove):
             if not s.beamng_jbeam_active_structure.prop_items:

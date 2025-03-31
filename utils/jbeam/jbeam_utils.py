@@ -460,6 +460,127 @@ class JbeamUtils:
         print(f"Assigned '{node_tree.name}' to '{repr(obj)}' via modifier '{mod.name}'")
 
     @staticmethod
+    def get_index_by_id(obj, target_id, domain, attr_name) -> int:
+        mesh = obj.data
+        if obj.mode == 'EDIT':
+            bm = bmesh.from_edit_mesh(mesh)
+            bm_data_map = {
+                "verts": bm.verts,
+                "edges": bm.edges,
+                "faces": bm.faces
+            }
+            if domain in bm_data_map:
+                bm_data_map[domain].ensure_lookup_table()
+            else:
+                print(f"{repr(obj)}: Unsupported domain '{domain}' in Edit Mode")
+                return -1
+                
+            bm_data = getattr(bm, domain, None)
+
+            if bm_data is None:
+                print(f"{repr(obj)}: Unsupported domain '{domain}' in Edit Mode")
+                return -1
+
+            # Iterate through elements and check for the ID
+            for index, element in enumerate(bm_data):
+                layer = bm_data.layers.string.get(attr_name)
+                if layer is None:
+                    print(f"{repr(obj)}: Layer '{attr_name}' not found in Edit Mode ({domain})")
+                    return -1
+
+                if element[layer].decode('utf-8') == target_id:
+                    return index  # Return the index of the element with the matching ID
+
+            print(f"{repr(obj)}: {attr_name} '{target_id}' not found in Edit Mode ({domain})")
+            return -1
+
+        elif obj.mode == 'OBJECT':
+            if attr_name not in mesh.attributes:
+                print(f"{repr(obj)}: Attribute '{attr_name}' not found in Object Mode ({domain})")
+                return -1
+
+            attr_data = mesh.attributes[attr_name].data
+
+            # Iterate through elements and check for the ID
+            for index, data in enumerate(attr_data):
+                if data.value.decode('utf-8') == target_id:
+                    return index  # Return the index of the element with the matching ID
+
+            print(f"{repr(obj)}: {attr_name} '{target_id}' not found in Object Mode ({domain})")
+            return -1
+
+        print(f"{repr(obj)}: Unknown object mode {obj.mode}")
+        return -1
+
+    @staticmethod
+    def get_beam_index(obj, node_id1, node_id2) -> int:
+        print("get beam ===", node_id1, node_id2)
+        """
+        Get the index of the beam defined by two node IDs (node_id1, node_id2).
+        """
+        # Iterate through all the edges in the mesh
+        mesh = obj.data
+        if obj.mode == 'EDIT':
+            bm = bmesh.from_edit_mesh(mesh)
+            bm_data = bm.edges
+        elif obj.mode == 'OBJECT':
+            bm_data = mesh.edges
+        else:
+            print(f"{repr(obj)}: Unknown object mode {obj.mode}")
+            return -1
+
+        # Iterate through all edges (beams)
+        for index, edge in enumerate(bm_data):
+            # Get the vertex indices of the edge
+            v1, v2 = sorted(edge.verts, key=lambda v: v.index)
+            # Get the node IDs of the vertices
+            n1 = JbeamUtils.get_node_id(obj, v1.index)
+            n2 = JbeamUtils.get_node_id(obj, v2.index)
+            
+            # Check if the node IDs match
+            if {n1, n2} == {node_id1, node_id2}:
+                return index  # Return the index if the IDs match
+        
+        print(f"{repr(obj)}: Beam with node IDs '{node_id1}' and '{node_id2}' not found")
+        return -1
+
+    @staticmethod
+    def get_triangle_index(obj, node_id1, node_id2, node_id3) -> int:
+        print("get beam ===", node_id1, node_id2, node_id3)
+        """
+        Get the index of the triangle (face) defined by three node IDs.
+        """
+        # Iterate through all the faces (triangles) in the mesh
+        mesh = obj.data
+        if obj.mode == 'EDIT':
+            bm = bmesh.from_edit_mesh(mesh)
+            bm_data = bm.faces
+        elif obj.mode == 'OBJECT':
+            bm_data = mesh.polygons
+        else:
+            print(f"{repr(obj)}: Unknown object mode {obj.mode}")
+            return -1
+
+        # Iterate through all faces (triangles)
+        for index, face in enumerate(bm_data):
+            # Get the vertex indices of the face
+            verts = face.verts
+            
+            # Get the node IDs of the vertices
+            node_ids = sorted([JbeamUtils.get_node_id(obj, v.index) for v in verts])
+            
+            # Check if the node IDs match (order doesn't matter)
+            if node_ids == sorted([node_id1, node_id2, node_id3]):
+                return index  # Return the index if the IDs match
+        
+        print(f"{repr(obj)}: Triangle with node IDs '{node_id1}', '{node_id2}', and '{node_id3}' not found")
+        return -1
+
+    @staticmethod
+    def get_node_index(obj, node_id) -> int:
+        return JbeamUtils.get_index_by_id(obj, node_id, domain="verts", attr_name=JbeamUtils.ATTR_NODE_ID)
+
+    @staticmethod
     def check_unique_node_names(obj: bpy.types.Object) -> tuple[bool, str]:
         """Checks if all nodes have a unique name."""
         node_names = set()
@@ -479,42 +600,42 @@ class JbeamUtils:
 
     @staticmethod  # deprecated method
     def check_vertex_groups(obj: bpy.types.Object) -> tuple[bool, str]:
-            """Checks if each required vertex group has exactly one assigned vertex 
-            and that no vertex is assigned to more than one required group.
-            """
-            required_groups = set(JbeamUtils.get_required_vertex_group_names(minimal=True))
-            existing_groups = {vg.name for vg in obj.vertex_groups}
+        """Checks if each required vertex group has exactly one assigned vertex 
+        and that no vertex is assigned to more than one required group.
+        """
+        required_groups = set(JbeamUtils.get_required_vertex_group_names(minimal=True))
+        existing_groups = {vg.name for vg in obj.vertex_groups}
 
-            # Ensure all required groups exist
-            if not required_groups.issubset(existing_groups):
-                missing = required_groups - existing_groups
-                return False, f"Missing vertex groups: {', '.join(missing)}"
+        # Ensure all required groups exist
+        if not required_groups.issubset(existing_groups):
+            missing = required_groups - existing_groups
+            return False, f"Missing vertex groups: {', '.join(missing)}"
 
-            vertex_assignment = {}  # {vertex_index: group_name}
+        vertex_assignment = {}  # {vertex_index: group_name}
+        
+        # Check vertex assignments
+        for group_name in required_groups:
+            vgroup = obj.vertex_groups.get(group_name)
+            if not vgroup:
+                continue  # Shouldn't happen due to poll, but just in case
+
+            # Get assigned vertices
+            assigned_verts = [
+                v.index for v in obj.data.vertices
+                if any(g.group == vgroup.index for g in v.groups)
+            ]
+            count = len(assigned_verts)
+
+            if count == 0:
+                return False, f"Vertex Group '{group_name}' has no vertex/node assigned."
+            elif count > 1:
+                return False, f"Vertex Group '{group_name}' has {count} vertices assigned (should be 1 only)."
+
+            # Ensure unique vertex assignment
+            vertex_index = assigned_verts[0]
+            if vertex_index in vertex_assignment:
+                return False, f"Vertex {vertex_index} is assigned to both '{vertex_assignment[vertex_index]}' and '{group_name}', which is not allowed."
             
-            # Check vertex assignments
-            for group_name in required_groups:
-                vgroup = obj.vertex_groups.get(group_name)
-                if not vgroup:
-                    continue  # Shouldn't happen due to poll, but just in case
+            vertex_assignment[vertex_index] = group_name  # Store assigned vertex
 
-                # Get assigned vertices
-                assigned_verts = [
-                    v.index for v in obj.data.vertices
-                    if any(g.group == vgroup.index for g in v.groups)
-                ]
-                count = len(assigned_verts)
-
-                if count == 0:
-                    return False, f"Vertex Group '{group_name}' has no vertex/node assigned."
-                elif count > 1:
-                    return False, f"Vertex Group '{group_name}' has {count} vertices assigned (should be 1 only)."
-
-                # Ensure unique vertex assignment
-                vertex_index = assigned_verts[0]
-                if vertex_index in vertex_assignment:
-                    return False, f"Vertex {vertex_index} is assigned to both '{vertex_assignment[vertex_index]}' and '{group_name}', which is not allowed."
-                
-                vertex_assignment[vertex_index] = group_name  # Store assigned vertex
-
-            return True, "All vertex groups are correctly assigned."
+        return True, "All vertex groups are correctly assigned."

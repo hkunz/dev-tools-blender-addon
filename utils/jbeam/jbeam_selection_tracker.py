@@ -109,9 +109,12 @@ class JbeamSelectionTracker:
         elif reset:
             obj.data.update()
 
-    def update_struct(self, scene, obj, bm, name, selection, bmesh_type, get_id, set_gn_index):
-        active_elem = bm.select_history.active if isinstance(bm.select_history.active, bmesh_type) else None
-        active_index = active_elem.index if active_elem else (max(selection) if selection else -1)
+    def update_struct(self, scene, obj, bm, name, selection, bmesh_type, get_id, set_gn_index, index = -1):
+        if index < 0:
+            active_elem = bm.select_history.active if isinstance(bm.select_history.active, bmesh_type) else None
+            active_index = active_elem.index if active_elem else (max(selection) if selection else -1)
+        else:
+            active_index = index
         struct = scene.beamng_jbeam_active_structure
         struct.name = name
         struct.index = active_index
@@ -166,7 +169,7 @@ class JbeamSelectionTracker:
 
     def update_triangle_data(self, scene, obj, bm):
         bm.faces.ensure_lookup_table()
-        selection = {v.index for v in bm.faces if v.select}
+        selection = [f.index for f in bm.faces if f.select]
 
         if self.face_selection == selection:
             return
@@ -174,12 +177,15 @@ class JbeamSelectionTracker:
         self.face_selection = selection
         mod = j.get_gn_jbeam_modifier(obj)
         o.update_face_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_faces", "selected_faces", selection)
-        active_elem = bm.select_history.active
-        active_face = active_elem if isinstance(active_elem, bmesh.types.BMFace) else None
-        active_index = active_face.index if active_face else (max(selection) if selection else -1)
-        active_face = bm.faces[active_index] if active_index != -1 else None
+        active_face = bm.faces.active if bm.faces.active and bm.faces.active.index in selection else None
+
+        if not active_face and selection:
+            idx = selection[0]
+            active_face = bm.faces.active = bm.faces[idx]
+            bmesh.update_edit_mesh(obj.data)
+
         name = {3: "Triangle", 4: "Quad"}.get(len(active_face.verts), "Ngon") if active_face else "Triangle"
-        struct = self.update_struct(scene, obj, bm, name, selection, bmesh.types.BMFace, j.get_triangle_id, j.set_gn_jbeam_active_triangle_index)
+        struct = self.update_struct(scene, obj, bm, name, selection, bmesh.types.BMFace, j.get_triangle_id, j.set_gn_jbeam_active_triangle_index, active_face.index if active_face else -1)
         self.update_instances(scene, obj, struct, j.get_total_triangle_instances)
         bpy.ops.object.devtools_beamng_load_jbeam_triangle_props()
         UiUtils.force_update_ui(bpy.context)

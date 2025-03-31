@@ -17,15 +17,14 @@ class OBJECT_OT_SelectSpecificElement(bpy.types.Operator):
         print(f"Operator select  Element ID {self.element_id} or Element Index: {self.element_index} if no ID is specified")
         obj = context.object
         bm = bmesh.from_edit_mesh(obj.data)
+        search_by_index = not self.element_id
 
-        def get_element_index(id, getter_func):
-            if not id:
+        def get_element_index(getter_func, nodes_str, element_type):
+            if search_by_index:
                 return self.element_index
             index = getter_func()
             if index < 0:
-                self.report({'WARNING'}, f"Node ID '{id}' not found")
-            else:
-                self.report({'INFO'}, f"Node ID '{id}' in Selection")
+                self.report({'WARNING'}, f"{element_type} '{nodes_str}' not found")
             return index
 
         def parse_node_ids(node_string):
@@ -42,23 +41,38 @@ class OBJECT_OT_SelectSpecificElement(bpy.types.Operator):
         for f in bm.faces:
             f.select = False
 
-        # FIXME: this code only puts element in selection but not active
+        element = None
+        nodes_str = None
         if o.is_vertex_selection_mode():
-            index = get_element_index(self.element_id, lambda: j.get_node_index(obj, self.element_id))
+            element_type = "Node"
+            nodes_str = j.get_node_id(obj, self.element_index) if search_by_index else self.element_id
+            index = get_element_index(lambda: j.get_node_index(obj, self.element_id), nodes_str, element_type)
             if 0 <= index < len(bm.verts):
-                bm.verts[index].select = True
+                element = bm.verts[index]
         elif o.is_edge_selection_mode():
+            element_type = "Beam"
             node_ids = parse_node_ids(self.element_id)
-            index = get_element_index(self.element_id, lambda: j.get_beam_index(obj, node_ids[0], node_ids[1]))
+            if len(node_ids) != 2:
+                self.report({'WARNING'}, f"{element_type} '{self.element_id}' not found")
+                return {'CANCELLED'}
+            nodes_str =  j.get_beam_id(obj, self.element_index) if search_by_index else j.format_node_ids(*node_ids)
+            index = get_element_index(lambda: j.get_beam_index(obj, *node_ids), nodes_str, element_type)
             if 0 <= index < len(bm.edges):
-                bm.edges[index].select = True
+                element = bm.edges[index]
         elif o.is_face_selection_mode():
+            element_type = "Face"
             node_ids = parse_node_ids(self.element_id)
-            index = get_element_index(self.element_id, lambda: j.get_triangle_index(obj, node_ids[0], node_ids[1], node_ids[2]))
+            if len(node_ids) != 3:
+                self.report({'WARNING'}, f"{element_type} '{self.element_id}' not found")
+                return {'CANCELLED'}
+            nodes_str = j.get_triangle_id(obj, self.element_index) if search_by_index else j.format_node_ids(*node_ids)
+            index = get_element_index(lambda: j.get_triangle_index(obj, *node_ids), nodes_str, element_type)
             if 0 <= index < len(bm.faces):
-                bm.faces[index].select = True
-
-        # Update the mesh to reflect changes
-        bmesh.update_edit_mesh(obj.data)
+                element = bm.faces[index]
+        if element:
+            element.select = True
+            bm.select_history.add(element)
+            bmesh.update_edit_mesh(obj.data)
+            self.report({'INFO'}, f"Selected {element_type} '{nodes_str}' (Index={index})")
 
         return {'FINISHED'}

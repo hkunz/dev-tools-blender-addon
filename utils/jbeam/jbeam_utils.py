@@ -154,7 +154,7 @@ class JbeamUtils:
             v1, v2 = v1.index, v2.index
         n1 = JbeamUtils.get_node_id(obj, v1) or "?"
         n2 = JbeamUtils.get_node_id(obj, v2) or "?"
-        return f"[{n1}|{n2}]"
+        return JbeamUtils.format_node_ids(n1, n2)
 
     @staticmethod
     def get_triangle_id(obj, face_index, bm=None) -> str:
@@ -169,7 +169,11 @@ class JbeamUtils:
             verts = [v.index for v in face.verts]  # Get all vertex indices
 
         node_ids = [JbeamUtils.get_node_id(obj, v) or "?" for v in verts]
-        return f"[{'|'.join(node_ids)}]" # Format the result as "[id1|id2|id3|...]"
+        return JbeamUtils.format_node_ids(*node_ids)
+
+    @staticmethod
+    def format_node_ids(*node_ids):
+        return f"[{'|'.join(sorted(map(lambda x: x or '?', node_ids)))}]"  # Format the result as "[id1|id2|id3|...]"
 
     @staticmethod
     def get_beam_node_ids(obj, edge_index) -> tuple[str, str]:
@@ -514,7 +518,6 @@ class JbeamUtils:
 
     @staticmethod
     def get_beam_index(obj, node_id1, node_id2) -> int:
-        print("get beam ===", node_id1, node_id2)
         """
         Get the index of the beam defined by two node IDs (node_id1, node_id2).
         """
@@ -531,22 +534,18 @@ class JbeamUtils:
 
         # Iterate through all edges (beams)
         for index, edge in enumerate(bm_data):
-            # Get the vertex indices of the edge
             v1, v2 = sorted(edge.verts, key=lambda v: v.index)
-            # Get the node IDs of the vertices
             n1 = JbeamUtils.get_node_id(obj, v1.index)
             n2 = JbeamUtils.get_node_id(obj, v2.index)
-            
             # Check if the node IDs match
             if {n1, n2} == {node_id1, node_id2}:
                 return index  # Return the index if the IDs match
-        
+
         print(f"{repr(obj)}: Beam with node IDs '{node_id1}' and '{node_id2}' not found")
         return -1
 
     @staticmethod
     def get_triangle_index(obj, node_id1, node_id2, node_id3) -> int:
-        print("get beam ===", node_id1, node_id2, node_id3)
         """
         Get the index of the triangle (face) defined by three node IDs.
         """
@@ -563,16 +562,12 @@ class JbeamUtils:
 
         # Iterate through all faces (triangles)
         for index, face in enumerate(bm_data):
-            # Get the vertex indices of the face
             verts = face.verts
-            
-            # Get the node IDs of the vertices
             node_ids = sorted([JbeamUtils.get_node_id(obj, v.index) for v in verts])
-            
             # Check if the node IDs match (order doesn't matter)
             if node_ids == sorted([node_id1, node_id2, node_id3]):
                 return index  # Return the index if the IDs match
-        
+    
         print(f"{repr(obj)}: Triangle with node IDs '{node_id1}', '{node_id2}', and '{node_id3}' not found")
         return -1
 

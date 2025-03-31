@@ -3,6 +3,49 @@ import bmesh
 import json
 
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
+from dev_tools.utils.ui_utils import UiUtils  # type: ignore
+
+def update_element_index(self, context):
+    # FIXME this function gets called 3 times preventing IntProperty change, workaround delay also useless
+    return
+    struct = context.scene.beamng_jbeam_active_structure
+    struct.update_in_progress = True
+
+    print(f"Element Index updated: {self.index} {struct.index}")
+
+    struct_name = struct.name
+    index = struct.index
+    obj = context.object
+
+    bm = bmesh.from_edit_mesh(obj.data)
+
+    for v in bm.verts:
+        v.select = False
+    for e in bm.edges:
+        e.select = False
+    for f in bm.faces:
+        f.select = False
+
+    if struct_name == "Node":
+        if 0 <= index < len(bm.verts):
+            bm.verts[index].select = True
+    elif struct_name == "Beam":
+        if 0 <= index < len(bm.edges):
+            bm.edges[index].select = True
+    elif struct_name == "Triangle":
+        if 0 <= index < len(bm.faces):
+            bm.faces[index].select = True
+
+    def set_update_in_progress_to_false():
+        struct = bpy.context.scene.beamng_jbeam_active_structure
+        struct.update_in_progress = False
+
+    def start_delay_set_update_in_progress_to_false():
+        delay_time = 0.1
+        bpy.app.timers.register(set_update_in_progress_to_false, first_interval=delay_time)
+
+    start_delay_set_update_in_progress_to_false()  # struct.update_in_progress = False
+    #bmesh.update_edit_mesh(obj.data)
 
 class JbeamStructurePropertyItem(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Property Name")  # type: ignore
@@ -22,7 +65,8 @@ class JbeamStructure(bpy.types.PropertyGroup):
     index: bpy.props.IntProperty(
         name="Element Index",
         description="Index of the associated vertex/edge/face",
-        default=-1
+        default=-1,
+        update=update_element_index
     )  # type: ignore
 
     num_instances: bpy.props.IntProperty(
@@ -44,6 +88,7 @@ class JbeamStructure(bpy.types.PropertyGroup):
     )  # type: ignore
     
     prop_items: bpy.props.CollectionProperty(type=JbeamStructurePropertyItem)  # type: ignore # items representing scope modifiers on the strucutre
+    update_in_progress: bpy.props.BoolProperty(default=False)   # type: ignore # needed so that when we modify a value in the panel, we will ignore all draw function in sidepanel until update is complete
 
 class JbeamHiddenElements(bpy.types.PropertyGroup):
     num_hidden_nodes: bpy.props.IntProperty(

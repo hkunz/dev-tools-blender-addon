@@ -143,6 +143,8 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
         return prefs
 
     def draw(self, context) -> None:
+        #if context.scene.beamng_jbeam_active_structure.update_in_progress:
+        #    return
         prefs = self.get_prefs(context)
         layout: bpy.types.UILayout = self.layout
         # box.label(text="Icon Label", icon=IconsManager.BUILTIN_ICON_MESH_DATA)
@@ -264,7 +266,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             action_col.scale_x = 1
             sub_r = action_col.row(align=True)
             sub_r.prop(struct, "index", text="", emboss=True)
-            sub_r.operator(OBJECT_OT_SelectSpecificElement.bl_idname, text="", icon="RESTRICT_SELECT_OFF")
+            sub_r.operator(OBJECT_OT_SelectSpecificElement.bl_idname, text="", icon="RESTRICT_SELECT_OFF").element_index = struct.index
 
         def draw_scope_modifier_list(select, save, remove):
             if not s.beamng_jbeam_active_structure.prop_items:
@@ -325,6 +327,8 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
         elif o.is_edge_selection_mode():
             bm = bmesh.from_edit_mesh(obj.data)
             bm.edges.ensure_lookup_table()
+            if index < 0 or index >= len(bm.edges):
+                index = max(0, len(bm.edges) - 1) if bm.edges else 0
             edge = bm.edges[index]
             draw_active_element(box, struct, f"Length={edge.calc_length():.2f}", 0.35)
             draw_element_instances_buttons(box.row())
@@ -334,7 +338,9 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
         elif o.is_face_selection_mode():
             bm = bmesh.from_edit_mesh(obj.data)
             bm.faces.ensure_lookup_table()
-            face = bm.faces[index] 
+            if index < 0 or index >= len(bm.faces):
+                index = max(0, len(bm.faces) - 1) if bm.faces else 0
+            face = bm.faces[index]
             draw_active_element(box, struct, f"Area={face.calc_area():.2f}")
             draw_element_instances_buttons(box.row())
             draw_scope_modifier_list(OBJECT_OT_BeamngSelectJbeamTrianglesByProperty.bl_idname, OBJECT_OT_BeamngSaveJbeamTriangleProp.bl_idname, OBJECT_OT_BeamngRemoveJbeamTriangleProp.bl_idname)

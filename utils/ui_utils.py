@@ -13,3 +13,5 @@ class UiUtils:
                 for region in area.regions:
                     if region.type in {'WINDOW', 'UI'}:
                         region.tag_redraw()
+    
+    

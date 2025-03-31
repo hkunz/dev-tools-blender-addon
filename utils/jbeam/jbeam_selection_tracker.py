@@ -70,13 +70,15 @@ class JbeamSelectionTracker:
         self.reset_selection(scene)
         self.check_selection_change(scene)
 
-    def reset_selection(self, scene):
-        scene.beamng_jbeam_active_structure.index = -1
+    def reset_selection(self, scene, index=-1):
+        scene.beamng_jbeam_active_structure.index = index
         self.vertex_selection: set[int] = None
         self.edge_selection = None
         self.face_selection = None
 
     def check_selection_change(self, scene):
+        if scene.beamng_jbeam_active_structure.update_in_progress:  # useless check, doesn't work because it will already be False by now. Supposed to be used in conjunction with beamng_jbeam_node_props_manager.py::update_element_index so we could select the element while setting JbeamStructure::index IntProperty in panel
+            return
         obj = bpy.context.object
         mode = j.set_gn_jbeam_visualizer_selection_mode(obj)
         reset = False

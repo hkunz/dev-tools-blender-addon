@@ -1,57 +1,40 @@
 import bpy
+import bmesh
+
+from dev_tools.utils.object_utils import ObjectUtils as o  # type: ignore
 
 class OBJECT_OT_SelectSpecificElement(bpy.types.Operator):
-    """Select a specific vertex, edge, or face by index"""
     bl_idname = "object.select_specific_element"
     bl_label = "Select Specific Element"
     bl_options = {'REGISTER', 'UNDO'}
 
-    element_index: bpy.props.IntProperty(name="Element Index", default=0)  # type: ignore
-    element_type: bpy.props.EnumProperty(
-        name="Element Type",
-        items=[
-            ('VERT', "Vertex", "Select a vertex"),
-            ('EDGE', "Edge", "Select an edge"),
-            ('FACE', "Face", "Select a face"),
-        ],
-        default='VERT',
-    )  # type: ignore
+    element_index: bpy.props.IntProperty(name="Element Index", default=0)
 
     def execute(self, context):
+        print(f"Operator executed with Element Index: {self.element_index}")
         obj = context.object
-        if obj is None or obj.type != 'MESH':
-            self.report({'ERROR'}, "No mesh object selected")
-            return {'CANCELLED'}
-
-        mesh = obj.data
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.select_all(action='DESELECT')  # Deselect everything
-        bpy.ops.object.mode_set(mode='OBJECT')
-
-        elements = {
-            'VERT': mesh.vertices,
-            'EDGE': mesh.edges,
-            'FACE': mesh.polygons
-        }
+        bm = bmesh.from_edit_mesh(obj.data)
         
-        if self.element_index < 0 or self.element_index >= len(elements[self.element_type]):
-            self.report({'ERROR'}, "Invalid element index")
-            return {'CANCELLED'}
+        # Deselect all elements
+        for v in bm.verts:
+            v.select = False
+        for e in bm.edges:
+            e.select = False
+        for f in bm.faces:
+            f.select = False
+        
+        # Now select the specific element
+        if o.is_vertex_selection_mode():
+            if 0 <= self.element_index < len(bm.verts):
+                bm.verts[self.element_index].select = True
+        elif o.is_edge_selection_mode():
+            if 0 <= self.element_index < len(bm.edges):
+                bm.edges[self.element_index].select = True
+        elif o.is_face_selection_mode():
+            if 0 <= self.element_index < len(bm.faces):
+                bm.faces[self.element_index].select = True
 
-        # Select the specified element
-        elements[self.element_type][self.element_index].select = True
-
-        # Switch back to edit mode
-        bpy.ops.object.mode_set(mode='EDIT')
+        # Update the mesh to reflect changes
+        bmesh.update_edit_mesh(obj.data)
 
         return {'FINISHED'}
-
-# Register
-def register():
-    bpy.utils.register_class(OBJECT_OT_SelectSpecificElement)
-
-def unregister():
-    bpy.utils.unregister_class(OBJECT_OT_SelectSpecificElement)
-
-if __name__ == "__main__":
-    register()

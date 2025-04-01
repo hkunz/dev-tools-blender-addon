@@ -9,15 +9,22 @@ class OBJECT_OT_SelectSpecificElement(bpy.types.Operator):
     bl_idname = "object.select_specific_element"
     bl_label = "Select Specific Element"
     bl_options = {'REGISTER', 'UNDO'}
+    bl_description = "Search for an element by its ID, or by its index if the ID field is empty or the Shift key is held down."
 
     element_id: bpy.props.StringProperty(name="Element Index", default="")  # type: ignore
     element_index: bpy.props.IntProperty(name="Element Index", default=-1)  # type: ignore
 
+    is_shift_held: bpy.props.BoolProperty(default=False)  # type: ignore
+
+    def invoke(self, context, event):
+        # Check if Shift key is held down during the invocation of the operator
+        self.is_shift_held = event.shift
+        return self.execute(context)
+
     def execute(self, context):
-        print(f"Operator select  Element ID {self.element_id} or Element Index: {self.element_index} if no ID is specified")
         obj = context.object
         bm = bmesh.from_edit_mesh(obj.data)
-        search_by_index = not self.element_id
+        search_by_index = not self.element_id or self.is_shift_held
 
         def get_element_index(getter_func, nodes_str, element_type):
             if search_by_index:

@@ -255,6 +255,18 @@ class ObjectUtils:
         return any(len(face.vertices) > 3 for face in obj.data.polygons)
 
     @staticmethod
+    def get_selection_mode(context=None):
+        c = context if context else bpy.context
+        if c.object.mode == 'EDIT':
+            if c.tool_settings.mesh_select_mode[0]:
+                return 1  # Vertex mode
+            elif c.tool_settings.mesh_select_mode[1]:
+                return 2  # Edge mode
+            elif c.tool_settings.mesh_select_mode[2]:
+                return 3  # Face mode
+        return -1
+
+    @staticmethod
     def is_vertex_selection_mode():
         return bpy.context.tool_settings.mesh_select_mode[0]
 

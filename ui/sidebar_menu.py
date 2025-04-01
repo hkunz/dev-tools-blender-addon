@@ -23,6 +23,8 @@ from dev_tools.operators.object.beamng.beamng_jbeam_create_node_mesh import OBJE
 from dev_tools.operators.object.beamng.utils.beamng_jbeam_select_element_operator import OBJECT_OT_SelectSpecificElement  # type: ignore
 from dev_tools.operators.common.ui.toggle_dynamic_button_operator import ButtonItem, ButtonItemSelector, ToggleDynamicButtonOperator, ManageDynamicButtonsOperator  # type: ignore
 
+
+from dev_tools.ui.addon_preferences import MyAddonPreferences as a # type: ignore
 from dev_tools.utils.jbeam.jbeam_selection_tracker import JbeamSelectionTracker # type: ignore
 from dev_tools.utils.utils import Utils # type: ignore
 from dev_tools.utils.object_utils import ObjectUtils as o # type: ignore
@@ -137,22 +139,14 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
     #bl_context = "object"
     #https://blender.stackexchange.com/questions/201360/how-to-control-spacing-alignment-of-label-horizontal-enum-property
 
-    def get_prefs(self, context):
-        addon_name = Utils.get_addon_module_name()
-        prefs = context.preferences.addons.get(addon_name).preferences
-        return prefs
-
     def draw(self, context) -> None:
-        #if context.scene.beamng_jbeam_active_structure.update_in_progress:
-        #    return
-        prefs = self.get_prefs(context)
         layout: bpy.types.UILayout = self.layout
         # box.label(text="Icon Label", icon=IconsManager.BUILTIN_ICON_MESH_DATA)
         # self.draw_sample_modifier_exposed_props(context, layout, "GeometryNodes")
         self.draw_expanded_beamng_options(context, layout, context.active_object)
-        if prefs.armature_options:
+        if a.is_addon_option_enabled("armature_options"):
             self.draw_expanded_armature_options(context, layout)
-        if prefs.bake_options:
+        if a.is_addon_option_enabled("bake_options"):
             self.draw_expanded_bake_options(context, layout)
         # self.draw_sample_color_picker(context, layout)
 
@@ -197,9 +191,8 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
         if not s.expanded_beamng_options:
             return
 
-        prefs = self.get_prefs(context)
         col = layout.column()
-        if prefs.empty_options:
+        if a.is_addon_option_enabled("empty_options"):
             col.operator(OBJECT_OT_BeamngCreateEmptiesBase.bl_idname, text="Create Empties")
             row = col.row(align=True)
             row.operator(OBJECT_OT_BeamngClearChildrenStart01Empty.bl_idname, text="Clear Empty")
@@ -213,7 +206,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             col.operator(OBJECT_OT_BeamngJbeamCreateNodeMesh.bl_idname, text="Create Node Mesh", icon="OUTLINER_OB_MESH")
         elif len(context.selected_objects) == 1:
             if j.is_node_mesh(context.selected_objects[0]):
-                if prefs.debug_options:
+                if a.is_addon_option_enabled("debug_options"):
                     r = col.row(align=True)
                     r.operator(OBJECT_OT_BeamngPrintJbeamNodeProps.bl_idname, text="Nodes Debug", icon="CONSOLE")
                     r.operator(OBJECT_OT_BeamngPrintJbeamBeamProps.bl_idname, text="Beams Debug", icon="CONSOLE")

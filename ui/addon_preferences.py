@@ -51,6 +51,12 @@ class MyAddonPreferences(bpy.types.AddonPreferences):
         update=lambda self, context: on_property_update(self, context, "debug")
     ) # type: ignore
 
+    use_vizualizer: bpy.props.BoolProperty(
+        name="Geometry Nodes Visualizer",
+        default=True,
+        update=lambda self, context: on_property_update(self, context, "visualizer")
+    ) # type: ignore
+
     armature_options: bpy.props.BoolProperty(
         name="Show Armature Options",
         default=False,
@@ -69,7 +75,7 @@ class MyAddonPreferences(bpy.types.AddonPreferences):
         update=lambda self, context: on_property_update(self, context, "empty")
     ) # type: ignore
 
-    CHECKBOXES: List[str] = ["debug_options", "armature_options", "bake_options", "empty_options"]
+    CHECKBOXES: List[str] = ["debug_options", "use_vizualizer", "armature_options", "bake_options", "empty_options"]
 
     def set_checkbox(self, prop_name: str, value: bool) -> None:
         if getattr(self, prop_name) != value:
@@ -97,6 +103,15 @@ class MyAddonPreferences(bpy.types.AddonPreferences):
         for checkbox in self.CHECKBOXES:
             box.prop(self, checkbox)
 
+    @staticmethod
+    def is_addon_option_enabled(option):
+        addon_name = Utils.get_addon_module_name()
+        prefs = bpy.context.preferences.addons.get(addon_name).preferences
+        return getattr(prefs, option, False)
+
+    @staticmethod
+    def is_addon_visualizer_enabled():
+        return MyAddonPreferences.is_addon_option_enabled("use_vizualizer")
 
 def register() -> None:
     bpy.utils.register_class(MyAddonPreferences)

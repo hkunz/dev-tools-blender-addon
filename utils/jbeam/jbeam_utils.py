@@ -3,6 +3,7 @@ import bmesh
 import os
 import copy
 
+from dev_tools.ui.addon_preferences import MyAddonPreferences as a # type: ignore
 from dev_tools.utils.file_utils import FileUtils  # type: ignore
 from dev_tools.utils.object_utils import ObjectUtils  # type: ignore
 from dev_tools.utils.jbeam.jbeam_props_storage import JbeamPropsStorage  # type: ignore
@@ -378,6 +379,8 @@ class JbeamUtils:
 
     @staticmethod
     def get_gn_jbeam_modifier(obj):
+        if not a.is_addon_visualizer_enabled():
+            return None
         # Find the node tree by attribute
         node_tree = next((nt for nt in bpy.data.node_groups if nt.get(JbeamUtils.GN_JBEAM_VISUALIZER_GROUP_NODE_NAME) == JbeamUtils.GN_JBEAM_VISUALIZER_GROUP_NODE_NAME), None)
         if not node_tree:
@@ -403,6 +406,8 @@ class JbeamUtils:
 
     @staticmethod
     def set_gn_jbeam_socket_mode(obj, socket_name, value=None, attribute_name=None):
+        if not a.is_addon_visualizer_enabled():
+            return
         mod = JbeamUtils.get_gn_jbeam_modifier(obj)
         ObjectUtils.set_gn_socket_mode(mod, socket_name, value, attribute_name)
 
@@ -435,6 +440,8 @@ class JbeamUtils:
 
     @staticmethod
     def add_gn_jbeam_visualizer_modifier(obj):
+        if not a.is_addon_visualizer_enabled():
+            return None
         # Find the node tree by attribute instead of name
         group_node_name = JbeamUtils.GN_JBEAM_VISUALIZER_GROUP_NODE_NAME
         node_tree = next((nt for nt in bpy.data.node_groups if nt.get(group_node_name) == group_node_name), None)

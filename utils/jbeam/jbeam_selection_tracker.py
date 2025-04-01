@@ -4,6 +4,7 @@ import json
 
 from typing import Optional
 
+from dev_tools.ui.addon_preferences import MyAddonPreferences as a # type: ignore
 from dev_tools.utils.object_utils import ObjectUtils as o  # type: ignore
 from dev_tools.utils.ui_utils import UiUtils  # type: ignore
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
@@ -80,7 +81,7 @@ class JbeamSelectionTracker:
         if scene.beamng_jbeam_active_structure.update_in_progress:  # useless check, doesn't work because it will already be False by now. Supposed to be used in conjunction with beamng_jbeam_node_props_manager.py::update_element_index so we could select the element while setting JbeamStructure::index IntProperty in panel
             return
         obj = bpy.context.object
-        mode = j.set_gn_jbeam_visualizer_selection_mode(obj)
+        mode = j.set_gn_jbeam_visualizer_selection_mode(obj) if a.is_addon_visualizer_enabled() else o.get_selection_mode()
         reset = False
         if self.selection_mode != mode:
             self.selection_mode = mode
@@ -137,8 +138,9 @@ class JbeamSelectionTracker:
             return
 
         self.vertex_selection = selection
-        mod = j.get_gn_jbeam_modifier(obj)
-        o.update_vertex_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_vertices", "selected_vertices", selection)
+        if a.is_addon_visualizer_enabled():
+            mod = j.get_gn_jbeam_modifier(obj)
+            o.update_vertex_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_vertices", "selected_vertices", selection)
         struct = self.update_struct(scene, obj, bm, "Node", selection, bmesh.types.BMVert, j.get_node_id, j.set_gn_jbeam_active_node_index)
         x, y, z = o.get_vertex_position_by_index(obj, bm, struct.index)
         struct.position.x = x

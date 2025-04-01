@@ -111,7 +111,7 @@ class JbeamParser:
         for key, value in self.jbeam_data.items():
             if "refNodes" in value:
                 headers, values = value["refNodes"]
-                self.refnodes = {h[:-1]: v for h, v in zip(headers[1:], values[1:])}  # Trim last char from keys
+                self.refnodes = {h[:-1]: v for h, v in zip(headers[:], values[:])}  # Trim last char from keys
 
     def parse_nodes(self, json_nodes):
         nodes = []

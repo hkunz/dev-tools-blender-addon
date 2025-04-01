@@ -118,11 +118,9 @@ class JbeamSelectionTracker:
             active_index = active_elem.index if active_elem else (max(selection) if selection else -1)
         else:
             active_index = index
-        refnode = jr.get_refnode_id(obj, active_index)
         struct = scene.beamng_jbeam_active_structure
         struct.name = name
         struct.index = active_index
-        struct.refnode_enum = jr.RefNode(refnode).name # example: jr.RefNode.RIGHT_CORNER.name
         ids = [
             get_id(obj, i, bm) or f"({i})"
             for i in selection
@@ -144,6 +142,8 @@ class JbeamSelectionTracker:
             mod = j.get_gn_jbeam_modifier(obj)
             o.update_vertex_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_vertices", "selected_vertices", selection)
         struct = self.update_struct(scene, obj, bm, "Node", selection, bmesh.types.BMVert, j.get_node_id, j.set_gn_jbeam_active_node_index)
+        refnode = jr.get_refnode_id(obj, struct.index)
+        struct.refnode_enum = jr.RefNode(refnode).name # example: jr.RefNode.RIGHT_CORNER.name
         x, y, z = o.get_vertex_position_by_index(obj, bm, struct.index)
         struct.position.x = x
         struct.position.y = y

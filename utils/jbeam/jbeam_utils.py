@@ -694,7 +694,7 @@ class JbeamRefnodeUtils:
         RIGHT_CORNER = 5
 
     @staticmethod
-    def refnode_enum():
+    def refnode_enum_list():
         # Return the enum items in the correct format for EnumProperty
         return [(e.name, e.name, f"Set the node to {e.name}") for e in JbeamRefnodeUtils.RefNode]
 

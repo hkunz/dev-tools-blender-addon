@@ -90,7 +90,7 @@ class JbeamStructure(bpy.types.PropertyGroup):
     refnode_enum: bpy.props.EnumProperty(
         name="RefNode",
         description="Choose a RefNode type",
-        items=jr.refnode_enum(),
+        items=jr.refnode_enum_list(),
         default="NONE"
     )  # type: ignore
 

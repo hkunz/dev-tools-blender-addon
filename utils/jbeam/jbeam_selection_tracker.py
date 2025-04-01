@@ -163,8 +163,9 @@ class JbeamSelectionTracker:
             return
 
         self.edge_selection = selection
-        mod = j.get_gn_jbeam_modifier(obj)
-        o.update_edge_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_edges", "selected_edges", selection)
+        if a.is_addon_visualizer_enabled():
+            mod = j.get_gn_jbeam_modifier(obj)
+            o.update_edge_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_edges", "selected_edges", selection)
         struct = self.update_struct(scene, obj, bm, "Beam", selection, bmesh.types.BMEdge, j.get_beam_id, j.set_gn_jbeam_active_beam_index)
         self.update_instances(scene, obj, struct, j.get_total_beam_instances)
         bpy.ops.object.devtools_beamng_load_jbeam_beam_props()
@@ -179,8 +180,9 @@ class JbeamSelectionTracker:
             return
 
         self.face_selection = selection
-        mod = j.get_gn_jbeam_modifier(obj)
-        o.update_face_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_faces", "selected_faces", selection)
+        if a.is_addon_visualizer_enabled():
+            mod = j.get_gn_jbeam_modifier(obj)
+            o.update_face_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_faces", "selected_faces", selection)
         active_face = bm.faces.active if bm.faces.active and bm.faces.active.index in selection else None
 
         if not active_face and selection:

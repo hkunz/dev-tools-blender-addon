@@ -705,6 +705,11 @@ class JbeamRefnodeUtils:
     }
 
     @staticmethod
+    def get_ref_nodes() -> dict[str, None]:
+        """Generate a dictionary of ref nodes initialized to None, excluding NONE."""
+        return {label: None for key, label in JbeamRefnodeUtils.REFNODE_MAP.items() if key != JbeamRefnodeUtils.RefNode.NONE}
+
+    @staticmethod
     def get_refnode_label(refnode: RefNode) -> str:
         """Return the mapped string for a given RefNode."""
         return JbeamRefnodeUtils.REFNODE_MAP.get(refnode, "")

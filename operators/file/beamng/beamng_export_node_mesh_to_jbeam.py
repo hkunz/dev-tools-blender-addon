@@ -8,7 +8,7 @@ from pprint import pprint
 from dev_tools.utils.object_utils import ObjectUtils as o  # type: ignore
 from dev_tools.utils.json_cleanup import json_cleanup  # type: ignore
 from dev_tools.utils.jbeam.jbeam_helper import PreJbeamStructureHelper, RedundancyReducerJbeamGenerator  # type: ignore
-from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
+from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j, JbeamRefnodeUtils as jr  # type: ignore  # type: ignore
 from dev_tools.utils.jbeam.jbeam_export_processor import JbeamExportProcessor  # type: ignore
 
 
@@ -95,11 +95,13 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
             return {'CANCELLED'}
 
         # Check vertex groups
+        '''
         is_valid, message = j.check_vertex_groups(obj)
         if not is_valid:
             self.report({'WARNING'}, message)
             restore_mode()
             return {'CANCELLED'}
+        '''
 
         # Check unique node names
         is_valid, message = self.check_unique_node_names(obj)
@@ -177,7 +179,7 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
 
         ref_nodes_data = [
             ["ref:", "back:", "left:", "up:", "leftCorner:", "rightCorner:"],
-            ["ref"] + [ref_nodes[key] if ref_nodes[key] is not None else "" for key in ["back", "left", "up", "leftCorner", "rightCorner"]],
+            [ref_nodes[key] if ref_nodes[key] is not None else "" for key in ["ref", "back", "left", "up", "leftCorner", "rightCorner"]],
         ]
 
         def format_list(data, prepend="", newfile=True):
@@ -269,15 +271,14 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
         return ngons
 
     def find_reference_nodes(self, o):
-        ref_nodes = {"ref": None, "back": None, "left": None, "up": None, "leftCorner": None, "rightCorner": None}
-        for group_name in ref_nodes.keys():
-            group = o.vertex_groups.get(group_name)
-            if group:
-                for vert in o.data.vertices:
-                    for g in vert.groups:
-                        if g.group == group.index:
-                            ref_nodes[group_name] = j.get_node_id(o,vert.index)
-                            break
+        ref_nodes = jr.get_ref_nodes()  # {"ref": None, "back": None, "left": None, "up": None, "leftCorner": None, "rightCorner": None}
+        for label in ref_nodes.keys():
+            refnode_enum = jr.get_refnode_from_label(label)
+            for vert in o.data.vertices:
+                refnode_id = jr.get_refnode_id(o, vert.index)
+                if refnode_id != jr.RefNode.NONE and refnode_id == refnode_enum.value:
+                    ref_nodes[label] = j.get_node_id(o, vert.index)
+                    break
         return ref_nodes
 
     @classmethod

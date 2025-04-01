@@ -7,6 +7,8 @@ support overlapping nodes
 support multiple beams/triangle instances
 on_save event, save the jbeam_props_storage.py data into object.data as custom serialized json
 
+* check on export if not duplicate RefNodes stored caused by modeling
+
 BUGS:
 
 Ctrl+Z not working when saving jbeam props, even though we use bl_options UNDO

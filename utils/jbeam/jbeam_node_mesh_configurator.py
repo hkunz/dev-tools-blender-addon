@@ -1,7 +1,7 @@
 import bpy
 import json
 
-from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
+from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j, JbeamRefnodeUtils as jr  # type: ignore
 
 class JbeamNodeMeshConfigurator:
 
@@ -24,8 +24,8 @@ class JbeamNodeMeshConfigurator:
         nodes_list = parser.get_nodes_list()
         beams_list = parser.get_beams_list()
         tris_list = parser.get_triangles_list()
-        JbeamNodeMeshConfigurator.assign_ref_nodes_to_vertex_groups(obj, ref_nodes, nodes)
         JbeamNodeMeshConfigurator.create_node_mesh_attributes(obj)
+        JbeamNodeMeshConfigurator.assign_ref_nodes(obj, ref_nodes, nodes)
         JbeamNodeMeshConfigurator.store_node_props_in_vertex_attributes(obj, nodes_list)
         JbeamNodeMeshConfigurator.store_beam_props_in_edge_attributes(obj, beams_list)
         JbeamNodeMeshConfigurator.store_triangle_props_in_face_attributes(obj, tris_list)
@@ -38,13 +38,8 @@ class JbeamNodeMeshConfigurator:
             del obj.data[key]
 
     @staticmethod
-    def assign_ref_nodes_to_vertex_groups(obj, ref_nodes, nodes):
-        for group_name, node_id in ref_nodes.items():
-            vg = obj.vertex_groups.get(group_name)
-            if vg is None:
-                print(f"Vertex group '{group_name}' not found, creating it.")
-                vg = obj.vertex_groups.new(name=group_name)
-
+    def assign_ref_nodes(obj, ref_nodes, nodes):
+        for refnode_name, node_id in ref_nodes.items():
             node = nodes.get(node_id)
             if node is None:
                 print(f"Node ID '{node_id}' not found in 'jbeam_parser::nodes', skipping.")
@@ -53,8 +48,8 @@ class JbeamNodeMeshConfigurator:
             if idx < 0:
                 print(f"Error: No vertex index assigned to {node.id}")
                 continue
-            vg.add([idx], 1.0, 'REPLACE')
-            print(f"Assigned vertex {idx} to vertex group '{group_name}'.")
+            jr.set_refnode_id(obj, idx, jr.get_refnode_from_label(refnode_name).value)
+            print(f"Assigned Node '{node.id}' with index {idx} as ref node '{refnode_name}({jr.get_refnode_from_label(refnode_name).value})'.")
 
     @staticmethod
     def create_node_mesh_attributes(obj):

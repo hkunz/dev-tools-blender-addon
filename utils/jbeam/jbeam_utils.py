@@ -687,11 +687,33 @@ class JbeamRefnodeUtils:
 
     class RefNode(Enum):
         NONE = 0
-        UP = 1
-        LEFT = 2
-        BACK = 3
-        LEFT_CORNER = 4
-        RIGHT_CORNER = 5
+        REF = 1
+        UP = 2
+        LEFT = 3
+        BACK = 4
+        LEFT_CORNER = 5
+        RIGHT_CORNER = 6
+
+    REFNODE_MAP = {
+        RefNode.NONE: "",
+        RefNode.REF: "ref",
+        RefNode.UP: "up",
+        RefNode.LEFT: "left",
+        RefNode.BACK: "back",
+        RefNode.LEFT_CORNER: "leftCorner",
+        RefNode.RIGHT_CORNER: "rightCorner",
+    }
+
+    @staticmethod
+    def get_refnode_label(refnode: RefNode) -> str:
+        """Return the mapped string for a given RefNode."""
+        return JbeamRefnodeUtils.REFNODE_MAP.get(refnode, "")
+
+    @staticmethod
+    def get_refnode_from_label(label: str) -> RefNode:
+        """Return the corresponding RefNode from a string label."""
+        reverse_map = {v: k for k, v in JbeamRefnodeUtils.REFNODE_MAP.items()}
+        return reverse_map.get(label, JbeamRefnodeUtils.RefNode.NONE)
 
     @staticmethod
     def refnode_enum_list():

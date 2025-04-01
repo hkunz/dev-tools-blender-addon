@@ -5,10 +5,9 @@ import re
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
 
 class OBJECT_OT_BeamngJbeamRenameSelectedNodes(bpy.types.Operator):
-    """Renames selected Nodes using the Active Node ID as a prefix. Use # as a number placeholder."""
     bl_idname = "object.devtools_beamng_jbeam_rename_selected_nodes"
     bl_label = "DevTools: Rename Selected JBeam Nodes"
-    bl_description = ""
+    bl_description = "Renames selected Nodes using the Active Node ID as a prefix/suffix. Use # as a number placeholder."
     bl_options = {'INTERNAL', 'UNDO'}
 
     def execute(self, context):
@@ -52,5 +51,6 @@ class OBJECT_OT_BeamngJbeamRenameSelectedNodes(bpy.types.Operator):
                 j.set_node_id(obj, v.index, new_value)
 
         bmesh.update_edit_mesh(mesh)
-        self.report({'INFO'}, f"Assigned JBeam Node IDs to {len(selected_verts)} vertices")
+        verts_msg = "Nodes" if len(selected_verts) > 1 else "Node"
+        self.report({'INFO'}, f"Assigned ID to {len(selected_verts)} selected {verts_msg}")
         return {'FINISHED'}

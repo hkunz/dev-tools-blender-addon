@@ -21,7 +21,8 @@ from dev_tools.operators.object.beamng.beamng_jbeam_node_props_manager import OB
 from dev_tools.operators.object.beamng.beamng_jbeam_rename_selected_nodes import OBJECT_OT_BeamngJbeamRenameSelectedNodes  # type:ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_create_node_mesh import OBJECT_OT_BeamngJbeamCreateNodeMesh  # type: ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_set_refnode_operator import OBJECT_OT_BeamngJbeamSetRefnodeOperator  # type: ignore
-from dev_tools.operators.object.beamng.utils.beamng_jbeam_select_element_operator import OBJECT_OT_SelectSpecificElement  # type: ignore
+from dev_tools.operators.object.beamng.utils.beamng_jbeam_select_element_operator import OBJECT_OT_BeamngJbeamSelectSpecificElement  # type: ignore
+from dev_tools.operators.object.beamng.utils.beamng_jbeam_select_ref_element_operator import OBJECT_OT_BeamngJbeamSelectRefNode  # type: ignore
 from dev_tools.utils.jbeam.jbeam_utils import JbeamRefnodeUtils as jr  # type: ignore
 from dev_tools.operators.common.ui.toggle_dynamic_button_operator import ButtonItem, ButtonItemSelector, ToggleDynamicButtonOperator, ManageDynamicButtonsOperator  # type: ignore
 
@@ -261,7 +262,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             action_col.scale_x = 1
             sub_r = action_col.row(align=True)
             sub_r.prop(struct, "index", text="", emboss=True)
-            op = sub_r.operator(OBJECT_OT_SelectSpecificElement.bl_idname, text="", icon="RESTRICT_SELECT_OFF")
+            op = sub_r.operator(OBJECT_OT_BeamngJbeamSelectSpecificElement.bl_idname, text="", icon="RESTRICT_SELECT_OFF")
             op.element_index = struct.index
             op.element_id = struct.id
 
@@ -319,9 +320,18 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             draw_active_element(box, struct, f"{struct.position.x:.2f}, {struct.position.y:.2f}, {struct.position.z:.2f}", 0.35)
             box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign Node ID", icon="GREASEPENCIL")
             r = box.row(align=True)
-            split = r.split(factor=0.6)
-            split.prop(struct, "refnode_enum")
-            split.operator(OBJECT_OT_BeamngJbeamSetRefnodeOperator.bl_idname, text="Set Ref Node").refnode_enum = struct.refnode_enum
+            label_col = r.column(align=True)
+            label_col.scale_x = 0.4
+            label_col.label(text="REF:")
+            enum_col = r.column(align=True)
+            enum_col.scale_x = 1.3
+            enum_col.prop(struct, "refnode_enum", text="")
+            action_col = r.column(align=True)
+            action_col.scale_x = 1
+            sub_r = action_col.row(align=True)
+            sub_r.operator(OBJECT_OT_BeamngJbeamSetRefnodeOperator.bl_idname, text="Assign").refnode_enum = struct.refnode_enum
+            op = sub_r.operator(OBJECT_OT_BeamngJbeamSelectRefNode.bl_idname, text="", icon="RESTRICT_SELECT_OFF")
+            op.refnode_enum = struct.refnode_enum
             draw_scope_modifier_list(OBJECT_OT_BeamngSelectJbeamNodesByProperty.bl_idname, OBJECT_OT_BeamngSaveJbeamNodeProp.bl_idname, OBJECT_OT_BeamngRemoveJbeamNodeProp.bl_idname)
             draw_bottom_options(OBJECT_OT_BeamngAddJbeamNodeProp.bl_idname, OBJECT_OT_BeamngSaveAllJbeamNodeProps.bl_idname)
 

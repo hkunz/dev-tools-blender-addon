@@ -5,10 +5,10 @@ import re
 from dev_tools.utils.object_utils import ObjectUtils as o  # type: ignore
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
 
-class OBJECT_OT_SelectSpecificElement(bpy.types.Operator):
-    bl_idname = "object.select_specific_element"
-    bl_label = "Select Specific Element"
-    bl_options = {'REGISTER', 'UNDO'}
+class OBJECT_OT_BeamngJbeamSelectSpecificElement(bpy.types.Operator):
+    bl_idname = "object.devtools_beamng_jbeam_select_element_by_id_or_index"
+    bl_label = "DevTools: Select Specific Element"
+    bl_options = {'INTERNAL', 'UNDO'}
     bl_description = "Search for an element by its ID, or by its index if the ID field is empty or the Shift key is held down."
 
     element_id: bpy.props.StringProperty(name="Element Index", default="")  # type: ignore

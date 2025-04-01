@@ -3,6 +3,9 @@ import bmesh
 import os
 import copy
 
+from enum import Enum
+from typing import Union
+
 from dev_tools.ui.addon_preferences import MyAddonPreferences as a # type: ignore
 from dev_tools.utils.file_utils import FileUtils  # type: ignore
 from dev_tools.utils.object_utils import ObjectUtils  # type: ignore
@@ -86,8 +89,9 @@ class JbeamUtils:
         JbeamUtils.create_attribute_triangle_props(obj)
 
     @staticmethod
-    def get_attribute_value(obj, index, attr_name, domain="verts") -> str:
+    def get_attribute_value(obj, index, attr_name, domain="verts") -> Union[str, int, None]:
         mesh = obj.data
+
         if obj.mode == 'EDIT':
             bm = bmesh.from_edit_mesh(mesh)
             bm_data_map = {
@@ -95,6 +99,7 @@ class JbeamUtils:
                 "edges": bm.edges,
                 "faces": bm.faces
             }
+            
             if domain in bm_data_map:
                 bm_data_map[domain].ensure_lookup_table()
             else:
@@ -113,13 +118,17 @@ class JbeamUtils:
                 return None
 
             element = bm_data[index]
-            layer = bm_data.layers.string.get(attr_name)
 
-            if layer is None:
-                print(f"{repr(obj)}: Layer '{attr_name}' not found in Edit Mode ({domain})")
-                return None
+            string_layer = bm_data.layers.string.get(attr_name)
+            if string_layer:
+                return element[string_layer].decode('utf-8')
 
-            return element[layer].decode('utf-8')
+            int_layer = bm_data.layers.int.get(attr_name)
+            if int_layer:
+                return element[int_layer]
+            
+            print(f"{repr(obj)}: Layer '{attr_name}' not found in Edit Mode ({domain})")
+            return None
 
         elif obj.mode == 'OBJECT':
             if attr_name not in mesh.attributes:
@@ -131,8 +140,14 @@ class JbeamUtils:
             if index >= len(attr_data):
                 print(f"{repr(obj)}: Index {index} out of range in Object Mode ({domain})")
                 return None
-
-            return attr_data[index].value.decode('utf-8')
+            
+            if isinstance(attr_data[index].value, bytes):
+                return attr_data[index].value.decode('utf-8')
+            elif isinstance(attr_data[index].value, int):
+                return attr_data[index].value
+            else:
+                print(f"{repr(obj)}: Unsupported attribute type in Object Mode")
+                return None
 
         print(f"{repr(obj)}: Unknown object mode {obj.mode}")
         return None
@@ -298,9 +313,10 @@ class JbeamUtils:
             print("JBeam storage check complete: No duplicates found.")
 
     @staticmethod
-    def set_attribute_value(obj, index: int, attr_name: str, attr_value: str, domain="verts", instance=1):
+    def set_attribute_value(obj, index: int, attr_name: str, attr_value: Union[str, int], domain="verts"):
         mesh = obj.data
 
+        # Handle 'EDIT' mode
         if obj.mode == 'EDIT':
             bm = bmesh.from_edit_mesh(mesh)
             bm_data = getattr(bm, domain)  # Access verts, edges, or faces dynamically
@@ -310,11 +326,18 @@ class JbeamUtils:
                 return False
 
             element = bm_data[index]
-            layer = bm_data.layers.string.get(attr_name) or bm_data.layers.string.new(attr_name)
-
-            element[layer] = attr_value.encode('utf-8')
+            if isinstance(attr_value, str):  # For string values
+                layer = bm_data.layers.string.get(attr_name) or bm_data.layers.string.new(attr_name)
+                element[layer] = attr_value.encode('utf-8')
+            elif isinstance(attr_value, int):  # For integer values
+                layer = bm_data.layers.int.get(attr_name) or bm_data.layers.int.new(attr_name)
+                element[layer] = attr_value
+            else:
+                print(f"{repr(obj)}: Unsupported attribute value type")
+                return False
             return True
 
+        # Handle 'OBJECT' mode
         elif obj.mode == 'OBJECT':
             domain_map = {"verts": "POINT", "edges": "EDGE", "faces": "FACE"}
 
@@ -323,7 +346,11 @@ class JbeamUtils:
                 return False
 
             if attr_name not in mesh.attributes:
-                mesh.attributes.new(name=attr_name, type='STRING', domain=domain_map[domain])
+                # Define the attribute as integer for 'verts' if it's not present
+                if isinstance(attr_value, int):
+                    mesh.attributes.new(name=attr_name, type='INT', domain=domain_map[domain])
+                else:
+                    mesh.attributes.new(name=attr_name, type='STRING', domain=domain_map[domain])
 
             attr_data = mesh.attributes[attr_name].data
 
@@ -331,11 +358,19 @@ class JbeamUtils:
                 print(f"{repr(obj)}: Index {index} out of range in Object Mode ({domain})")
                 return False
 
-            attr_data[index].value = attr_value.encode('utf-8')
+            if isinstance(attr_value, str):  # For string values
+                attr_data[index].value = attr_value.encode('utf-8')
+            elif isinstance(attr_value, int):  # For integer values
+                attr_data[index].value = attr_value
+            else:
+                print(f"{repr(obj)}: Unsupported attribute value type")
+                return False
+
             return True
 
         print(f"{repr(obj)}: Unknown object mode {obj.mode}")
         return False
+
 
     @staticmethod
     def set_node_id(obj, vertex_index, node_id: str):
@@ -641,3 +676,28 @@ class JbeamUtils:
             vertex_assignment[vertex_index] = group_name  # Store assigned vertex
 
         return True, "All vertex groups are correctly assigned."
+
+
+
+class JbeamRefnodeUtils:
+
+    DOMAIN = "verts"
+    ATTR_REFNODE_ID = "jbeam_refnode_id"
+
+    class RefNode(Enum):
+        NONE = 0
+        UP = 1
+        LEFT = 2
+        BACK = 3
+        LEFT_CORNER = 4
+        RIGHT_CORNER = 5
+
+    @staticmethod
+    def create_attribute_refnode(obj):
+        return JbeamUtils.create_attribute(obj, JbeamUtils.ATTR_REFNODE_ID, type="INT")
+    
+    def set_refnode_id(obj, vertex_index, refnode_enum: int):
+        JbeamUtils.set_attribute_value(obj, vertex_index, JbeamUtils.ATTR_REFNODE_ID, refnode_enum, domain=JbeamRefnodeUtils.DOMAIN)
+
+    def get_refnode_id(obj, vertex_index) -> int:
+        return JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_REFNODE_ID, domain=JbeamRefnodeUtils.DOMAIN)

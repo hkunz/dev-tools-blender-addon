@@ -7,7 +7,7 @@ from typing import Optional
 from dev_tools.ui.addon_preferences import MyAddonPreferences as a # type: ignore
 from dev_tools.utils.object_utils import ObjectUtils as o  # type: ignore
 from dev_tools.utils.ui_utils import UiUtils  # type: ignore
-from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
+from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j, JbeamRefnodeUtils as jr  # type: ignore# type: ignore
 from dev_tools.operators.common.ui.toggle_dynamic_button_operator import ButtonItem  # type: ignore
 
 class JbeamSelectionTracker:
@@ -118,9 +118,11 @@ class JbeamSelectionTracker:
             active_index = active_elem.index if active_elem else (max(selection) if selection else -1)
         else:
             active_index = index
+        refnode = jr.get_refnode_id(obj, active_index)
         struct = scene.beamng_jbeam_active_structure
         struct.name = name
         struct.index = active_index
+        struct.refnode_enum = jr.RefNode(refnode).name # example: jr.RefNode.RIGHT_CORNER.name
         ids = [
             get_id(obj, i, bm) or f"({i})"
             for i in selection

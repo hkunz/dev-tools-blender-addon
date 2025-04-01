@@ -87,6 +87,7 @@ class JbeamUtils:
         JbeamUtils.create_attribute_node_props(obj)
         JbeamUtils.create_attribute_beam_props(obj)
         JbeamUtils.create_attribute_triangle_props(obj)
+        JbeamRefnodeUtils.create_attribute_refnode(obj)
 
     @staticmethod
     def get_attribute_value(obj, index, attr_name, domain="verts") -> Union[str, int, None]:
@@ -693,11 +694,18 @@ class JbeamRefnodeUtils:
         RIGHT_CORNER = 5
 
     @staticmethod
-    def create_attribute_refnode(obj):
-        return JbeamUtils.create_attribute(obj, JbeamUtils.ATTR_REFNODE_ID, type="INT")
-    
-    def set_refnode_id(obj, vertex_index, refnode_enum: int):
-        JbeamUtils.set_attribute_value(obj, vertex_index, JbeamUtils.ATTR_REFNODE_ID, refnode_enum, domain=JbeamRefnodeUtils.DOMAIN)
+    def refnode_enum():
+        # Return the enum items in the correct format for EnumProperty
+        return [(e.name, e.name, f"Set the node to {e.name}") for e in JbeamRefnodeUtils.RefNode]
 
+    @staticmethod
+    def create_attribute_refnode(obj):
+        return JbeamUtils.create_attribute(obj, JbeamRefnodeUtils.ATTR_REFNODE_ID, type="INT")
+    
+    @staticmethod
+    def set_refnode_id(obj, vertex_index, refnode_enum: int):
+        JbeamUtils.set_attribute_value(obj, vertex_index, JbeamRefnodeUtils.ATTR_REFNODE_ID, refnode_enum, domain=JbeamRefnodeUtils.DOMAIN)
+
+    @staticmethod
     def get_refnode_id(obj, vertex_index) -> int:
-        return JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_REFNODE_ID, domain=JbeamRefnodeUtils.DOMAIN)
+        return JbeamUtils.get_attribute_value(obj, vertex_index, JbeamRefnodeUtils.ATTR_REFNODE_ID, domain=JbeamRefnodeUtils.DOMAIN)

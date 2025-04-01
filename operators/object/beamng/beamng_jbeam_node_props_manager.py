@@ -2,7 +2,7 @@ import bpy
 import bmesh
 import json
 
-from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
+from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j, JbeamRefnodeUtils as jr  # type: ignore
 from dev_tools.utils.ui_utils import UiUtils  # type: ignore
 
 def update_element_index(self, context):
@@ -86,7 +86,14 @@ class JbeamStructure(bpy.types.PropertyGroup):
         name="Selection List",
         default=""
     )  # type: ignore
-    
+
+    refnode_enum: bpy.props.EnumProperty(
+        name="RefNode",
+        description="Choose a RefNode type",
+        items=jr.refnode_enum(),
+        default="NONE"
+    )  # type: ignore
+
     prop_items: bpy.props.CollectionProperty(type=JbeamStructurePropertyItem)  # type: ignore # items representing scope modifiers on the strucutre
     update_in_progress: bpy.props.BoolProperty(default=False)   # type: ignore # needed so that when we modify a value in the panel, we will ignore all draw function in sidepanel until update is complete
 

@@ -65,6 +65,7 @@ from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_node_mesh import 
 from dev_tools.operators.object.beamng.beamng_jbeam_node_props_manager import OBJECT_OT_BeamngLoadJbeamNodeProps, OBJECT_OT_BeamngLoadJbeamBeamProps, OBJECT_OT_BeamngLoadJbeamTriangleProps, OBJECT_OT_BeamngSaveJbeamNodeProp, OBJECT_OT_BeamngSaveJbeamBeamProp, OBJECT_OT_BeamngSaveJbeamTriangleProp, OBJECT_OT_BeamngSaveAllJbeamNodeProps, OBJECT_OT_BeamngSaveAllJbeamBeamProps, OBJECT_OT_BeamngSaveAllJbeamTriangleProps, OBJECT_OT_BeamngAddJbeamTriangleProp, OBJECT_OT_BeamngAddJbeamNodeProp, OBJECT_OT_BeamngAddJbeamBeamProp, OBJECT_OT_BeamngRemoveJbeamNodeProp, OBJECT_OT_BeamngRemoveJbeamBeamProp, OBJECT_OT_BeamngRemoveJbeamTriangleProp, OBJECT_OT_BeamngSelectJbeamNodesByProperty, OBJECT_OT_BeamngSelectJbeamBeamsByProperty, OBJECT_OT_BeamngSelectJbeamTrianglesByProperty  # type: ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_rename_selected_nodes import OBJECT_OT_BeamngJbeamRenameSelectedNodes # type: ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_create_node_mesh import OBJECT_OT_BeamngJbeamCreateNodeMesh # type: ignore
+from dev_tools.operators.object.beamng.beamng_jbeam_set_refnode_operator import OBJECT_OT_BeamngJbeamSetRefnodeOperator  # type: ignore
 from dev_tools.operators.object.beamng.utils.beamng_jbeam_print_attributes_operators import OBJECT_OT_BeamngPrintJbeamNodeProps, OBJECT_OT_BeamngPrintJbeamBeamProps, OBJECT_OT_BeamngPrintJbeamTriangleProps  # type: ignore
 from dev_tools.operators.object.beamng.utils.beamng_jbeam_select_element_operator import OBJECT_OT_SelectSpecificElement  # type: ignore
 
@@ -105,7 +106,8 @@ DEVTOOLS_CLASSES = [
     OBJECT_OT_BeamngJbeamCreateNodeMesh,
     OBJECT_OT_BeamngPrintJbeamNodeProps,
     OBJECT_OT_BeamngPrintJbeamBeamProps,
-    OBJECT_OT_BeamngPrintJbeamTriangleProps
+    OBJECT_OT_BeamngPrintJbeamTriangleProps,
+    OBJECT_OT_BeamngJbeamSetRefnodeOperator
 ]
 
 @persistent

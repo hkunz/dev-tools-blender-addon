@@ -20,7 +20,9 @@ from dev_tools.operators.object.beamng.beamng_convert_jbeam_to_node_mesh import 
 from dev_tools.operators.object.beamng.beamng_jbeam_node_props_manager import OBJECT_OT_BeamngSaveJbeamNodeProp, OBJECT_OT_BeamngSaveJbeamBeamProp, OBJECT_OT_BeamngSaveJbeamTriangleProp, OBJECT_OT_BeamngSaveAllJbeamNodeProps, OBJECT_OT_BeamngSaveAllJbeamBeamProps, OBJECT_OT_BeamngSaveAllJbeamTriangleProps, OBJECT_OT_BeamngAddJbeamNodeProp, OBJECT_OT_BeamngAddJbeamBeamProp, OBJECT_OT_BeamngAddJbeamTriangleProp, OBJECT_OT_BeamngRemoveJbeamNodeProp, OBJECT_OT_BeamngRemoveJbeamBeamProp, OBJECT_OT_BeamngRemoveJbeamTriangleProp, OBJECT_OT_BeamngSelectJbeamNodesByProperty, OBJECT_OT_BeamngSelectJbeamBeamsByProperty, OBJECT_OT_BeamngSelectJbeamTrianglesByProperty, JbeamStructurePropertyItem, JbeamStructure, JbeamHiddenElements  # type: ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_rename_selected_nodes import OBJECT_OT_BeamngJbeamRenameSelectedNodes  # type:ignore
 from dev_tools.operators.object.beamng.beamng_jbeam_create_node_mesh import OBJECT_OT_BeamngJbeamCreateNodeMesh  # type: ignore
+from dev_tools.operators.object.beamng.beamng_jbeam_set_refnode_operator import OBJECT_OT_BeamngJbeamSetRefnodeOperator  # type: ignore
 from dev_tools.operators.object.beamng.utils.beamng_jbeam_select_element_operator import OBJECT_OT_SelectSpecificElement  # type: ignore
+from dev_tools.utils.jbeam.jbeam_utils import JbeamRefnodeUtils as jr  # type: ignore
 from dev_tools.operators.common.ui.toggle_dynamic_button_operator import ButtonItem, ButtonItemSelector, ToggleDynamicButtonOperator, ManageDynamicButtonsOperator  # type: ignore
 
 
@@ -316,6 +318,10 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
         if o.is_vertex_selection_mode():
             draw_active_element(box, struct, f"{struct.position.x:.2f}, {struct.position.y:.2f}, {struct.position.z:.2f}", 0.35)
             box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign Node ID", icon="GREASEPENCIL")
+            r = box.row(align=True)
+            split = r.split(factor=0.6)
+            split.prop(struct, "refnode_enum")
+            split.operator(OBJECT_OT_BeamngJbeamSetRefnodeOperator.bl_idname, text="Set Ref Node").refnode_enum = struct.refnode_enum
             draw_scope_modifier_list(OBJECT_OT_BeamngSelectJbeamNodesByProperty.bl_idname, OBJECT_OT_BeamngSaveJbeamNodeProp.bl_idname, OBJECT_OT_BeamngRemoveJbeamNodeProp.bl_idname)
             draw_bottom_options(OBJECT_OT_BeamngAddJbeamNodeProp.bl_idname, OBJECT_OT_BeamngSaveAllJbeamNodeProps.bl_idname)
 

@@ -18,11 +18,37 @@ class OBJECT_OT_BeamngJbeamSelectRefNode(bpy.types.Operator):
 
     @classmethod
     def description(cls, context, properties):
-        return f"Search for the Node's '{jr.ATTR_REFNODE_ID}' attribute containing the ref node value '{properties.refnode_enum}' (ID: {jr.RefNode[properties.refnode_enum].value})"
+        return f"Select the Nodes assigned with ref node '{properties.refnode_enum}' (ID: {jr.RefNode[properties.refnode_enum].value})"
 
     def execute(self, context):
+
         obj = context.object
         bm = bmesh.from_edit_mesh(obj.data)
-        print("YES")
 
+        # Deselect all elements
+        for v in bm.verts:
+            v.select = False
+        for e in bm.edges:
+            e.select = False
+        for f in bm.faces:
+            f.select = False
+
+        if not o.is_vertex_selection_mode():
+            return {'CANCELLED'}
+
+        refnode_id = jr.RefNode[self.refnode_enum].value
+        indices = jr.find_nodes_with_refnode_id(obj, refnode_id)
+        if not indices:
+            self.report({'INFO'}, f"No nodes found with '{self.refnode_enum}' (ID: {refnode_id})")
+            return {'FINISHED'}
+
+        element = None
+        for idx in indices:
+            element = bm.verts[idx]
+            element.select = True
+
+        if element:
+            bm.select_history.add(element)
+            bmesh.update_edit_mesh(obj.data)
+            self.report({'INFO'}, f"Selected {len(indices)} Node(s)")
         return {'FINISHED'}

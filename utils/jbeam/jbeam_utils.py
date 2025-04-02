@@ -95,62 +95,42 @@ class JbeamUtils:
 
         if obj.mode == 'EDIT':
             bm = bmesh.from_edit_mesh(mesh)
-            bm_data_map = {
-                "verts": bm.verts,
-                "edges": bm.edges,
-                "faces": bm.faces
-            }
-            
-            if domain in bm_data_map:
-                bm_data_map[domain].ensure_lookup_table()
-            else:
-                print(f"{repr(obj)}: Unsupported domain '{domain}' in Edit Mode")
-                return None
-            
-            bm_data = getattr(bm, domain, None)  # Access verts, edges, or faces dynamically
+            bm_data = getattr(bm, domain, None)
 
-            if bm_data is None:
+            if not bm_data:
                 print(f"{repr(obj)}: Unsupported domain '{domain}' in Edit Mode")
                 return None
 
-            num_elements = len(bm_data)
-            if index >= num_elements or num_elements <= 0:
+            bm_data.ensure_lookup_table()
+
+            if index >= len(bm_data):
                 print(f"{repr(obj)}: Index {index} out of range in Edit Mode ({domain})")
                 return None
 
             element = bm_data[index]
+            layer = bm_data.layers.string.get(attr_name) or bm_data.layers.int.get(attr_name)
+            if not layer:
+                print(f"{repr(obj)}: Layer '{attr_name}' not found in Edit Mode ({domain})")
+                return None
 
-            string_layer = bm_data.layers.string.get(attr_name)
-            if string_layer:
-                return element[string_layer].decode('utf-8')
-
-            int_layer = bm_data.layers.int.get(attr_name)
-            if int_layer:
-                return element[int_layer]
-            
-            print(f"{repr(obj)}: Layer '{attr_name}' not found in Edit Mode ({domain})")
-            return None
+            value = element[layer]
+            return value.decode('utf-8') if isinstance(value, bytes) else value
 
         elif obj.mode == 'OBJECT':
-            if attr_name not in mesh.attributes:
+            attr = mesh.attributes.get(attr_name)
+            if not attr:
                 print(f"{repr(obj)}: Attribute '{attr_name}' not found in Object Mode ({domain})")
                 return None
 
-            attr_data = mesh.attributes[attr_name].data
-
+            attr_data = attr.data
             if index >= len(attr_data):
                 print(f"{repr(obj)}: Index {index} out of range in Object Mode ({domain})")
                 return None
-            
-            if isinstance(attr_data[index].value, bytes):
-                return attr_data[index].value.decode('utf-8')
-            elif isinstance(attr_data[index].value, int):
-                return attr_data[index].value
-            else:
-                print(f"{repr(obj)}: Unsupported attribute type in Object Mode")
-                return None
 
-        print(f"{repr(obj)}: Unknown object mode {obj.mode}")
+            value = attr_data[index].value
+            return value.decode('utf-8') if isinstance(value, bytes) else value
+
+        print(f"{repr(obj)}: Unknown object mode '{obj.mode}'")
         return None
 
     @staticmethod
@@ -736,3 +716,4 @@ class JbeamRefnodeUtils:
     @staticmethod
     def get_refnode_id(obj, vertex_index) -> int:
         return JbeamUtils.get_attribute_value(obj, vertex_index, JbeamRefnodeUtils.ATTR_REFNODE_ID, domain=JbeamRefnodeUtils.DOMAIN)
+    

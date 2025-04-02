@@ -595,14 +595,16 @@ class JbeamUtils:
         return -1
 
     @staticmethod
-    def get_beam_index(obj, node_id1, node_id2) -> int:
+    def get_beam_index(obj, node_id1, node_id2, bm=None) -> int:
         """
         Get the index of the beam defined by two node IDs (node_id1, node_id2).
         """
         # Iterate through all the edges in the mesh
         mesh = obj.data
         if obj.mode == 'EDIT':
-            bm = bmesh.from_edit_mesh(mesh)
+            if not bm:
+                bm = bmesh.from_edit_mesh(mesh)
+                bm.edges.ensure_lookup_table()
             bm_data = bm.edges
         elif obj.mode == 'OBJECT':
             bm_data = mesh.edges
@@ -623,14 +625,16 @@ class JbeamUtils:
         return -1
 
     @staticmethod
-    def get_triangle_index(obj, node_id1, node_id2, node_id3) -> int:
+    def get_triangle_index(obj, node_id1, node_id2, node_id3, bm=None) -> int:
         """
         Get the index of the triangle (face) defined by three node IDs.
         """
         # Iterate through all the faces (triangles) in the mesh
         mesh = obj.data
         if obj.mode == 'EDIT':
-            bm = bmesh.from_edit_mesh(mesh)
+            if not bm:
+                bm = bmesh.from_edit_mesh(mesh)
+                bm.faces.ensure_lookup_table()
             bm_data = bm.faces
         elif obj.mode == 'OBJECT':
             bm_data = mesh.polygons

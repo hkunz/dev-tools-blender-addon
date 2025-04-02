@@ -23,6 +23,8 @@ class OBJECT_OT_BeamngJbeamSelectRefNode(bpy.types.Operator):
     def execute(self, context):
 
         obj = context.object
+        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.mode_set(mode='EDIT')
         bm = bmesh.from_edit_mesh(obj.data)
 
         # Deselect all elements

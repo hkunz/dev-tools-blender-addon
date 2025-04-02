@@ -125,13 +125,6 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
 
         return {'RUNNING_MODAL'}
 
-    def get_final_struct(self, items):
-        formatted_str = ',\n    '.join(
-            str(item).replace("'", '"')
-            for item in items
-        )
-        return formatted_str
-
     def generate_jbeam_node_list(self, obj):
 
         jbeam = PreJbeamStructureHelper(obj, domain="vertex")
@@ -239,13 +232,11 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
                 f.write(json_output)
         else:
             print(f"Replace nodes, beams, triangles, refNodes, etc in {filepath}")
-            refnodes_str = self.get_final_struct(ref_nodes_data)
+            refnodes_str = ',\n    '.join(str(item).replace("'", '"') for item in ref_nodes_data)
             nodes_str = format_list(nodes, '["id", "posX", "posY", "posZ"],', False)
             beams_str = format_list(beams, '["id1:","id2:"],', False)
             tris_str = format_list(triangles, '["id1:","id2:","id3:"],', False)
-            if quads: quads_str = "" #self.get_final_struct(existing_data, quads, "quads", [["id1:","id2:","id3:","id4:"]])
-            if ngons: ngons_str = "" #self.get_final_struct(existing_data, ngons, "ngons", [["ngons:"]])
-            
+
             processor = JbeamExportProcessor(existing_data_str)
 
             # Modify "nodes", then "beams", and "triangles" successively:
@@ -253,8 +244,6 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
             existing_data_str = processor.insert_node_contents("nodes", nodes_str)
             existing_data_str = processor.insert_node_contents("beams", beams_str)
             existing_data_str = processor.insert_node_contents("triangles", tris_str)
-            if quads: existing_data_str = processor.insert_node_contents("quads", quads_str)
-            if ngons: existing_data_str = processor.insert_node_contents("ngons", ngons_str)
 
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(existing_data_str)

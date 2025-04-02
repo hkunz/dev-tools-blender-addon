@@ -134,6 +134,61 @@ class JbeamUtils:
         return None
 
     @staticmethod
+    def find_elements_with_attribute_value(obj, attr_name, attr_value, domain="verts", bm=None) -> list[int]:
+        """Finds the indices of elements (vertices, edges, or faces) with a specific attribute value."""
+        mesh = obj.data
+        matching_element_indices = []
+
+        if obj.mode == 'EDIT':
+            # If bm is not provided, get the current bmesh from the mesh
+            if not bm:
+                bm = bmesh.from_edit_mesh(obj.data)
+            
+            bm_data = getattr(bm, domain, None)
+            if not bm_data:
+                print(f"{repr(obj)}: Unsupported domain '{domain}' in Edit Mode")
+                return []
+
+            bm_data.ensure_lookup_table()
+
+            string_layer = bm_data.layers.string.get(attr_name)
+            int_layer = bm_data.layers.int.get(attr_name)
+
+            # Iterate through each element in the bm_data (verts, edges, or faces)
+            for idx, element in enumerate(bm_data):
+                value = None
+                if string_layer:
+                    value = element[string_layer].decode('utf-8')
+                elif int_layer:
+                    value = element[int_layer]
+
+                if value == attr_value:
+                    matching_element_indices.append(idx)  # Append the index of the element
+
+        elif obj.mode == 'OBJECT':
+            if attr_name not in mesh.attributes:
+                print(f"{repr(obj)}: Attribute '{attr_name}' not found in Object Mode ({domain})")
+                return []
+
+            attr_data = mesh.attributes[attr_name].data
+
+            # In OBJECT mode, we cannot directly access BMVerts, BMEdges, or BMFaces, 
+            # but we can lookup the index of the element and retrieve them by index from the mesh.
+            for idx, entry in enumerate(attr_data):
+                value = entry.value
+                if isinstance(value, bytes):
+                    value = value.decode('utf-8')
+
+                if value == attr_value:
+                    matching_element_indices.append(idx)  # Append the index of the element
+
+        else:
+            print(f"{repr(obj)}: Unknown object mode '{obj.mode}'")
+
+        return matching_element_indices
+
+
+    @staticmethod
     def get_node_id(obj, vertex_index, bm=None) -> str:
         return JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_ID, 'verts')
 
@@ -684,14 +739,25 @@ class JbeamRefnodeUtils:
         RefNode.RIGHT_CORNER: "rightCorner",
     }
 
+    def get_refnode_name(value: int) -> RefNode:
+        try:
+            return JbeamRefnodeUtils.RefNode(value)
+        except ValueError:
+            print(f"Invalid value: {value}")
+        return None
+
     @staticmethod
     def get_ref_nodes() -> dict[str, None]:
         """Generate a dictionary of ref nodes initialized to None, excluding NONE."""
         return {label: None for key, label in JbeamRefnodeUtils.REFNODE_MAP.items() if key != JbeamRefnodeUtils.RefNode.NONE}
 
     @staticmethod
+    def get_refnode_labels_list() -> list[str]:
+        return [value for value in JbeamRefnodeUtils.REFNODE_MAP.values() if value]
+
+    @staticmethod
     def get_refnode_label(refnode: RefNode) -> str:
-        """Return the mapped string for a given RefNode."""
+        """Return the mapped label (up, left, back..) for a given RefNode."""
         return JbeamRefnodeUtils.REFNODE_MAP.get(refnode, "")
 
     @staticmethod
@@ -701,9 +767,12 @@ class JbeamRefnodeUtils:
         return reverse_map.get(label, JbeamRefnodeUtils.RefNode.NONE)
 
     @staticmethod
-    def refnode_enum_list():
+    def refnode_enum_list() -> list[tuple[str, str, str]]:
         # Return the enum items in the correct format for EnumProperty
         return [(e.name, e.name, f"Set the node to {e.name}") for e in JbeamRefnodeUtils.RefNode]
+
+    def get_refnode_values() -> list[int]:
+        return [node.value for node in JbeamRefnodeUtils.RefNode if node.value != 0]
 
     @staticmethod
     def create_attribute_refnode(obj):
@@ -717,3 +786,7 @@ class JbeamRefnodeUtils:
     def get_refnode_id(obj, vertex_index) -> int:
         return JbeamUtils.get_attribute_value(obj, vertex_index, JbeamRefnodeUtils.ATTR_REFNODE_ID, domain=JbeamRefnodeUtils.DOMAIN)
     
+    def find_nodes_with_refnode_id(obj, refnode) -> list[int]:
+        indices = JbeamUtils.find_elements_with_attribute_value(obj, JbeamRefnodeUtils.ATTR_REFNODE_ID, refnode, domain="verts")
+        return indices
+

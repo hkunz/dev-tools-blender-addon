@@ -103,6 +103,14 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
             return {'CANCELLED'}
         '''
 
+        refnodes = jr.get_refnode_values()
+        for refnode in refnodes:
+            items = jr.find_nodes_with_refnode_id(obj, refnode)
+            if len(items) > 1:
+                enum = jr.get_refnode_name(refnode)
+                self.report({'WARNING'}, f"Multiple nodes assigned with {enum}. Only 1 Node can be labeled as {enum}")
+                return {'CANCELLED'}
+
         # Check unique node names
         is_valid, message = self.check_unique_node_names(obj)
         if not is_valid:
@@ -117,11 +125,10 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
 
         return {'RUNNING_MODAL'}
 
-    def get_final_struct(self, json, items, jbeam_prop, prepend=[]):
-        arr = prepend + items
+    def get_final_struct(self, items):
         formatted_str = ',\n    '.join(
             str(item).replace("'", '"')
-            for item in arr
+            for item in items
         )
         return formatted_str
 
@@ -177,9 +184,10 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
         ngons = self.get_ngons(obj)
         ref_nodes = self.find_reference_nodes(obj)
 
+        ref_nodes_keys = jr.get_refnode_labels_list()
         ref_nodes_data = [
-            ["ref:", "back:", "left:", "up:", "leftCorner:", "rightCorner:"],
-            [ref_nodes[key] if ref_nodes[key] is not None else "" for key in ["ref", "back", "left", "up", "leftCorner", "rightCorner"]],
+            [f"{key}:" for key in ref_nodes_keys],
+            [ref_nodes.get(key, "") or "" for key in ref_nodes_keys]
         ]
 
         def format_list(data, prepend="", newfile=True):
@@ -231,7 +239,7 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
                 f.write(json_output)
         else:
             print(f"Replace nodes, beams, triangles, refNodes, etc in {filepath}")
-            refnodes_str = self.get_final_struct(existing_data, ref_nodes_data, "refNodes")
+            refnodes_str = self.get_final_struct(ref_nodes_data)
             nodes_str = format_list(nodes, '["id", "posX", "posY", "posZ"],', False)
             beams_str = format_list(beams, '["id1:","id2:"],', False)
             tris_str = format_list(triangles, '["id1:","id2:","id3:"],', False)
@@ -274,11 +282,9 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
         ref_nodes = jr.get_ref_nodes()  # {"ref": None, "back": None, "left": None, "up": None, "leftCorner": None, "rightCorner": None}
         for label in ref_nodes.keys():
             refnode_enum = jr.get_refnode_from_label(label)
-            for vert in o.data.vertices:
-                refnode_id = jr.get_refnode_id(o, vert.index)
-                if refnode_id != jr.RefNode.NONE and refnode_id == refnode_enum.value:
-                    ref_nodes[label] = j.get_node_id(o, vert.index)
-                    break
+            indices = jr.find_nodes_with_refnode_id(o, refnode_enum.value)
+            if indices:
+                ref_nodes[label] = j.get_node_id(o, indices[0])
         return ref_nodes
 
     @classmethod

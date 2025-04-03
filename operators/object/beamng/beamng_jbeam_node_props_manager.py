@@ -591,14 +591,16 @@ class OBJECT_OT_BeamngSelectByPropertyBase(bpy.types.Operator):
         bmesh.update_edit_mesh(obj.data, loop_triangles=True)
 
         matched_count = 0
+        instances = context.scene.beamng_jbeam_instance.get_selected_instances()
 
         for elem in self.get_elements(bm):
-            stored_data = self.get_property_data(obj, elem)
-            stored_value = stored_data.get(self.prop_name, None)
+            for instance in instances:
+                stored_data = self.get_property_data(obj, elem, instance)
+                stored_value = stored_data.get(self.prop_name, None)
 
-            if stored_value is not None and str(stored_value).strip().lower().strip("\"'") == selected_prop_value:
-                elem.select = True
-                matched_count += 1
+                if stored_value is not None and str(stored_value).strip().lower().strip("\"'") == selected_prop_value:
+                    elem.select = True
+                    matched_count += 1
 
         bmesh.update_edit_mesh(obj.data)
 
@@ -614,8 +616,8 @@ class OBJECT_OT_BeamngSelectJbeamNodesByProperty(OBJECT_OT_BeamngSelectByPropert
     def get_elements(self, bm):
         return bm.verts
 
-    def get_property_data(self, obj, element):
-        return j.get_node_props(obj, element.index)
+    def get_property_data(self, obj, element, instance):
+        return j.get_node_props(obj, element.index, instance)
 
 class OBJECT_OT_BeamngSelectJbeamBeamsByProperty(OBJECT_OT_BeamngSelectByPropertyBase):
     """Select all edges (beams) that share the same JBeam property and value"""
@@ -625,8 +627,8 @@ class OBJECT_OT_BeamngSelectJbeamBeamsByProperty(OBJECT_OT_BeamngSelectByPropert
     def get_elements(self, bm):
         return bm.edges
 
-    def get_property_data(self, obj, element):
-        return j.get_beam_props(obj, element.index) # TODO pass instance
+    def get_property_data(self, obj, element, instance):
+        return j.get_beam_props(obj, element.index, instance)
 
 class OBJECT_OT_BeamngSelectJbeamTrianglesByProperty(OBJECT_OT_BeamngSelectByPropertyBase):
     """Select all faces (triangles) that share the same JBeam property and value"""
@@ -636,5 +638,5 @@ class OBJECT_OT_BeamngSelectJbeamTrianglesByProperty(OBJECT_OT_BeamngSelectByPro
     def get_elements(self, bm):
         return bm.faces
 
-    def get_property_data(self, obj, element):
-        return j.get_triangle_props(obj, element.index) # TODO pass instance
+    def get_property_data(self, obj, element, instance):
+        return j.get_triangle_props(obj, element.index, instance)

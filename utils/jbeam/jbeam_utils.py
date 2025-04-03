@@ -542,63 +542,60 @@ class JbeamUtils:
         print(f"Assigned '{node_tree.name}' to '{repr(obj)}' via modifier '{mod.name}'")
 
     @staticmethod
-    def get_index_by_id(obj, target_id, domain, attr_name) -> int:
+    def get_indices_by_id(obj, target_id, domain, attr_name) -> list[int]:
         mesh = obj.data
+        indices = []  # List to store matching indices
+
         if obj.mode == 'EDIT':
             bm = bmesh.from_edit_mesh(mesh)
-            bm_data_map = {
-                "verts": bm.verts,
-                "edges": bm.edges,
-                "faces": bm.faces
-            }
-            if domain in bm_data_map:
-                bm_data_map[domain].ensure_lookup_table()
-            else:
-                print(f"{repr(obj)}: Unsupported domain '{domain}' in Edit Mode")
-                return -1
-                
             bm_data = getattr(bm, domain, None)
-
-            if bm_data is None:
-                print(f"{repr(obj)}: Unsupported domain '{domain}' in Edit Mode")
-                return -1
+            if bm_data:
+                bm_data.ensure_lookup_table()
+            else:
+                print(f"{obj!r}: Unsupported domain '{domain}' in Edit Mode")
+                return []
 
             # Iterate through elements and check for the ID
             for index, element in enumerate(bm_data):
                 layer = bm_data.layers.string.get(attr_name)
                 if layer is None:
                     print(f"{repr(obj)}: Layer '{attr_name}' not found in Edit Mode ({domain})")
-                    return -1
+                    return []
 
                 if element[layer].decode('utf-8') == target_id:
-                    return index  # Return the index of the element with the matching ID
+                    indices.append(index)  # Add index to the list
 
-            print(f"{repr(obj)}: {attr_name} '{target_id}' not found in Edit Mode ({domain})")
-            return -1
+            if not indices:
+                print(f"{repr(obj)}: {attr_name} '{target_id}' not found in Edit Mode ({domain})")
+            return indices
 
         elif obj.mode == 'OBJECT':
             if attr_name not in mesh.attributes:
                 print(f"{repr(obj)}: Attribute '{attr_name}' not found in Object Mode ({domain})")
-                return -1
+                return []
 
             attr_data = mesh.attributes[attr_name].data
 
             # Iterate through elements and check for the ID
             for index, data in enumerate(attr_data):
                 if data.value.decode('utf-8') == target_id:
-                    return index  # Return the index of the element with the matching ID
+                    indices.append(index)  # Add index to the list
 
-            print(f"{repr(obj)}: {attr_name} '{target_id}' not found in Object Mode ({domain})")
-            return -1
+            if not indices:
+                print(f"{repr(obj)}: {attr_name} '{target_id}' not found in Object Mode ({domain})")
+            return indices
 
         print(f"{repr(obj)}: Unknown object mode {obj.mode}")
-        return -1
+        return []
 
     @staticmethod
-    def get_beam_index(obj, node_id1, node_id2, bm=None) -> int:
+    def get_beam_indices(obj, node_id1, node_id2, bm=None):
         """
-        Get the index of the beam defined by two node IDs (node_id1, node_id2).
+        Get the indices of the beams defined by two node IDs (node_id1, node_id2).
         """
+        # List to store matching indices
+        indices = []
+
         # Iterate through all the edges in the mesh
         mesh = obj.data
         if obj.mode == 'EDIT':
@@ -610,7 +607,7 @@ class JbeamUtils:
             bm_data = mesh.edges
         else:
             print(f"{repr(obj)}: Unknown object mode {obj.mode}")
-            return -1
+            return []
 
         # Iterate through all edges (beams)
         for index, edge in enumerate(bm_data):
@@ -619,16 +616,21 @@ class JbeamUtils:
             n2 = JbeamUtils.get_node_id(obj, v2.index)
             # Check if the node IDs match
             if {n1, n2} == {node_id1, node_id2}:
-                return index  # Return the index if the IDs match
+                indices.append(index)  # Add index to the list if the IDs match
 
-        print(f"{repr(obj)}: Beam with node IDs '{node_id1}' and '{node_id2}' not found")
-        return -1
+        if not indices:
+            print(f"{repr(obj)}: Beam with node IDs '{node_id1}' and '{node_id2}' not found")
+        
+        return indices  # Return all matching indices
 
     @staticmethod
-    def get_triangle_index(obj, node_id1, node_id2, node_id3, bm=None) -> int:
+    def get_triangle_indices(obj, node_id1, node_id2, node_id3, bm=None):
         """
-        Get the index of the triangle (face) defined by three node IDs.
+        Get the indices of the triangles (faces) defined by three node IDs.
         """
+        # List to store matching indices
+        indices = []
+
         # Iterate through all the faces (triangles) in the mesh
         mesh = obj.data
         if obj.mode == 'EDIT':
@@ -640,7 +642,7 @@ class JbeamUtils:
             bm_data = mesh.polygons
         else:
             print(f"{repr(obj)}: Unknown object mode {obj.mode}")
-            return -1
+            return []
 
         # Iterate through all faces (triangles)
         for index, face in enumerate(bm_data):
@@ -648,14 +650,16 @@ class JbeamUtils:
             node_ids = sorted([JbeamUtils.get_node_id(obj, v.index) for v in verts])
             # Check if the node IDs match (order doesn't matter)
             if node_ids == sorted([node_id1, node_id2, node_id3]):
-                return index  # Return the index if the IDs match
-    
-        print(f"{repr(obj)}: Triangle with node IDs '{node_id1}', '{node_id2}', and '{node_id3}' not found")
-        return -1
+                indices.append(index)  # Add index to the list if the IDs match
+
+        if not indices:
+            print(f"{repr(obj)}: Triangle with node IDs '{node_id1}', '{node_id2}', and '{node_id3}' not found")
+        
+        return indices  # Return all matching indices
 
     @staticmethod
-    def get_node_index(obj, node_id) -> int:
-        return JbeamUtils.get_index_by_id(obj, node_id, domain="verts", attr_name=JbeamUtils.ATTR_NODE_ID)
+    def get_node_indices(obj, node_id) -> list[int]:
+        return JbeamUtils.get_indices_by_id(obj, node_id, domain="verts", attr_name=JbeamUtils.ATTR_NODE_ID)
 
     @staticmethod
     def check_unique_node_names(obj: bpy.types.Object) -> tuple[bool, str]:

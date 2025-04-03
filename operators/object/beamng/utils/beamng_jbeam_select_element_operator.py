@@ -28,13 +28,13 @@ class OBJECT_OT_BeamngJbeamSelectSpecificElement(bpy.types.Operator):
         bm = bmesh.from_edit_mesh(obj.data)
         search_by_index = not self.element_id or self.is_shift_held
 
-        def get_element_index(getter_func, nodes_str, element_type):
+        def get_element_indices(getter_func, nodes_str, element_type):
             if search_by_index:
-                return self.element_index
-            index = getter_func()
-            if index < 0:
+                return [self.element_index]
+            indices = getter_func()
+            if not indices:
                 self.report({'WARNING'}, f"{element_type} '{nodes_str}' not found")
-            return index
+            return indices
 
         def parse_node_ids(node_string):
             node_string = node_string.strip('[]')
@@ -50,15 +50,16 @@ class OBJECT_OT_BeamngJbeamSelectSpecificElement(bpy.types.Operator):
         for f in bm.faces:
             f.select = False
 
-        element = None
+        elements = []
         nodes_str = None
         if o.is_vertex_selection_mode():
             bm.verts.ensure_lookup_table()
             element_type = "Node"
             nodes_str = j.get_node_id(obj, self.element_index) if search_by_index else self.element_id
-            index = get_element_index(lambda: j.get_node_index(obj, self.element_id), nodes_str, element_type)
-            if 0 <= index < len(bm.verts):
-                element = bm.verts[index]
+            indices = get_element_indices(lambda: j.get_node_indices(obj, self.element_id), nodes_str, element_type)
+            for i in indices:
+                if 0 <= i < len(bm.verts):
+                    elements.append(bm.verts[i])
         elif o.is_edge_selection_mode():
             bm.edges.ensure_lookup_table()
             element_type = "Beam"
@@ -74,9 +75,10 @@ class OBJECT_OT_BeamngJbeamSelectSpecificElement(bpy.types.Operator):
                     return {'CANCELLED'}
             else:
                 nodes_str = j.format_node_ids(*node_ids)
-            index = get_element_index(lambda: j.get_beam_index(obj, *node_ids, bm), nodes_str, element_type)
-            if 0 <= index < len(bm.edges):
-                element = bm.edges[index]
+            indices = get_element_indices(lambda: j.get_beam_indices(obj, *node_ids, bm), nodes_str, element_type)
+            for i in indices:
+                if 0 <= i < len(bm.edges):
+                    elements.append(bm.edges[i])
         elif o.is_face_selection_mode():
             bm.faces.ensure_lookup_table()
             element_type = "Face"
@@ -92,13 +94,15 @@ class OBJECT_OT_BeamngJbeamSelectSpecificElement(bpy.types.Operator):
                     return {'CANCELLED'}
             else:
                 nodes_str = j.format_node_ids(*node_ids)
-            index = get_element_index(lambda: j.get_triangle_index(obj, *node_ids, bm), nodes_str, element_type)
-            if 0 <= index < len(bm.faces):
-                element = bm.faces[index]
-        if element:
-            element.select = True
-            bm.select_history.add(element)
+            indices = get_element_indices(lambda: j.get_triangle_indices(obj, *node_ids, bm), nodes_str, element_type)
+            for i in indices:
+                if 0 <= i < len(bm.faces):
+                    elements.append(bm.faces[i])
+        if elements:
+            for element in elements:
+                element.select = True
+                bm.select_history.add(element)
+            self.report({'INFO'}, f"Selected {len(elements)} {element_type} elements")
             bmesh.update_edit_mesh(obj.data)
-            self.report({'INFO'}, f"Selected {element_type} '{nodes_str}' (Index={index})")
 
         return {'FINISHED'}

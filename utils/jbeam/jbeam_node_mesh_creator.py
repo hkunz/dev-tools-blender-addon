@@ -71,31 +71,32 @@ class JbeamNodeMeshCreator:
             raise RuntimeError("Mesh object has not been created yet. Call 'create_object' first.")
 
         faces = []
-        unique_faces = {}  # Dictionary to store unique faces and their assigned indices
-        for i, triangle in enumerate(tris_list):  # Enumerate to generate indices
-            # Get the node IDs for the three vertices of the triangle
-            node_id1 = triangle.node_id1
-            node_id2 = triangle.node_id2
-            node_id3 = triangle.node_id3
+        unique_faces = {}  # Dictionary to ensure unique faces and track indices
 
-            face_key = tuple(sorted([node_id1, node_id2, node_id3]))  # Generate a key for the triangle based on the sorted node IDs (order doesn't matter)
+        for triangle in tris_list:
+            node_id1, node_id2, node_id3 = triangle.node_id1, triangle.node_id2, triangle.node_id3
 
-            # Check if the face is unique or already exists in the dictionary
-            if face_key not in unique_faces:
-                unique_faces[face_key] = i  # If it's a new face, assign a new index and add it to the dictionary
-
-            triangle.index = unique_faces[face_key]  # Use the same index for duplicate triangles
-
-            # Check if the node IDs exist in vertex_indices (which maps NodeID to vertex index)
+            # Ensure all nodes exist in vertex_indices
             if node_id1 in self.vertex_indices and node_id2 in self.vertex_indices and node_id3 in self.vertex_indices:
                 index1 = self.vertex_indices[node_id1]
                 index2 = self.vertex_indices[node_id2]
                 index3 = self.vertex_indices[node_id3]
-                faces.append((index1, index2, index3))  # Add the face as a tuple of vertex indices
+                face = tuple((index1, index2, index3))
+
+                if face not in unique_faces:
+                    unique_faces[face] = len(unique_faces)  # Assign a unique index
+                    faces.append(face)
+
+                triangle.index = unique_faces[face]  # Ensure `triangle.index` is properly stored
             else:
-                print(f"Warning: Could not find vertices for Triangle with NodeIDs {node_id1}, {node_id2}, and {node_id3}")
+                missing = [n for n in (node_id1, node_id2, node_id3) if n not in self.vertex_indices]
+                print(f"Warning: Missing vertex indices for {missing}")
+                triangle.index = -1  # Set to -1 if missing (to trigger the error print)
 
         # Update the mesh with the faces
         self.mesh.from_pydata([], [], faces)
         self.mesh.update()
-        print(f"Added {len(faces)} faces to the mesh.")
+        print(f"Added {len(faces)} unique faces to the mesh.")
+
+
+

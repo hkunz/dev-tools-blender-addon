@@ -8,6 +8,9 @@ support multiple beams/triangle instances
 on_save event, save the jbeam_props_storage.py data into object.data as custom serialized json
 
 * check on export if not duplicate RefNodes stored caused by modeling
+* when all selected, selected all instances
+* search by name with "" should work
+* jbeam load with specific scope modifiers
 
 BUGS:
 

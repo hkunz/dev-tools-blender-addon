@@ -628,14 +628,13 @@ class JbeamUtils:
         return indices  # Return all matching indices
 
     @staticmethod
-    def get_triangle_indices(obj, node_id1, node_id2, node_id3, bm=None):
+    def get_face_indices(obj, *node_ids, bm=None):
         """
-        Get the indices of the triangles (faces) defined by three node IDs.
+        Get the indices of faces (triangles, n-gons) defined by the given node IDs.
         """
-        # List to store matching indices
+        # Ensure we have a sorted list of node IDs for comparison
+        target_node_ids = sorted(node_ids)
         indices = []
-
-        # Iterate through all the faces (triangles) in the mesh
         mesh = obj.data
         if obj.mode == 'EDIT':
             if not bm:
@@ -648,18 +647,19 @@ class JbeamUtils:
             print(f"{repr(obj)}: Unknown object mode {obj.mode}")
             return []
 
-        # Iterate through all faces (triangles)
+        # Iterate through all faces
         for index, face in enumerate(bm_data):
-            verts = face.verts
-            node_ids = sorted([JbeamUtils.get_node_id(obj, v.index) for v in verts])
-            # Check if the node IDs match (order doesn't matter)
-            if node_ids == sorted([node_id1, node_id2, node_id3]):
-                indices.append(index)  # Add index to the list if the IDs match
+            verts = face.verts if hasattr(face, "verts") else face.vertices
+            face_node_ids = sorted([JbeamUtils.get_node_id(obj, v.index) for v in verts])
+
+            # Check if the face contains the same node IDs (order-independent)
+            if face_node_ids == target_node_ids:
+                indices.append(index)
 
         if not indices:
-            print(f"{repr(obj)}: Triangle with node IDs '{node_id1}', '{node_id2}', and '{node_id3}' not found")
+            print(f"{repr(obj)}: Face with node IDs {target_node_ids} not found")
         
-        return indices  # Return all matching indices
+        return indices  # Return all matching face indices
 
     @staticmethod
     def get_node_indices(obj, node_id) -> list[int]:

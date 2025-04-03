@@ -37,7 +37,7 @@ class OBJECT_OT_BeamngJbeamSelectSpecificElement(bpy.types.Operator):
 
         def parse_node_ids(node_string):
             """Parse and format node IDs."""
-            node_string = node_string.strip('[]').replace(';', ',').replace('|', ',')
+            node_string = node_string.strip('[]').replace(';', ',').replace('|', ',').replace('"', '')
             return re.findall(r'n\d+', node_string)
 
         # Deselect all elements
@@ -75,11 +75,11 @@ class OBJECT_OT_BeamngJbeamSelectSpecificElement(bpy.types.Operator):
             bm.faces.ensure_lookup_table()
             element_type = "Face"
             node_ids = parse_node_ids(self.element_id)
-            if len(node_ids) != 3:
+            if len(node_ids) < 3:
                 self.report({'WARNING'}, f"{element_type} '{self.element_id}' not found")
                 return {'CANCELLED'}
             nodes_str = j.get_triangle_id(obj, self.element_index) if search_by_index and 0 <= self.element_index < len(bm.faces) else j.format_node_ids(*node_ids)
-            indices = get_element_indices(lambda: j.get_triangle_indices(obj, *node_ids, bm), element_type, nodes_str)
+            indices = get_element_indices(lambda: j.get_face_indices(obj, *node_ids, bm=bm), element_type, nodes_str)
             elements = [bm.faces[i] for i in indices if 0 <= i < len(bm.faces)]
 
         if elements:

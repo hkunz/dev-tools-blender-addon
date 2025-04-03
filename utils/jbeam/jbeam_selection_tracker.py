@@ -81,7 +81,7 @@ class JbeamSelectionTracker:
         if scene.beamng_jbeam_active_structure.update_in_progress:  # useless check, doesn't work because it will already be False by now. Supposed to be used in conjunction with beamng_jbeam_node_props_manager.py::update_element_index so we could select the element while setting JbeamStructure::index IntProperty in panel
             return
         obj = bpy.context.object
-        mode = j.set_gn_jbeam_visualizer_selection_mode(obj) if a.is_addon_visualizer_enabled() else o.get_selection_mode()
+        mode: int = j.set_gn_jbeam_visualizer_selection_mode(obj)
         reset = False
         if self.selection_mode != mode:
             self.selection_mode = mode
@@ -140,10 +140,12 @@ class JbeamSelectionTracker:
         self.vertex_selection = selection
         if a.is_addon_visualizer_enabled():
             mod = j.get_gn_jbeam_modifier(obj)
-            o.update_vertex_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_vertices", "selected_vertices", selection)
+            if mod:
+                o.update_vertex_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_vertices", "selected_vertices", selection)
         struct = self.update_struct(scene, obj, bm, "Node", selection, bmesh.types.BMVert, j.get_node_id, j.set_gn_jbeam_active_node_index)
         refnode = jr.get_refnode_id(obj, struct.index)
-        struct.refnode_enum = jr.RefNode(refnode).name # example: jr.RefNode.RIGHT_CORNER.name
+        if refnode != None:
+            struct.refnode_enum = jr.RefNode(refnode).name # example: jr.RefNode.RIGHT_CORNER.name
         x, y, z = o.get_vertex_position_by_index(obj, bm, struct.index)
         struct.position.x = x
         struct.position.y = y
@@ -167,7 +169,8 @@ class JbeamSelectionTracker:
         self.edge_selection = selection
         if a.is_addon_visualizer_enabled():
             mod = j.get_gn_jbeam_modifier(obj)
-            o.update_edge_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_edges", "selected_edges", selection)
+            if mod:
+                o.update_edge_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_edges", "selected_edges", selection)
         struct = self.update_struct(scene, obj, bm, "Beam", selection, bmesh.types.BMEdge, j.get_beam_id, j.set_gn_jbeam_active_beam_index)
         self.update_instances(scene, obj, struct, j.get_total_beam_instances)
         bpy.ops.object.devtools_beamng_load_jbeam_beam_props()
@@ -184,7 +187,8 @@ class JbeamSelectionTracker:
         self.face_selection = selection
         if a.is_addon_visualizer_enabled():
             mod = j.get_gn_jbeam_modifier(obj)
-            o.update_face_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_faces", "selected_faces", selection)
+            if mod:
+                o.update_face_bool_attribute_for_gn(mod, obj, bm, "attribute_selected_faces", "selected_faces", selection)
         active_face = bm.faces.active if bm.faces.active and bm.faces.active.index in selection else None
 
         if not active_face and selection:

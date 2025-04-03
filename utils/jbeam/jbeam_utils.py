@@ -459,7 +459,7 @@ class JbeamUtils:
             return None
         mod = next((m for m in obj.modifiers if m.type == 'NODES' and m.node_group == node_tree), None)
         if not mod:
-            print("Error: Modifier using the node tree not found.")
+            pass #print("Error: Modifier using the node tree not found.")
         return mod
 
     @staticmethod
@@ -480,10 +480,14 @@ class JbeamUtils:
         if not a.is_addon_visualizer_enabled():
             return
         mod = JbeamUtils.get_gn_jbeam_modifier(obj)
+        if not mod:
+            return
         ObjectUtils.set_gn_socket_mode(mod, socket_name, value, attribute_name)
 
     @staticmethod
     def set_gn_jbeam_visualizer_selection_mode(obj):
+        if not JbeamUtils.get_gn_jbeam_modifier(obj):
+            return ObjectUtils.get_selection_mode()
         mode = next(i + 1 for i, v in enumerate(bpy.context.tool_settings.mesh_select_mode) if v) # 1 (vertex), 2 (edge), or 3 (edge)
         if JbeamUtils.get_gn_jbeam_visualizer_selection_mode(obj) == mode:
             return mode

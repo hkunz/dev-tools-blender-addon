@@ -82,6 +82,12 @@ class JbeamStructure(bpy.types.PropertyGroup):
         subtype="TRANSLATION"
     )  # type: ignore
 
+    calc_info: bpy.props.FloatProperty(
+        name="Calculation Info",
+        description="Calculation info such as face area or edge length",
+        default=0.0
+    )  # type: ignore
+
     selection: bpy.props.StringProperty(
         name="Selection List",
         default=""

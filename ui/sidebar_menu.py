@@ -251,6 +251,8 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             split.alignment = 'RIGHT'
             split.label(text=f"({info})")
             box.label(text=f"Selected: {struct.selection}")
+
+        def draw_element_search(box, struct):
             r = box.row(align=True)
             label_col = r.column(align=True)
             label_col.scale_x = 0.35
@@ -311,13 +313,15 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
         struct = s.beamng_jbeam_active_structure
         index = struct.index
 
-        if index < 0:
+        if index < 0 or not struct.selection:
             msg = "Select elements to view Scope Modifiers" if j.is_node_mesh(obj) else "Convert to Node Mesh"
             box.label(text=msg)
+            draw_element_search(box, struct)
             return
 
         if o.is_vertex_selection_mode():
             draw_active_element(box, struct, f"{struct.position.x:.2f}, {struct.position.y:.2f}, {struct.position.z:.2f}", 0.35)
+            draw_element_search(box, struct)
             box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign Node ID", icon="GREASEPENCIL")
             r = box.row(align=True)
             label_col = r.column(align=True)
@@ -336,23 +340,15 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             draw_bottom_options(OBJECT_OT_BeamngAddJbeamNodeProp.bl_idname, OBJECT_OT_BeamngSaveAllJbeamNodeProps.bl_idname)
 
         elif o.is_edge_selection_mode():
-            bm = bmesh.from_edit_mesh(obj.data)
-            bm.edges.ensure_lookup_table()
-            if index < 0 or index >= len(bm.edges):
-                index = max(0, len(bm.edges) - 1) if bm.edges else 0
-            edge = bm.edges[index]
-            draw_active_element(box, struct, f"Length={edge.calc_length():.2f}", 0.35)
+            draw_active_element(box, struct, f"Length={struct.calc_info:.2f}", 0.35)
+            draw_element_search(box, struct)
             draw_element_instances_buttons(box.row())
             draw_scope_modifier_list(OBJECT_OT_BeamngSelectJbeamBeamsByProperty.bl_idname, OBJECT_OT_BeamngSaveJbeamBeamProp.bl_idname, OBJECT_OT_BeamngRemoveJbeamBeamProp.bl_idname)
             draw_bottom_options(OBJECT_OT_BeamngAddJbeamBeamProp.bl_idname, OBJECT_OT_BeamngSaveAllJbeamBeamProps.bl_idname)
 
         elif o.is_face_selection_mode():
-            bm = bmesh.from_edit_mesh(obj.data)
-            bm.faces.ensure_lookup_table()
-            if index < 0 or index >= len(bm.faces):
-                index = max(0, len(bm.faces) - 1) if bm.faces else 0
-            face = bm.faces[index]
-            draw_active_element(box, struct, f"Area={face.calc_area():.2f}")
+            draw_active_element(box, struct, f"Area={struct.calc_info:.2f}")
+            draw_element_search(box, struct)
             draw_element_instances_buttons(box.row())
             draw_scope_modifier_list(OBJECT_OT_BeamngSelectJbeamTrianglesByProperty.bl_idname, OBJECT_OT_BeamngSaveJbeamTriangleProp.bl_idname, OBJECT_OT_BeamngRemoveJbeamTriangleProp.bl_idname)
             draw_bottom_options(OBJECT_OT_BeamngAddJbeamTriangleProp.bl_idname, OBJECT_OT_BeamngSaveAllJbeamTriangleProps.bl_idname)

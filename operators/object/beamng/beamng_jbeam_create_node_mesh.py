@@ -11,7 +11,6 @@ class JbeamNodeMesh:
         self.obj = self.create_triangulated_cube()
         self.setup()
         self.set_jbeam_attributes()
-        self.create_vertex_groups()
         return self.obj
 
     def setup(self):
@@ -49,9 +48,6 @@ class JbeamNodeMesh:
     def set_jbeam_attributes(self):
         j.setup_default_scope_modifiers_and_node_ids(self.obj)
         
-    def create_vertex_groups(self):
-        bpy.ops.object.devtools_beamng_create_refnodes_vertex_groups()
-
 
 class OBJECT_OT_BeamngJbeamCreateNodeMesh(bpy.types.Operator):
     """Create a JBeam Node Mesh Object"""

@@ -12,34 +12,6 @@ from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j, JbeamRefnodeUtils
 from dev_tools.utils.jbeam.jbeam_export_processor import JbeamExportProcessor  # type: ignore
 
 
-class OBJECT_OT_BeamngCreateRefnodesVertexGroups(bpy.types.Operator):
-    """Create BeamNG refNodes vertex groups if they do not exist"""
-    bl_idname = "object.devtools_beamng_create_refnodes_vertex_groups"
-    bl_label = "DevTools: Create BeamNG refNodes Vertex Groups"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    def execute(self, context):
-        group_names = j.get_required_vertex_group_names()
-        obj = context.active_object
-
-        if obj and obj.type == "MESH":
-            created_groups = []
-            for name in group_names:
-                if name not in obj.vertex_groups:
-                    obj.vertex_groups.new(name=name)
-                    created_groups.append(name)
-            
-            self.report({'INFO'}, f"{obj.name}: Vertex groups created: {', '.join(created_groups)}" if created_groups else "All groups already exist.")
-            return {'FINISHED'}
-        else:
-            self.report({'WARNING'}, "No valid mesh object selected!")
-            return {'CANCELLED'}
-
-    @classmethod
-    def poll(cls, context: bpy.types.Context) -> bool:
-        active_object: bpy.types.Object = context.active_object
-        return active_object and active_object.type == "MESH"
-
 class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Operator):
     """Export Node Mesh to JBeam format"""
     bl_idname = "export.dev_tools_beamng_export_node_mesh_to_jbeam"

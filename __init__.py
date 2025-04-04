@@ -50,7 +50,7 @@ from dev_tools.utils.jbeam.jbeam_selection_tracker import JbeamSelectionTracker 
 from dev_tools.translation.translations import register as register_translations, unregister as unregister_translations # type: ignore
 from dev_tools.ui.sidebar_menu import register as register_devtools_panel, unregister as unregister_devtools_panel # type: ignore
 from dev_tools.operators.common.operator_generic_popup import register as register_generic_popup, unregister as unregister_generic_popup # type: ignore
-from dev_tools.operators.file.beamng.beamng_export_node_mesh_to_jbeam import DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam, OBJECT_OT_BeamngCreateRefnodesVertexGroups # type: ignore
+from dev_tools.operators.file.beamng.beamng_export_node_mesh_to_jbeam import DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam # type: ignore
 from dev_tools.operators.file.beamng.beamng_import_jbeam_as_node_mesh import DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh  # type: ignore
 
 from dev_tools.operators.object.armature.armature_create_bones_random_vertices_operator import OBJECT_OT_ArmatureCreateBonesRandomVertices # type: ignore
@@ -84,7 +84,6 @@ DEVTOOLS_CLASSES = [
     OBJECT_OT_BeamngCreateMetaBallCloud,
     OBJECT_OT_BeamngParentToStart01Empty,
     OBJECT_OT_BeamngClearChildrenStart01Empty,
-    OBJECT_OT_BeamngCreateRefnodesVertexGroups,
     OBJECT_OT_BeamngConvertJbeamToNodeMesh,
     OBJECT_OT_BeamngLoadJbeamNodeProps,
     OBJECT_OT_BeamngLoadJbeamBeamProps,

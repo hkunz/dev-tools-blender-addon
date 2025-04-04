@@ -87,20 +87,6 @@ class JbeamTestObject:
             j.set_node_id(self.obj, vertex_idx, node_ids[vertex_idx])
             j.set_node_props(self.obj, vertex_idx, node_props[vertex_idx])
 
-    def create_vertex_groups(self):
-
-        vertex_groups_data = {
-            'group_bouncer_base': [2, 3, 4, 5, 6, 7, 8, 9],
-            'group_bouncer_spring': [0, 1, 5, 6, 8, 9, 14, 15, 16],
-            'group_bouncer_top': [0, 1, 10, 11, 12, 13, 14, 15]
-        }
-
-        for group_name, vertex_indices in vertex_groups_data.items():
-            group = self.obj.vertex_groups.new(name=group_name)
-
-            for vertex_index in vertex_indices:
-                group.add([vertex_index], 1.0, 'REPLACE')
-
 
 class TestJBeamHelper(unittest.TestCase):
     
@@ -109,7 +95,7 @@ class TestJBeamHelper(unittest.TestCase):
         print(f"===> Start Test {self} ==================================")
         print()
         test_obj = JbeamTestObject() # bpy.context.object
-        #test_obj.create_vertex_groups()
+
         self.obj = test_obj.get_obj()
 
     def test_pre_jbeam_structure(self):

@@ -49,7 +49,6 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
         bpy.ops.object.select_all(action='DESELECT')
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj
-        bpy.ops.object.devtools_beamng_create_refnodes_vertex_groups()
 
         self.report({'INFO'}, f"Converted {obj.name} to Node Mesh!")
         return {'FINISHED'}

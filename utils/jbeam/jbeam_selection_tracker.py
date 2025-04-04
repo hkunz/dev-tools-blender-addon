@@ -62,11 +62,22 @@ class JbeamSelectionTracker:
         self.on_instance_buttons_update(scene)
 
     def on_instance_button_change_remove(self, scene, instance_selection):
-        print("remove === ", instance_selection)
-        # TODO
-        return
-        for instance in instance_selection:
-            pass
+        obj = bpy.context.object
+        bm = bmesh.from_edit_mesh(obj.data)
+        prop_func = None
+        bm_data = None
+        if o.is_edge_selection_mode():
+            prop_func = j.delete_beam_props
+            bm_data = bm.edges
+        elif o.is_face_selection_mode():
+            prop_func = j.delete_triangle_props
+            bm_data = bm.faces
+        bm_data.ensure_lookup_table()
+        for elem in bm_data:
+            if not elem.select:
+                continue
+            for instance in instance_selection:
+                prop_func(obj, elem.index, instance)
         self.on_instance_buttons_update(scene)
         self.reset_selection(scene)
         self.check_selection_change(scene)

@@ -18,3 +18,4 @@ Ctrl+Z not working when saving jbeam props, even though we use bl_options UNDO
 Cannot add 2nd instance to triangles
 Cannot delete instance
 Potential Face orientation problem when saving and loading again. Should not reorder NodeIDs in Beams & Tris
+When importing mattress_full i cannot search a beam or triangle for some reason

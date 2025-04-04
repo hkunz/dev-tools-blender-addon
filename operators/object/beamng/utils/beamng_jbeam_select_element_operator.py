@@ -37,8 +37,8 @@ class OBJECT_OT_BeamngJbeamSelectSpecificElement(bpy.types.Operator):
 
         def parse_node_ids(node_string):
             """Parse and format node IDs."""
-            node_string = node_string.strip('[]').replace(';', ',').replace('|', ',').replace('"', '')
-            return re.findall(r'n\d+', node_string)
+            node_string = node_string.strip().strip('[]').replace('"', '')
+            return [node.strip() for node in re.split(r'[;|,]+', node_string)]
 
         # Deselect all elements
         for v in bm.verts:

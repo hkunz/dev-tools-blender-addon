@@ -238,7 +238,7 @@ class JbeamUtils:
     @staticmethod
     def get_triangle_node_ids(obj, face_index) -> tuple[str, str, str]:
         face = obj.data.polygons[face_index]
-        v1_idx, v2_idx, v3_idx = sorted(face.vertices)
+        v1_idx, v2_idx, v3_idx = face.vertices
         n1 = JbeamUtils.get_node_id(obj, v1_idx) or "?"
         n2 = JbeamUtils.get_node_id(obj, v2_idx) or "?"
         n3 = JbeamUtils.get_node_id(obj, v3_idx) or "?"

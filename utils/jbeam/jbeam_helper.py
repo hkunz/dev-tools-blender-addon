@@ -31,48 +31,48 @@ class PreJbeamStructureHelper:
     def __init__(self, obj, domain="vertex"):
         self.obj = obj
         self.domain = domain
-        self.check()
-        if self.domain == "vertex":
-            self.vertex_groups = self.get_vertex_groups()
-            self.vertex_to_groups = self.get_vertex_group_memberships()
-            self.props = self.get_node_properties()
-        elif self.domain == "edge":
-            self.props = self.get_beam_properties()
-        elif self.domain == "face":
-            self.props = self.get_triangle_properties()
 
-    def check(self):
+    def get_props(self):
         if not j.has_jbeam_node_id(self.obj):
             raise ValueError(f"ERROR: Required attributes \"jbeam_node_id\" and \"jbeam_node_props\" not found in mesh")
-        group_map = {g.index: g.name for g in self.obj.vertex_groups if g.name.startswith("group_")}
-        print(f"Vertex Groups Found: {group_map}")
 
-    def get_vertex_groups(self):
-        return {vg.index: vg.name for vg in self.obj.vertex_groups if vg.name.startswith("group_")}
-
-    def get_vertex_group_memberships(self):
-        return {
-            v.index: sorted([self.vertex_groups[g.group] for g in v.groups if g.group in self.vertex_groups])
-            for v in self.obj.data.vertices
-        }
+        props = None
+        if self.domain == "vertex":
+            props = self.get_node_properties()
+        elif self.domain == "edge":
+            props = self.get_beam_properties()
+        elif self.domain == "face":
+            props = self.get_triangle_properties()
+        return props
 
     def get_node_properties(self):
-        return {i: json.dumps(j.get_node_props(self.obj, i)) for i in range(len(self.obj.data.vertices))}
+        #return {i: json.dumps(j.get_node_props(self.obj, i)) for i in range(len(self.obj.data.vertices))}
+        return {
+            i: {
+                instance: json.dumps(j.get_node_props(self.obj, i, instance+1))
+                for instance in range(j.get_total_node_instances(self.obj, i))  # Instances per vertex
+            }
+            for i in range(len(self.obj.data.vertices))  # Iterate through each vertex
+        }
 
     def get_beam_properties(self):
-        return {i: json.dumps(j.get_beam_props(self.obj, i)) for i in range(len(self.obj.data.edges))}
+        #return {i: json.dumps(j.get_beam_props(self.obj, i)) for i in range(len(self.obj.data.edges))}
+        return {
+            i: {
+                instance: json.dumps(j.get_beam_props(self.obj, i, instance+1))
+                for instance in range(j.get_total_beam_instances(self.obj, i))  # Instances per edge
+            }
+            for i in range(len(self.obj.data.edges))  # Iterate through each edge
+        }
 
     def get_triangle_properties(self):
-        return {i: json.dumps(j.get_triangle_props(self.obj, i)) for i in range(len(self.obj.data.polygons))}
-
-    def parse_properties_old(self, properties_str):
-        if not properties_str:
-            return {}
+        #return {i: json.dumps(j.get_triangle_props(self.obj, i)) for i in range(len(self.obj.data.polygons))}
         return {
-            k.strip(): v.strip()
-            for item in properties_str.strip("{}").replace('"', '').split(",")
-            if (parts := item.split(":", 1)) and len(parts) == 2
-            for k, v in [parts]
+            i: {
+                instance: json.dumps(j.get_triangle_props(self.obj, i, instance+1))
+                for instance in range(j.get_total_triangle_instances(self.obj, i))  # Instances per edge
+            }
+            for i in range(len(self.obj.data.polygons))  # Iterate through each face
         }
 
     def parse_properties(self, properties_str):
@@ -88,12 +88,12 @@ class PreJbeamStructureHelper:
 
         return {}
 
-
     def structure_data(self):
-        data_dict = {
-            v_idx: self.parse_properties(self.props.get(v_idx, ""))
-            for v_idx in self.props
-        }
+        props = self.get_props()
+        data_dict = {}
+        for v_idx, instances in props.items():
+            for instance, prop in instances.items():  # Iterate over the instances in each vertex/edge/face
+                data_dict[f"{v_idx}_{instance+1}"] = self.parse_properties(prop)
         unique_props = set()  # Collect all unique properties dynamically
         for node_info in data_dict.values():
             unique_props.update(node_info.keys())
@@ -153,14 +153,19 @@ class RedundancyReducerJbeamGenerator:
     
     def reduce_redundancy(self):
         hierarchy = []
-        property_dict = defaultdict(list) # Initialize a defaultdict to keep track of nodes by each property
-        
+        property_dict = defaultdict(list)  # Initialize a defaultdict to keep track of nodes by each property
+
         # Iterate over the data to group nodes by their properties
         for item_idx, properties in self.data.items():
+            # Split item_idx into element_index and instance
+            idx_str, instance_str = item_idx.split("_")
+            idx = int(idx_str)
+            instance = int(instance_str)
+
             for key, value in properties.items():
                 if isinstance(value, list):
                     value = tuple(value)  # Use tuple for immutable storage in dictionary
-                property_dict[(key, value)].append(item_idx)
+                property_dict[(key, value)].append((idx, instance))  # Store the pair (element_index, instance)
 
         # Start from the bottom of the hierarchy (reverse the order of nodes)
         list_item = list(self.data.keys())
@@ -169,13 +174,13 @@ class RedundancyReducerJbeamGenerator:
         # Track the current hierarchy for each property to avoid redundancy
         curr_props = defaultdict(lambda: None)  # Default value for missing properties is None
 
-        for item_idx in list_item: # node = vertex index
+        for item_idx in list_item:  # node = vertex index
             properties = self.data[item_idx]
 
             for key, value in properties.items():
                 if isinstance(value, list):
                     value = tuple(value)  # Convert list to tuple to avoid redundancy in defaultdict
-                    
+
                 # If the property value has changed, push it up in the hierarchy
                 if curr_props[key] != value:
                     if curr_props[key] is not None:
@@ -184,17 +189,21 @@ class RedundancyReducerJbeamGenerator:
                             processed_value = ""  # Convert empty list to empty string
                         hierarchy.append({key: processed_value})
                     curr_props[key] = value
-            
-            index = item_idx
+
+            # Split item_idx into element_index and instance
+            idx_str, instance_str = item_idx.split("_")
+            idx = int(idx_str)
+            instance = int(instance_str)
+
             if self.domain == "vertex":
-                node_id = j.get_node_id(self.obj, index) if isinstance(item_idx, int) else item_idx
-                v = self.obj.data.vertices[index].co
+                node_id = j.get_node_id(self.obj, idx)  # Get the node ID based on idx
+                v = self.obj.data.vertices[idx].co
                 hierarchy.append([node_id, round(v.x, 2), round(v.y, 2), round(v.z, 2)])  # Append the node itself to the hierarchy
             elif self.domain == "edge":
-                node_id1, node_id2 = j.get_beam_node_ids(self.obj, index)
+                node_id1, node_id2 = j.get_beam_node_ids(self.obj, idx)
                 hierarchy.append([node_id1, node_id2])  # Append the beam itself to the hierarchy
             elif self.domain == "face":
-                node_id1, node_id2, node_id3 = j.get_triangle_node_ids(self.obj, index)
+                node_id1, node_id2, node_id3 = j.get_triangle_node_ids(self.obj, idx)
                 hierarchy.append([node_id1, node_id2, node_id3])  # Append the triangle itself to the hierarchy
 
         # Add the last property values
@@ -212,4 +221,5 @@ class RedundancyReducerJbeamGenerator:
             hierarchy.append({key: DEFAULT_SCOPE_MODIFIER_VALUES.get(key, '')})
 
         return hierarchy
+
 

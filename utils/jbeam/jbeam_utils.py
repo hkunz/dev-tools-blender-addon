@@ -302,6 +302,10 @@ class JbeamUtils:
         JbeamUtils.delete_props(obj, "faces", face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, instance)
 
     @staticmethod
+    def get_total_node_instances(obj, vertex_index) -> str:
+        return 1
+
+    @staticmethod
     def get_total_beam_instances(obj, edge_index) -> str:
         domain = "edges"
         key = JbeamUtils.get_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, domain)

@@ -123,6 +123,7 @@ class JbeamParser:
                 current_props.update(entry)
             elif isinstance(entry, list) and len(entry) >= 4:
                 node_id, x, y, z = entry[:4]
+                inline_props = entry[4] if len(entry) > 4 else {}
 
                 if any(isinstance(v, str) for v in (x, y, z)):
                     continue  # Skip header row
@@ -133,8 +134,10 @@ class JbeamParser:
 
                 seen_node_ids.add(node_id)
                 position = mathutils.Vector((x, y, z))
+                props = current_props.copy()
+                props.update(inline_props)
                 instance = 1 # only 1 instance can exist of one node ID unlike beams and triangles that can have multiple instances
-                nodes.append(Node(instance, node_id, -1, position, current_props.copy()))
+                nodes.append(Node(instance, node_id, -1, position, props))
 
         return nodes
 
@@ -149,18 +152,29 @@ class JbeamParser:
         for entry in json_data:
             if isinstance(entry, dict):
                 current_props.update(entry)
-            elif isinstance(entry, list) and len(entry) >= (2 if structure_type == "beams" else 3):
+            elif isinstance(entry, list): # and len(entry) >= (2 if structure_type == "beams" else 3):
                 if all(isinstance(item, str) and item.startswith("id") and item.endswith(":") for item in entry):
                     print(f"Header detected: {entry} (ignored)")
                     continue
-                nodes = [self.nodes.get(n) for n in entry[:len(entry)]]
+                nodes = None
+                inline_props = None
+                if structure_type == "beams" and len(entry) >= 2:
+                    # Beams have 2 items for the nodes, with optional properties after that
+                    nodes = [self.nodes.get(n) for n in entry[:2]]  # Always expect 2 node IDs
+                    inline_props = entry[2] if len(entry) > 2 and isinstance(entry[2], dict) else {}
+
+                elif structure_type == "triangles" and len(entry) >= 3:
+                    # Triangles have 3 items for the nodes, with optional properties after that
+                    nodes = [self.nodes.get(n) for n in entry[:3]]  # Always expect 3 node IDs
+                    inline_props = entry[3] if len(entry) > 3 and isinstance(entry[3], dict) else {}
                 if any(n is None for n in nodes):
                     print(f"Warning: Missing nodes {entry[:len(entry)]} in nodes and possibly in jbeam nodes")
                     continue
 
                 index = get_index([n.index for n in nodes]) if lookup else -1 # TODO get index
-                struct_id = tuple(sorted(entry[:len(entry)]))  # Store as a tuple (order-independent)
-
+                # struct_id = tuple(sorted(entry[:len(entry)]))  # Store as a tuple (order-independent)
+                struct_id = tuple(sorted(entry[:len(nodes)])) + (tuple(sorted(inline_props.items())) if inline_props else ())  # Include inline properties if they exist
+    
                 # Determine instance count
                 if struct_id not in seen_structures:
                     seen_structures[struct_id] = 1
@@ -170,12 +184,15 @@ class JbeamParser:
                 instance = seen_structures[struct_id]
                 #print(f"{structure_type[:-1].capitalize()} detected: {struct_id} (Instance: {instance}) => {current_props}")
 
+                props = current_props.copy()
+                props.update(inline_props)
+
                 structures.append(
                     (Beam if structure_type == "beams" else Triangle)(
                         instance, struct_id,
                         nodes[0].id, nodes[1].id,  # For Beam, pass only two node IDs (node_id1, node_id2)
                         *([nodes[2].id] if len(nodes) > 2 else []),  # For Triangle, pass three node IDs if available, otherwise just pass two valid IDs
-                        index, current_props.copy()
+                        index, props
                     )
                 )
 

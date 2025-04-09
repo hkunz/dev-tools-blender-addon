@@ -6,6 +6,7 @@ from typing import List, Tuple
 from bpy.app.handlers import persistent
 
 from dev_tools.operators.file.beamng.beamng_export_node_mesh_to_jbeam import DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam  # type: ignore
+from dev_tools.operators.file.beamng.beamng_import_jbeam_as_node_mesh import DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh  # type: ignore
 from dev_tools.operators.object.armature.armature_create_bones_random_vertices_operator import OBJECT_OT_ArmatureCreateBonesRandomVertices  # type: ignore
 from dev_tools.operators.object.armature.armature_create_bones_from_edge_selection_operator import OBJECT_OT_ArmatureCreateBonesFromEdgeSelection  # type: ignore
 from dev_tools.operators.object.armature.armature_assign_closest_vertex_to_bone_tails_operator import OBJECT_OT_ArmatureAssignClosestVertexToBoneTails  # type: ignore
@@ -206,6 +207,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
         col = col.box().column()
 
         if not context.selected_objects:
+            col.operator(DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh.bl_idname, text="Import JBeam File", icon="IMPORT")
             col.operator(OBJECT_OT_BeamngJbeamCreateNodeMesh.bl_idname, text="Create Node Mesh", icon="OUTLINER_OB_MESH")
         elif len(context.selected_objects) == 1:
             if j.is_node_mesh(context.selected_objects[0]):

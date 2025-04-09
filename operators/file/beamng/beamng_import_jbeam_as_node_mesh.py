@@ -1,4 +1,7 @@
 import bpy
+import re
+import os
+import tempfile
 
 from bpy.types import Operator
 from bpy.props import StringProperty
@@ -25,6 +28,13 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
         lines = content.splitlines()
         fixed_lines = []
 
+        def get_next_significant_line(i):
+            for j in range(i + 1, len(lines)):
+                next_line = lines[j].strip()
+                if next_line and not next_line.startswith('//'):
+                    return next_line
+            return ''
+
         for i, line in enumerate(lines):
             stripped = line.rstrip()
 
@@ -33,12 +43,25 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
                 fixed_lines.append(line)
                 continue
 
-            # Check if this line should have a comma
+             # Check if this line should have a comma
             if not stripped.endswith((',', '{', '[', ':')):
                 # Check next line to avoid false positives at end of blocks
                 next_line = lines[i + 1].strip() if i + 1 < len(lines) else ''
                 if next_line and not next_line.startswith(('}', ']')):
                     stripped += ','
+
+            # Remove comma if line ends with ',' but next significant line is a closing bracket
+            next_line = get_next_significant_line(i)
+            if stripped.endswith(',') and next_line.startswith(('}', ']')):
+                stripped = stripped.rstrip(',')
+
+            stripped = re.sub(r'(\d+\.\d+)\s*(\{)', r'\1,\2', stripped)
+            stripped = re.sub(r'(".*?")\s*(\{)', r'\1,\2', stripped)
+
+            # Case 2: quoted string followed by dict
+            stripped = stripped.replace('"{', '",{')
+            stripped = stripped.replace(']{', '],{')
+
 
             fixed_lines.append(stripped)
 
@@ -64,6 +87,20 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
 
             except Exception as e2:
                 self.report({'ERROR'}, f"Failed to fix and load file: {e2}")
+            
+                tmp_dir = tempfile.gettempdir()
+                os.makedirs(tmp_dir, exist_ok=True)
+                
+                # Write the fixed JBeam content into a file called 'filed.jbeam' in the /tmp folder
+                file_path = os.path.join(tmp_dir, "filed.jbeam")
+                try:
+                    with open(file_path, 'w') as f:
+                        f.write(fixed)
+                except:
+                    pass
+
+                self.report({'ERROR'}, f"Failed to fix and load file: {e2}. Wrote attemped fixed file to: {file_path}")
+            
                 return {'CANCELLED'}
 
         nodes_list = self.parser.get_nodes_list()

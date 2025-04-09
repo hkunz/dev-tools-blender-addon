@@ -16,6 +16,10 @@ This is an unofficial Blender addon designed to simplify the process of editing 
 
 * Convenient for working on mods for BeamNG.drive.
 
+**Importing JBeam Files**
+
+When importing JBeam files, make sure every item ends with a comma. Since we use a JSON parser to read the files, any missing commas will result in the JBeam file being treated as invalid.
+
 **Note**: This addon is not affiliated with BeamNG, and is meant as a community-driven tool to enhance Blender's utility for JBeam file manipulation.
 
 =================================================================

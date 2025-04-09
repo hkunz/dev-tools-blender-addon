@@ -1,8 +1,22 @@
 =================================================================
-# Dev Tools
+# Dev Tools: The Unofficial JBeam Editor Addon for Blender
 =================================================================
 
-Dev Tools uses personal scripts for my Blender projects
+This is an unofficial Blender addon designed to simplify the process of editing JBeam files for BeamNG.drive. The addon provides an intuitive interface within Blender, enabling users to easily manipulate and visualize JBeam structures, such as nodes, beams, and triangles. In addition to basic editing, it also allows for the adjustment of scope modifiers related to each node, beam, and triangle. Whether you're working with vehicle mods or other custom JBeam configurations, this tool helps streamline the workflow by integrating JBeam editing directly within Blender's 3D environment.
+
+**Features**:
+
+* Edit and manage JBeam files without leaving Blender.
+
+* Visualize nodes, beams, and triangles in the 3D view.
+
+* Adjust scope modifiers related to each node, beam, and triangle.
+
+* Simple integration with Blender's object and mesh system.
+
+* Convenient for working on mods for BeamNG.drive.
+
+**Note**: This addon is not affiliated with BeamNG, and is meant as a community-driven tool to enhance Blender's utility for JBeam file manipulation.
 
 =================================================================
 # Create ZIP addon file (Unix & Linux)

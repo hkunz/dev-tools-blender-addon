@@ -65,32 +65,45 @@ class JbeamParser:
         self.json_triangles = None
 
     def load_jbeam(self, filepath):
-        """Load and clean JBeam file."""
-        self.jbeam_data = None
+        """Load and clean JBeam file from path."""
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"File not found: {filepath}")
         try:
             with open(filepath, "r", encoding="utf-8") as f:
                 raw_text = f.read()
-                clean_text = json_cleanup(raw_text)
-                self.jbeam_data = json.loads(clean_text)
+            self._load_jbeam_data(raw_text)
         except FileNotFoundError as e:
             raise FileNotFoundError(f"File not found: {filepath}") from e
         except json.JSONDecodeError as e:
             raise ValueError(f"Error decoding JSON from JBeam file: {e}") from e
-        
-        for part_name, part_data in self.jbeam_data.items():
-            if "nodes" in part_data:  # TODO currently only handles 1 part for selected obj, the first partname in the list
+
+    def load_jbeam_from_string(self, text):
+        """Load and clean JBeam file from string."""
+        try:
+            self._load_jbeam_data(text)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Error decoding JSON from JBeam string: {e}") from e
+
+
+    def _load_jbeam_data(self, text):
+        """Internal shared logic to clean and parse JBeam text."""
+        clean_text = json_cleanup(text)
+        self.jbeam_data = json.loads(clean_text)
+
+        for part_name, part_data in self.jbeam_data.items(): 
+            if "nodes" in part_data: # TODO currently only handles 1 part for selected obj, the first partname in the list
                 break
 
         json_nodes = part_data.get("nodes", [])
         self.json_beams = part_data.get("beams", [])
         self.json_triangles = part_data.get("triangles", [])
+        
         try:
             self.parse_ref_nodes()
             self.nodes_list = self.parse_nodes(json_nodes)
         except Exception as e:
             raise RuntimeError(f"An error occurred while processing the JBeam nodes: {e}") from e
+
 
     def parse_data_for_jbeam_object_conversion(self, obj, get_vertex_indices=True):
         mesh = obj.data

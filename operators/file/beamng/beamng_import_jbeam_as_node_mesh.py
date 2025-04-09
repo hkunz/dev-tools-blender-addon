@@ -21,6 +21,29 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
         maxlen=255,
     )  # type: ignore
 
+    def attempt_fix_jbeam_commas(self, content: str) -> str:
+        lines = content.splitlines()
+        fixed_lines = []
+
+        for i, line in enumerate(lines):
+            stripped = line.rstrip()
+
+            # Ignore empty lines or comment-only lines
+            if not stripped or stripped.strip().startswith('//'):
+                fixed_lines.append(line)
+                continue
+
+            # Check if this line should have a comma
+            if not stripped.endswith((',', '{', '[', ':')):
+                # Check next line to avoid false positives at end of blocks
+                next_line = lines[i + 1].strip() if i + 1 < len(lines) else ''
+                if next_line and not next_line.startswith(('}', ']')):
+                    stripped += ','
+
+            fixed_lines.append(stripped)
+
+        return '\n'.join(fixed_lines)
+
     def execute(self, context):
         bpy.ops.object.select_all(action='DESELECT')
         jbeam_path = self.filepath
@@ -28,8 +51,20 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
         try:
             self.parser.load_jbeam(jbeam_path)
         except Exception as e:
-            self.report({'ERROR'}, f"Failed to read file: {e}")
-            return {'CANCELLED'}
+            print(f"WARNING: Initial load failed with {e}. Trying to auto-fix commas and attempt reload...")
+
+            with open(jbeam_path, "r", encoding="utf-8") as f:
+                raw = f.read()
+
+            fixed = self.attempt_fix_jbeam_commas(raw)
+
+            try:
+                self.parser.load_jbeam_from_string(fixed)
+                self.report({'INFO'}, f"Successfully loaded Jbeam File")
+
+            except Exception as e2:
+                self.report({'ERROR'}, f"Failed to fix and load file: {e2}")
+                return {'CANCELLED'}
 
         nodes_list = self.parser.get_nodes_list()
         jmc = JbeamNodeMeshCreator()

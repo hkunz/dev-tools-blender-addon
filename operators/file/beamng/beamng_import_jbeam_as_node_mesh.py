@@ -6,6 +6,7 @@ from bpy.types import Operator
 from bpy.props import StringProperty
 from bpy_extras.io_utils import ImportHelper
 
+from dev_tools.ui.addon_preferences import MyAddonPreferences as a # type: ignore
 from dev_tools.utils.utils import Utils  # type: ignore
 from dev_tools.utils.temp_file_manager import TempFileManager  # type: ignore
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
@@ -38,34 +39,33 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
             return ''
 
         for i, line in enumerate(lines):
-            stripped = line.rstrip()
+            s = line.rstrip()
 
             # Ignore empty lines or comment-only lines
-            if not stripped or stripped.strip().startswith('//'):
+            if not s or s.strip().startswith('//'):
                 fixed_lines.append(line)
                 continue
 
              # Check if this line should have a comma
-            if not stripped.endswith((',', '{', '[', ':')):
+            if not s.endswith((',', '{', '[', ':')):
                 next_line = lines[i + 1].strip() if i + 1 < len(lines) else '' # Check next line to avoid false positives at end of blocks
                 if next_line and not next_line.startswith(('}', ']')):
-                    stripped += ','
+                    s += ','
 
             # Remove comma if line ends with ',' but next significant line is a closing bracket
             next_line = get_next_significant_line(i)
-            if stripped.endswith(',') and next_line.startswith(('}', ']')):
-                stripped = stripped.rstrip(',')
-
-            stripped = re.sub(r'(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)', r'\1,\2', stripped) # fix missing commas between numbers like ["b31", 0.00, -1.45 0.97], notice there' no comma between 1.45 and 0.97
-            stripped = re.sub(r'(\d+\.\d+)\s*(\{)', r'\1,\2', stripped) # add missing commas in ex: "value": 5.5 { should be "value": 5.5,{
-            stripped = re.sub(r'(".*?")\s*(\{)', r'\1,\2', stripped) # add missing commas in "key" { should be "key",{
-            stripped = re.sub(r'(\d(?:\.\d+)?)(?="\w)', r'\1,', stripped) # fix missing commas in lines like ["b14l", 0.43, 0.56, 0.75,{"nodeWeight":5.5"group":""}], which has missing coma between 5.5"group"
+            if s.endswith(',') and next_line.startswith(('}', ']')):
+                s = s.rstrip(',')
 
             # Check quoted string followed by dict
-            stripped = stripped.replace('"{', '",{')
-            stripped = stripped.replace(']{', '],{')
+            s = re.sub(r'"\s*\{', '",{', s) # s = s.replace('"{', '",{')
+            s = re.sub(r'\]\s*\{', '],{', s) # s = s.replace(']{', '],{')
+            s = re.sub(r'(-?\d+(?:\.\d+)?)(?=\s+-?\d)', r'\1, ', s) # add missing comma between 2 numbers like 0.00, -1.45
+            s = re.sub(r'(\d+\.\d+)\s*(\{)', r'\1,\2', s) # add missing commas in ex: "value": 5.5 { should be "value": 5.5,{
+            s = re.sub(r'(".*?")\s*(?=[\{\[])', r'\1, ', s) # add missing commas in "key" { should be "key",{ or for "key" [ should be "key",[ # previously #s = re.sub(r'(".*?")\s*(\{)', r'\1,\2', s)
+            s = re.sub(r'(\d(?:\.\d+)?)(?="\w)', r'\1,', s) # fix missing commas in lines like ["b14l", 0.43, 0.56, 0.75,{"nodeWeight":5.5"group":""}], which has missing coma between 5.5"group"
 
-            fixed_lines.append(stripped)
+            fixed_lines.append(s)
 
         return '\n'.join(fixed_lines)
 
@@ -94,39 +94,44 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
         filename = os.path.basename(jbeam_path)
         self.parser = JbeamParser()
         fix_required = False
+        cancel = False
         try:
             self.parser.load_jbeam(jbeam_path)
         except Exception as e:
             json_str = self.parser.get_json_str()
             error_text = self.extract_json_error_snippet(e, json_str)
-            Utils.log_and_report(f"Initial load failed with '{e}' Error Text: {error_text}. Trying to auto-fix commas and attempt reload...", self, "WARNING")
+            show_warning = a.is_addon_option_enabled("show_import_warnings")
+            Utils.log_and_report(f"Initial load failed with '{e}' Error Text: {error_text}. Trying to auto-fix commas and attempt reload...", self if show_warning else None, "WARNING")
             with open(jbeam_path, "r", encoding="utf-8") as f:
                 raw = f.read()
             fixed = self.attempt_fix_jbeam_commas(raw)
+            tmp_dir = TempFileManager().create_temp_dir()
+            os.makedirs(tmp_dir, exist_ok=True)
+            file_path1 = os.path.join(tmp_dir, filename)
+            file_path2 = os.path.join(tmp_dir, f"{filename}.json")
             try:
                 fix_required = True
                 self.parser.load_jbeam_from_string(fixed)
                 print(f"Auto-Fix and Load Success {filename}")
             except Exception as e2:
-                tmp_dir = TempFileManager().create_temp_dir()
-                os.makedirs(tmp_dir, exist_ok=True)
-                file_path1 = os.path.join(tmp_dir, filename)
-                file_path2 = os.path.join(tmp_dir, f"{filename}.json")
-                json_str = self.parser.get_json_str()
-                try:
-                    with open(file_path1, 'w') as f:
-                        f.write(fixed)
-                    with open(file_path2, 'w') as f:
-                        f.write(json_str)
-                except Exception as write_error:
-                    Utils.log_and_report(f"Failed to write the attempted fix file: {write_error}", self, "ERROR")
                 error_text = self.extract_json_error_snippet(e2, json_str)
                 Utils.log_and_report(f"Failed to fix and load file: '{e2}' Error Text: {error_text}\nWrote attempted fix file to: {file_path1}", self, "ERROR")
-                return {'CANCELLED'}
+                cancel = True
+            try:
+                json_str = self.parser.get_json_str()
+                with open(file_path1, 'w') as f:
+                    f.write(fixed)
+                with open(file_path2, 'w') as f:
+                    f.write(json_str)
+            except Exception as write_error:
+                Utils.log_and_report(f"Failed to write the attempted fix file: {write_error}", self, "ERROR")
 
+        if cancel:
+            return {'CANCELLED'}
         nodes_list = self.parser.get_nodes_list()
+        mesh_name = os.path.splitext(filename)[0]
         jmc = JbeamNodeMeshCreator()
-        obj = jmc.create_object()
+        obj = jmc.create_object(mesh_name)
         jmc.add_vertices(nodes_list)
         self.parser.parse_data_for_jbeam_object_conversion(obj, False)
 

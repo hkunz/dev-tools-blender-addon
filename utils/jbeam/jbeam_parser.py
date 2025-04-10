@@ -4,6 +4,7 @@ import os
 
 from typing import Optional, Iterable, Tuple
 
+from dev_tools.utils.utils import Utils  # type: ignore
 from dev_tools.utils.json_cleanup import json_cleanup  # type: ignore
 
 NodeID = str
@@ -56,6 +57,7 @@ class JbeamParser:
     def __init__(self):
         self.jbeam_data = None
         self.part_data = None
+        self.json_str = None
         self.refnodes: dict[str, str] = {}
         self.nodes: dict[NodeID, Node] = {}
         self.nodes_list: list[Node] = []
@@ -69,26 +71,29 @@ class JbeamParser:
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"File not found: {filepath}")
         try:
+            print("=============================================================")
+            print("Loading:", filepath)
             with open(filepath, "r", encoding="utf-8") as f:
                 raw_text = f.read()
+            print("Raw data loaded. Start parsing...")
             self._load_jbeam_data(raw_text)
         except FileNotFoundError as e:
-            raise FileNotFoundError(f"File not found: {filepath}") from e
+            Utils.log_and_raise(f"File not found: {filepath}", FileNotFoundError, e)
         except json.JSONDecodeError as e:
-            raise ValueError(f"Error decoding JSON from JBeam file: {e}") from e
+            Utils.log_and_raise(f"Error decoding JSON from JBeam file: {e}", ValueError, e)
 
     def load_jbeam_from_string(self, text):
         """Load and clean JBeam file from string."""
         try:
             self._load_jbeam_data(text)
+            print("Loaded jbeam successfully from fixed string")
         except json.JSONDecodeError as e:
-            raise ValueError(f"Error decoding JSON from JBeam string: {e}") from e
-
+            Utils.log_and_raise(f"Error decoding JSON from JBeam string: {e}", ValueError, e)
 
     def _load_jbeam_data(self, text):
         """Internal shared logic to clean and parse JBeam text."""
-        clean_text = json_cleanup(text)
-        self.jbeam_data = json.loads(clean_text)
+        self.json_str = json_cleanup(text)
+        self.jbeam_data = json.loads(self.json_str)
 
         for part_name, part_data in self.jbeam_data.items(): 
             if "nodes" in part_data: # TODO currently only handles 1 part for selected obj, the first partname in the list
@@ -102,8 +107,7 @@ class JbeamParser:
             self.parse_ref_nodes()
             self.nodes_list = self.parse_nodes(json_nodes)
         except Exception as e:
-            raise RuntimeError(f"An error occurred while processing the JBeam nodes: {e}") from e
-
+            Utils.log_and_raise(f"An error occurred while processing the JBeam nodes: {e}", RuntimeError, e)
 
     def parse_data_for_jbeam_object_conversion(self, obj, get_vertex_indices=True):
         mesh = obj.data
@@ -114,7 +118,7 @@ class JbeamParser:
             self.beams_list = self.parse_beams(self.json_beams, mesh)
             self.triangles_list = self.parse_triangles(self.json_triangles, mesh)
         except Exception as e:
-            raise RuntimeError(f"An error occurred while processing the remaining JBeam data: {e}") from e
+            Utils.log_and_raise(f"An error occurred while processing the remaining JBeam data: {e}", RuntimeError, e)
 
     def parse_ref_nodes(self):
         """Extract reference nodes from the JBeam data, trimming colons from keys."""
@@ -181,7 +185,7 @@ class JbeamParser:
                     nodes = [self.nodes.get(n) for n in entry[:3]]  # Always expect 3 node IDs
                     inline_props = entry[3] if len(entry) > 3 and isinstance(entry[3], dict) else {}
                 if any(n is None for n in nodes):
-                    print(f"Warning: Missing nodes {entry[:len(entry)]} in nodes and possibly in jbeam nodes")
+                    print(f"Warning: Missing nodes accessed by element {entry[:len(entry)]}. Nodes possibly missing in jbeam file or limitation in the addon where some nodes reside in a base jbeam file")
                     continue
 
                 index = get_index([n.index for n in nodes]) if lookup else -1 # TODO get index
@@ -249,6 +253,9 @@ class JbeamParser:
         for node_id, node in items:
             print(f"{node_id} => {node}")
             # i.e.: 'node_1' => Node(instance=1, id=a1ll, index=5, pos=<Vector (0.6800, -0.9350, 0.1100)>, props={'frictionCoef': 1.2, 'nodeMaterial': '|NM_RUBBER', 'nodeWeight': 1, 'collision': True, 'selfCollision': True, 'group': 'mattress'})
+
+    def get_json_str(self) -> str:
+        return self.json_str
 
     def get_nodes(self) -> dict[NodeID, Node]:
         return self.nodes

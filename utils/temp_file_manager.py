@@ -31,7 +31,8 @@ class TempFileManager:
 
     def create_temp_parent_dir(self) -> None:
         appdata_local_temp_dir: str = tempfile.gettempdir() # C:/Users/<user>/AppData/Local/Temp/
-        TempFileManager.TEMP_PARENT_DIRECTORY: str = os.path.join(appdata_local_temp_dir, f"vx{Utils.get_addon_version()}-b{Utils.get_blender_version()}-tmp{StringUtils.randomize_string(5)}") # vxv1.0.8-bv4.0.1-tmpEGjov
+        random_suffix = "" #StringUtils.randomize_string(5)
+        TempFileManager.TEMP_PARENT_DIRECTORY: str = os.path.join(appdata_local_temp_dir, f"j-editor-{Utils.get_addon_version()}-b{Utils.get_blender_version()}-tmp{random_suffix}") # j1.0.8-bv4.0.1-tmpEGjov
         self.create_directory(TempFileManager.TEMP_PARENT_DIRECTORY)
         print(f"Created temporary parent directory: {TempFileManager.TEMP_PARENT_DIRECTORY}")
 
@@ -41,7 +42,7 @@ class TempFileManager:
             TempFileManager.TEMP_PARENT_DIRECTORY = None
         if not TempFileManager.TEMP_PARENT_DIRECTORY:
             self.create_temp_parent_dir()
-        dir: str = tempfile.mkdtemp(prefix="", dir=TempFileManager.TEMP_PARENT_DIRECTORY) # creates a temp directory in os.environ['TEMP']/TEMP_PARENT_DIRECTORY/
+        dir: str = TempFileManager.TEMP_PARENT_DIRECTORY # tempfile.mkdtemp(prefix="", dir=TempFileManager.TEMP_PARENT_DIRECTORY) # creates a temp directory in os.environ['TEMP']/TEMP_PARENT_DIRECTORY/
         print("Created temp directory:", dir)
         return dir
 

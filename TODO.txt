@@ -19,3 +19,6 @@ Cannot add 2nd instance to triangles
 Cannot delete instance
 Potential Face orientation problem when saving and loading again. Should not reorder NodeIDs in Beams & Tris
 When importing mattress_full i cannot search a beam or triangle for some reason
+
+Loading Jbeam Bugs:
+C:\Users\hkunz\Documents\BeamNG.drive\editable_vehicles\vehicles\cargotrailer\cargotrailer_woodplanks_short.jbeam > Claims to have missing node but actually is a limitation in addon, since the missing nodes are in another base jbeam file

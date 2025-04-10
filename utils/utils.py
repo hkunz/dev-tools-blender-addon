@@ -21,6 +21,23 @@ class Utils:
         return ('v' if prependv else '') + separator.join(map(str, bl_info['version']))
 
     @staticmethod
+    def log_and_raise(msg: str, exc_type=Exception, cause: Exception = None):
+        print(msg)
+        if cause:
+            raise exc_type(msg) from cause
+        else:
+            raise exc_type(msg)
+
+    @staticmethod
+    def log_and_report(msg: str, operator=None, level='INFO'):
+        level = level.upper()
+        print(f"{level}:", msg)
+        if operator:
+            if level not in {'INFO', 'WARNING', 'ERROR'}:
+                level = 'INFO'
+            operator.report({level}, msg)
+
+    @staticmethod
     def get_gn_version():
         v: Tuple[int, int, int] = bpy.app.version
         if v >= (4, 0, 0):

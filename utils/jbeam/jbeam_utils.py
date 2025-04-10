@@ -468,25 +468,25 @@ class JbeamUtils:
 
     @staticmethod
     def set_gn_jbeam_active_node_index(obj, vertex_index):
-        JbeamUtils.set_gn_jbeam_socket_mode(obj, "Active Node Vertex Index", value=vertex_index)
+        JbeamUtils.set_gn_jbeam_socket_value(obj, "Active Node Vertex Index", value=vertex_index)
 
     @staticmethod
     def set_gn_jbeam_active_beam_index(obj, edge_index):
-        JbeamUtils.set_gn_jbeam_socket_mode(obj, "Active Beam Edge Index", value=edge_index)
+        JbeamUtils.set_gn_jbeam_socket_value(obj, "Active Beam Edge Index", value=edge_index)
 
     @staticmethod
     def set_gn_jbeam_active_triangle_index(obj, face_index):
         return # TODO: not sure if we need colored triangle faces for actively selected triangles, if yes then we have to add a socket to the GN modifier
-        JbeamUtils.set_gn_jbeam_socket_mode(obj, "Active Triangle Face Index", value=face_index)
+        JbeamUtils.set_gn_jbeam_socket_value(obj, "Active Triangle Face Index", value=face_index)
 
     @staticmethod
-    def set_gn_jbeam_socket_mode(obj, socket_name, value=None, attribute_name=None):
+    def set_gn_jbeam_socket_value(obj, socket_name, value=None, attribute_name=None):
         if not a.is_addon_visualizer_enabled():
             return
         mod = JbeamUtils.get_gn_jbeam_modifier(obj)
         if not mod:
             return
-        ObjectUtils.set_gn_socket_mode(mod, socket_name, value, attribute_name)
+        ObjectUtils.set_gn_socket_value(mod, socket_name, value, attribute_name)
 
     @staticmethod
     def set_gn_jbeam_visualizer_selection_mode(obj):
@@ -495,7 +495,7 @@ class JbeamUtils:
         mode = next(i + 1 for i, v in enumerate(bpy.context.tool_settings.mesh_select_mode) if v) # 1 (vertex), 2 (edge), or 3 (edge)
         if JbeamUtils.get_gn_jbeam_visualizer_selection_mode(obj) == mode:
             return mode
-        JbeamUtils.set_gn_jbeam_socket_mode(obj, "Selection Mode", value=mode)
+        JbeamUtils.set_gn_jbeam_socket_value(obj, "Selection Mode", value=mode)
         return mode
 
     @staticmethod
@@ -545,6 +545,8 @@ class JbeamUtils:
         ObjectUtils.gn_hide_modifier_input_by_name(node_tree, "Selection Mode")
         ObjectUtils.gn_hide_modifier_input_by_name(node_tree, "Active Node Vertex Index")
         ObjectUtils.gn_hide_modifier_input_by_name(node_tree, "Active Beam Edge Index")
+        JbeamUtils.set_gn_jbeam_socket_value(obj, "Node Radius", 0.03)
+        JbeamUtils.set_gn_jbeam_socket_value(obj, "Beam Radius", 0.008)
         JbeamUtils.set_gn_jbeam_visualizer_selection_mode(obj)
 
         print(f"Assigned '{node_tree.name}' to '{repr(obj)}' via modifier '{mod.name}'")

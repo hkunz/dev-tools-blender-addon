@@ -406,7 +406,7 @@ class ObjectUtils:
         ObjectUtils.update_bool_attribute_for_gn(mod, obj, bm, named_attr_node_name, attr_name, values, "faces", "FACE")
 
     @staticmethod
-    def set_gn_socket_mode(mod, socket_name, value=None, attribute_name=None):
+    def set_gn_socket_value(mod, socket_name, value=None, attribute_name=None):
         node_group = mod.node_group
         for socket in node_group.interface.items_tree:
             if socket.name == socket_name:

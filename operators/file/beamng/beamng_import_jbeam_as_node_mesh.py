@@ -56,8 +56,10 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
             if stripped.endswith(',') and next_line.startswith(('}', ']')):
                 stripped = stripped.rstrip(',')
 
-            stripped = re.sub(r'(\d+\.\d+)\s*(\{)', r'\1,\2', stripped)
-            stripped = re.sub(r'(".*?")\s*(\{)', r'\1,\2', stripped)
+            stripped = re.sub(r'(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)', r'\1,\2', stripped) # fix missing commas between numbers like ["b31", 0.00, -1.45 0.97], notice there' no comma between 1.45 and 0.97
+            stripped = re.sub(r'(\d+\.\d+)\s*(\{)', r'\1,\2', stripped) # add missing commas in ex: "value": 5.5 { should be "value": 5.5,{
+            stripped = re.sub(r'(".*?")\s*(\{)', r'\1,\2', stripped) # add missing commas in "key" { should be "key",{
+            stripped = re.sub(r'(\d(?:\.\d+)?)(?="\w)', r'\1,', stripped) # fix missing commas in lines like ["b14l", 0.43, 0.56, 0.75,{"nodeWeight":5.5"group":""}], which has missing coma between 5.5"group"
 
             # Check quoted string followed by dict
             stripped = stripped.replace('"{', '",{')

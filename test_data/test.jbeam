@@ -45,19 +45,30 @@
 
             {"nodeWeight": 8},
             ["x1", -0.25, 0.25, 0.25],
+            , // comma line with nothing
             ["x22",0.25  -0.25  0.25   {"prop":"5"}],,
             ["x333" -0.25, 0.25, -0.25{"breakGroup":"lightmotor_L", "beamPrecompression":0.8"beamType":"|SUPPORT", "beamLongBound":0.7 "beamSpring":1000}]
             ["x336" -0.25, 0.25, -0.25{"breakGroup":"headlightmotor_L" "beamPrecompression":0.8 "beamType":"|SUPPORT" "beamLongBound":0.7 "beamSpring":1000}] , , ,,, // missing comma  "beamPrecompression":0.8"beamType":"|SUPPORT" and also in "beamLongBound":0.7 "beamSpring":1000
             ["x4444"0.25  -0.25  0.25   {"prop":"5b"}  ]
-            ["x55555"-0.25, 0.25, -0.25 {"prop":"b5" }]
-            ["test1" 100.5  2.6  3.7 ],  // Numbers with spacing
+            ["x55555"-0.25, 0.25, -0.25 {"prop":"b5" }]  /* some ill-structured comment block
+            {"group":"barstow_headlight_R"},
+            ["he1rr","he2rr","he2r"],
+            ["he1ll","he1l","he2l"],
+            */   ["test1" 100.5  2.6  3.7 ],  // Numbers with spacing
             ["2test",  2 -30.5 400.6    {"prop":"bb"}  ]  // Multiple numbers with a dictionary not comma separated
             ["t1" 0.5   -0.3   100.5 ]  // String with numbers in between
             ["t3" 10, 20, -50 , {"key":"value"} ]   // Numbers and a dictionary at the end
             {"collision": true},
             {"frictionCoef": 1.0},
-            {"nodeMaterial": "|NM_METAL"},
+            /* some comment block
+            {"group":"barstow_headlight_R"},
+            ["he1rr","he2rr","he2r"],
+            */, , {"nodeMaterial": "|NM_METAL"},
             {"nodeWeight": 25},
+            /* some comment block
+            {"group":"barstow_headlight_R"},
+            ["he1rr","he2rr","he2r"],
+            */,
             {"selfCollision": false}
         ],
         "beams": [

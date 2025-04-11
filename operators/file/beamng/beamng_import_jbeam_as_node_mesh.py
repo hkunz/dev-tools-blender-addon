@@ -26,8 +26,34 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
         maxlen=255,
     )  # type: ignore
 
+    def remove_block_and_line_comments(self, content: str) -> list[str]:
+        lines = content.splitlines()
+        cleaned_lines = []
+        in_block_comment = False
+
+        for line in lines:
+            if not in_block_comment:
+                if '/*' in line:
+                    before_comment = line.split('/*', 1)[0].rstrip()
+                    if before_comment:
+                        cleaned_lines.append(before_comment)
+                    in_block_comment = True
+                    continue
+                stripped = line.strip()
+                if not stripped or stripped.startswith('//'):
+                    continue
+                cleaned_lines.append(line)
+            else:
+                if '*/' in line:
+                    after_comment = line.split('*/', 1)[1].strip()
+                    in_block_comment = False
+                    if after_comment:
+                        cleaned_lines.append(after_comment)
+                # else: still inside a block comment, skip
+        return cleaned_lines
+
     def attempt_fix_jbeam_commas(self, content: str) -> str:
-        lines = [line for line in content.splitlines() if line.strip() and not line.strip().startswith('//')]
+        lines = self.remove_block_and_line_comments(content)
         fixed_lines = []
 
         # Precompute next significant line for each line
@@ -41,15 +67,15 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
 
         for i, line in enumerate(lines):
             s = line.rstrip()
-
-            # Ignore empty lines or comment-only lines
-            if not s or s.strip().startswith('//'):
-                fixed_lines.append(line)
-                continue
+            while s.lstrip().startswith(","):
+                s = s.lstrip().lstrip(",")
 
             s = re.sub(r'\s*//.*$', '', s)  # Remove comments after each code line
             s = re.sub(r'(,\s*){2,}', ',', s)  # Replace multiple commas with a single comma
             s = s.rstrip()
+
+            if not s.strip():
+                continue
 
             # Check if this line should have a comma
             if not s.endswith((',', '{', '[', ':')):

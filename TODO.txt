@@ -13,7 +13,6 @@ Ctrl+Z not working when saving jbeam props, even though we use bl_options UNDO
 Loading Jbeam Bugs:
 C:\Users\hkunz\Documents\BeamNG.drive\editable_vehicles\vehicles\cargotrailer\cargotrailer_woodplanks_short.jbeam > Claims to have missing node but actually is a limitation in addon, since the missing nodes are in another base jbeam file
 C:\Users\hkunz\Documents\BeamNG.drive\editable_vehicles\vehicles\cargotrailer\cargotrailer.jbeam > bpy.data.objects['cargotrailer_cargotrailer']: Index 1111 out of range in Object Mode (edges)
-C:\Users\hkunz\Documents\BeamNG.drive\editable_vehicles\vehicles\caravan\caravan.jbeam > Exception
 
 Export Bugs:
 When exporting jbeam without any scope modifiers, the beams and triangles dont get exported

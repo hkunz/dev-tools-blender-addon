@@ -14,16 +14,16 @@ class JbeamNodeMeshConfigurator:
         bpy.ops.object.mode_set(mode='OBJECT')
 
     @staticmethod
-    def process_node_mesh_props(obj, parser=None):
+    def process_node_mesh_props(obj, parser=None, part_name=""):
         j.set_jbeam_visuals(obj)
         j.add_gn_jbeam_visualizer_modifier(obj)
         if not parser:
             return
-        ref_nodes = parser.get_ref_nodes()
-        nodes = parser.get_nodes()
-        nodes_list = parser.get_nodes_list()
-        beams_list = parser.get_beams_list()
-        tris_list = parser.get_triangles_list()
+        ref_nodes = parser.get_ref_nodes(part_name)
+        nodes = parser.get_nodes(part_name)
+        nodes_list = parser.get_nodes_list(part_name)
+        beams_list = parser.get_beams_list(part_name)
+        tris_list = parser.get_triangles_list(part_name)
         JbeamNodeMeshConfigurator.create_node_mesh_attributes(obj)
         JbeamNodeMeshConfigurator.assign_ref_nodes(obj, ref_nodes, nodes)
         JbeamNodeMeshConfigurator.store_node_props_in_vertex_attributes(obj, nodes_list)

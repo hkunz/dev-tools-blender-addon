@@ -165,25 +165,28 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
 
         if cancel:
             return {'CANCELLED'}
-        nodes_list = self.parser.get_nodes_list()
-        part_name = self.parser.get_part_name()
-        if not nodes_list:
-            Utils.log_and_report(f"No nodes list in part name '{part_name}'", self, "INFO")
-            return {'FINISHED'}
-        mesh_name = f"{os.path.splitext(filename)[0]}_{part_name}" 
-        jmc = JbeamNodeMeshCreator()
-        obj = jmc.create_object(mesh_name)
-        jmc.add_vertices(nodes_list)
-        self.parser.parse_data_for_jbeam_object_conversion(obj, False)
 
-        beams_list = self.parser.get_beams_list()
-        tris_list = self.parser.get_triangles_list()
-        jmc.add_edges(beams_list)
-        jmc.add_faces(tris_list)
+        jbeam_parts: dict[str, object] = self.parser.get_jbeam_parts()
 
-        JbeamNodeMeshConfigurator.process_node_mesh_props(obj, self.parser)
-        obj.select_set(True)
-        bpy.context.view_layer.objects.active = obj
+        for part_name, part in jbeam_parts.items():
+            nodes_list = self.parser.get_nodes_list(part_name)
+            if not nodes_list:
+                Utils.log_and_report(f"No nodes list in part name '{part_name}'", self, "INFO")
+                continue
+            mesh_name = f"{os.path.splitext(filename)[0]}_{part_name}" 
+            jmc = JbeamNodeMeshCreator()
+            obj = jmc.create_object(mesh_name)
+            jmc.add_vertices(part.nodes_list)
+            self.parser.parse_data_for_jbeam_object_conversion(obj, part_name, False)
+
+            beams_list = self.parser.get_beams_list(part_name)
+            tris_list = self.parser.get_triangles_list(part_name)
+            jmc.add_edges(beams_list)
+            jmc.add_faces(tris_list)
+
+            JbeamNodeMeshConfigurator.process_node_mesh_props(obj, self.parser)
+            obj.select_set(True)
+            bpy.context.view_layer.objects.active = obj
         info = f"Auto-Fix and Import Success" if fix_required else f"Import Success"
         Utils.log_and_report(f"{info}: {filename}", self, "INFO")
         return {'FINISHED'}

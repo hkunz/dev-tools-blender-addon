@@ -92,6 +92,7 @@
             ["n3", "n7"],
             ["n1", "n8"],
             ["n2", "n7"],
+            {"testprop": "" , "testprop2": " ", "testprop3"  :  ""  "testprop4"  : "" }
             {"testprop": ""}
         ],
         "triangles": [

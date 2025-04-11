@@ -1,27 +1,18 @@
 TODO:
 
 Find out how .pc jbeam part displays the node names
-Detect overlapping vertices and mark node in red
-Add function to search a node by id
-support overlapping nodes
-support multiple beams/triangle instances
-on_save event, save the jbeam_props_storage.py data into object.data as custom serialized json
 
-* check on export if not duplicate RefNodes stored caused by modeling
 * when all selected, selected all instances
 * search by name with "" should work
-* jbeam load with specific scope modifiers
 
 BUGS:
 
 Ctrl+Z not working when saving jbeam props, even though we use bl_options UNDO
-Cannot add 2nd instance to triangles
-Cannot delete instance
-Potential Face orientation problem when saving and loading again. Should not reorder NodeIDs in Beams & Tris
-When importing mattress_full i cannot search a beam or triangle for some reason
 
 Loading Jbeam Bugs:
 C:\Users\hkunz\Documents\BeamNG.drive\editable_vehicles\vehicles\cargotrailer\cargotrailer_woodplanks_short.jbeam > Claims to have missing node but actually is a limitation in addon, since the missing nodes are in another base jbeam file
+C:\Users\hkunz\Documents\BeamNG.drive\editable_vehicles\vehicles\cargotrailer\cargotrailer.jbeam > bpy.data.objects['cargotrailer_cargotrailer']: Index 1111 out of range in Object Mode (edges)
+C:\Users\hkunz\Documents\BeamNG.drive\editable_vehicles\vehicles\caravan\caravan.jbeam > Exception
 
 Export Bugs:
 When exporting jbeam without any scope modifiers, the beams and triangles dont get exported

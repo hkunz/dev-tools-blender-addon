@@ -56,6 +56,7 @@ class Triangle(JBeamElement):
 class JbeamParser:
     def __init__(self):
         self.jbeam_data = None
+        self.part_name = None
         self.part_data = None
         self.json_str = None
         self.refnodes: dict[str, str] = {}
@@ -97,6 +98,7 @@ class JbeamParser:
 
         for part_name, part_data in self.jbeam_data.items(): 
             if "nodes" in part_data: # TODO currently only handles 1 part for selected obj, the first partname in the list
+                self.part_name = part_name
                 break
 
         json_nodes = part_data.get("nodes", [])
@@ -256,6 +258,9 @@ class JbeamParser:
 
     def get_json_str(self) -> str:
         return self.json_str
+
+    def get_part_name(self) -> str:
+        return self.part_name
 
     def get_nodes(self) -> dict[NodeID, Node]:
         return self.nodes

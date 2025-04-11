@@ -28,13 +28,13 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
 
     def attempt_fix_jbeam_commas(self, content: str) -> str:
 
-        lines = [line for line in content.splitlines() if line.strip()]
+        lines = [line for line in content.splitlines() if line.strip() and not line.strip().startswith('//')]
         fixed_lines = []
 
         def get_next_significant_line(i):
             for j in range(i + 1, len(lines)):
                 next_line = lines[j].strip()
-                if next_line and not next_line.startswith('//'):
+                if next_line:
                     return next_line
             return ''
 
@@ -45,6 +45,10 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
             if not s or s.strip().startswith('//'):
                 fixed_lines.append(line)
                 continue
+
+            s = re.sub(r'\s*//.*$', '', s)  # remove comments after each code line
+            s = re.sub(r'(,\s*){2,}', ',', s)
+            s = s.rstrip()
 
              # Check if this line should have a comma
             if not s.endswith((',', '{', '[', ':')):
@@ -57,13 +61,19 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
             if s.endswith(',') and next_line.startswith(('}', ']')):
                 s = s.rstrip(',')
 
-            # Check quoted string followed by dict
-            s = re.sub(r'"\s*\{', '",{', s) # s = s.replace('"{', '",{')
-            s = re.sub(r'\]\s*\{', '],{', s) # s = s.replace(']{', '],{')
-            s = re.sub(r'(-?\d+(?:\.\d+)?)(?=\s+-?\d)', r'\1, ', s) # add missing comma between 2 numbers like 0.00, -1.45
-            s = re.sub(r'(\d+\.\d+)\s*(\{)', r'\1,\2', s) # add missing commas in ex: "value": 5.5 { should be "value": 5.5,{
-            s = re.sub(r'(".*?")\s*(?=[\{\[])', r'\1, ', s) # add missing commas in "key" { should be "key",{ or for "key" [ should be "key",[ # previously #s = re.sub(r'(".*?")\s*(\{)', r'\1,\2', s)
-            s = re.sub(r'(\d(?:\.\d+)?)(?="\w)', r'\1,', s) # fix missing commas in lines like ["b14l", 0.43, 0.56, 0.75,{"nodeWeight":5.5"group":""}], which has missing coma between 5.5"group"
+            s = re.sub(r'"\s*\{', '",{', s)  # s = s.replace('"{', '",{')  # math "{ and put comma ",{
+            s = re.sub(r'\]\s*\{', '],{', s)  # s = s.replace(']{', '],{')  # math "]{ and put comma ],{
+            s = re.sub(r'([^"])"\s*"([^\s"])', r'\1"," \2', s) # missing comma in ex: s = 'k""d and also k"  "d'
+
+            # Match only number-like segments (space-separated) NOT inside quotes or dicts
+            s = re.sub(r'(\[\s*"[^"]*")(?=\s*-?\d)', r'\1,', s)  # Add comma between quoted string and number (but avoid dicts)
+            s = re.sub(r'(-?\d+(?:\.\d+)?)(\s+)(?=-?\d)', r'\1, ', s)  # Add commas between space-separated numbers
+
+            s = re.sub(r'(-?\d+(?:\.\d+)?)(?=\s+-?\d)', r'\1, ', s)  # add missing comma between 2 numbers like 0.00, -1.45
+            s = re.sub(r'(\d+\.\d+)\s*(\{)', r'\1,\2', s)  # add missing commas in ex: "value": 5.5 { should be "value": 5.5,{
+            s = re.sub(r'(".*?")\s*(?=[\{\[])', r'\1, ', s)  # add missing commas in "key" { should be "key",{ or for "key" [ should be "key",[ # previously #s = re.sub(r'(".*?")\s*(\{)', r'\1,\2', s)
+            s = re.sub(r'(-?\d+(?:\.\d+)?)(\s+)(")', r'\1, \3', s) # s = re.sub(r'(\d(?:\.\d+)?)(?="\w)', r'\1,', s)  # fix missing commas in lines like ["b14l", 0.43, 0.56, 0.75,{"nodeWeight":5.5"group":""}], which has missing coma between 5.5"group"
+            s = re.sub(r'(\d(?:\.\d+)?)(?="\w)', r'\1,', s)  # fix missing commas in lines like ["b14l", 0.43, 0.56, 0.75,{"nodeWeight":5.5"group":""}], which has missing coma between 5.5"group"
 
             fixed_lines.append(s)
 
@@ -129,7 +139,7 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
         if cancel:
             return {'CANCELLED'}
         nodes_list = self.parser.get_nodes_list()
-        mesh_name = os.path.splitext(filename)[0]
+        mesh_name = f"{os.path.splitext(filename)[0]}_{self.parser.get_part_name()}" 
         jmc = JbeamNodeMeshCreator()
         obj = jmc.create_object(mesh_name)
         jmc.add_vertices(nodes_list)

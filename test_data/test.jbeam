@@ -18,6 +18,24 @@
             ["oval_led_glass_aux1", ["cargotrailer_backwall"],[],{"pos":{"x": 0.0, "y":2.285, "z":2.3}, "rot":{"x":0, "y":0, "z":180}, "scale":{"x":1, "y":1, "z":1}}],,
             ["oval_led_glass_aux1", ["cargotrailer_backwall"],[],{"pos":{"x": -0.45, "y":2.285, "z":2.3}, "rot":{"x":0, "y":0, "z":180}, "scale":{"x":1, "y":1, "z":1}}],
         ]
+        "retractPinRR":{
+            "couplerNodes":[
+              //["cid1"    "cid2" "CouplingStrength" "CouplingRadius"    "CouplingLockRadius","CouplingSpeed","couplingStartRadius","breakGroup"], // stuff like missing comma between strings ["cid2" "CouplingStrength", cannot be fixed with regex, coz it will cause other stuff like "testprop": "" to insert commas "testprop": ","
+              ["cid1", "cid2", "CouplingStrength", "CouplingRadius",    "CouplingLockRadius","CouplingSpeed","couplingStartRadius","breakGroup"], 
+              ["cpr5r",  "cpx6r", 1200100,               0.015,               0.005,                   0.2,                 0.015,                 "markerlight_RR_break"]
+            ],
+            "groupType": "manualClose",
+            "attachSoundVolume":1,
+            "detachSoundVolume":1,
+            "soundNode:":["cpr6r"],
+            "attachSoundEvent": "event:>Vehicle>Latches>Mechanics>containertrailer_pin_close",
+            "detachSoundEvent": "event:>Vehicle>Latches>Mechanics>containertrailer_pin_open",
+            "breakSoundEvent":"",
+            "openForceMagnitude": 0,
+            "openForceDuration": 0.2,
+            "closeForceMagnitude": 1300,
+            "closeForceDuration": 3.0
+        },
         "nodes": [
             ["id", "posX", "posY", "posZ"],
             {"selfCollision": false, "cool":"jo"},

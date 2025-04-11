@@ -168,6 +168,9 @@ class JbeamParser:
         def get_index(indices):
             return lookup.get(tuple(sorted(indices)))
 
+        def make_hashable(d):
+            return tuple(sorted((k, tuple(v) if isinstance(v, list) else v) for k, v in d.items()))
+
         for entry in json_data:
             if isinstance(entry, dict):
                 current_props.update(entry)
@@ -190,10 +193,9 @@ class JbeamParser:
                     print(f"Warning: Missing nodes accessed by element {entry[:len(entry)]}. Nodes possibly missing in jbeam file or limitation in the addon where some nodes reside in a base jbeam file")
                     continue
 
-                index = get_index([n.index for n in nodes]) if lookup else -1 # TODO get index
-                # struct_id = tuple(sorted(entry[:len(entry)]))  # Store as a tuple (order-independent)
-                struct_id = tuple(sorted(entry[:len(nodes)])) + (tuple(sorted(inline_props.items())) if inline_props else ())  # Include inline properties if they exist
-    
+                index = get_index([n.index for n in nodes]) if lookup else -1
+                struct_id = tuple(sorted(entry[:len(nodes)])) + (make_hashable(inline_props) if inline_props else ())
+
                 # Determine instance count
                 if struct_id not in seen_structures:
                     seen_structures[struct_id] = 1

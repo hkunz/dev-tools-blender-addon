@@ -90,7 +90,7 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
 
             s = re.sub(r'"\s*\{', '",{', s)  # s = s.replace('"{', '",{')  # math "{ and put comma ",{
             s = re.sub(r'\]\s*\{', '],{', s)  # s = s.replace(']{', '],{')  # math "]{ and put comma ],{
-            s = re.sub(r'(?<=[}\]0-9"e])\s*(?="[^"]+"\s*:)', r', ', s) # missing comma in ex: s = 'k""d and also k"  "d'
+            s = re.sub(r'(?<=[}\]0-9"e])\s*(?="[^"]+"\s*:)', r', ', s)  # missing comma in ex: s = 'k""d and also k"  "d'
 
             # Match only number-like segments (space-separated) NOT inside quotes or dicts
             s = re.sub(r'(\[\s*"[^"]*")(?=\s*-?\d)', r'\1,', s)  # Add comma between quoted string and number (but avoid dicts)

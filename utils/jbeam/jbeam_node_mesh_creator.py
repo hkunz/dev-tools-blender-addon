@@ -35,7 +35,8 @@ class JbeamNodeMeshCreator:
         """Add edges to the existing mesh from the beam list, ensuring duplicates are handled."""
         if not self.mesh:
             raise RuntimeError("Mesh object has not been created yet. Call 'create_object' first.")
-
+        if not beam_list:
+            return
         edges = []
         unique_beams = {}  # Dictionary to store unique beams and their assigned indices
         for i, beam in enumerate(beam_list):  # Enumerate to generate indices
@@ -69,7 +70,8 @@ class JbeamNodeMeshCreator:
         """Add faces to the existing mesh from the triangle list, ensuring duplicates are handled."""
         if not self.mesh:
             raise RuntimeError("Mesh object has not been created yet. Call 'create_object' first.")
-
+        if not tris_list:
+            return
         faces = []
         unique_faces = {}  # Dictionary to ensure unique faces and track indices
 

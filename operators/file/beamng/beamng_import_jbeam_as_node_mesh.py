@@ -166,7 +166,11 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
         if cancel:
             return {'CANCELLED'}
         nodes_list = self.parser.get_nodes_list()
-        mesh_name = f"{os.path.splitext(filename)[0]}_{self.parser.get_part_name()}" 
+        part_name = self.parser.get_part_name()
+        if not nodes_list:
+            Utils.log_and_report(f"No nodes list in part name '{part_name}'", self, "INFO")
+            return {'FINISHED'}
+        mesh_name = f"{os.path.splitext(filename)[0]}_{part_name}" 
         jmc = JbeamNodeMeshCreator()
         obj = jmc.create_object(mesh_name)
         jmc.add_vertices(nodes_list)

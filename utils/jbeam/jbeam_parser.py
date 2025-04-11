@@ -97,19 +97,17 @@ class JbeamParser:
         self.jbeam_data = json.loads(self.json_str)
 
         for part_name, part_data in self.jbeam_data.items(): 
-            if "nodes" in part_data: # TODO currently only handles 1 part for selected obj, the first partname in the list
-                self.part_name = part_name
-                break
-
-        json_nodes = part_data.get("nodes", [])
-        self.json_beams = part_data.get("beams", [])
-        self.json_triangles = part_data.get("triangles", [])
-        
-        try:
-            self.parse_ref_nodes()
-            self.nodes_list = self.parse_nodes(json_nodes)
-        except Exception as e:
-            Utils.log_and_raise(f"An error occurred while processing the JBeam nodes: {e}", RuntimeError, e)
+            self.part_name = part_name
+            if "nodes" not in part_data:
+                continue
+            json_nodes = part_data.get("nodes", [])
+            self.json_beams = part_data.get("beams", [])
+            self.json_triangles = part_data.get("triangles", [])
+            try:
+                self.parse_ref_nodes()
+                self.nodes_list = self.parse_nodes(json_nodes)
+            except Exception as e:
+                Utils.log_and_raise(f"An error occurred while processing the JBeam nodes: {e}", RuntimeError, e)
 
     def parse_data_for_jbeam_object_conversion(self, obj, get_vertex_indices=True):
         mesh = obj.data
@@ -171,6 +169,9 @@ class JbeamParser:
         def make_hashable(d):
             return tuple(sorted((k, tuple(v) if isinstance(v, list) else v) for k, v in d.items()))
 
+        if not json_data:
+            print(f"No {structure_type} to parse because json data doesn't have '{structure_type}' node in jbeam part '{self.part_name}'")
+            return
         for entry in json_data:
             if isinstance(entry, dict):
                 current_props.update(entry)

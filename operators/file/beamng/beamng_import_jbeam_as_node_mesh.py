@@ -27,16 +27,17 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
     )  # type: ignore
 
     def attempt_fix_jbeam_commas(self, content: str) -> str:
-
         lines = [line for line in content.splitlines() if line.strip() and not line.strip().startswith('//')]
         fixed_lines = []
 
-        def get_next_significant_line(i):
+        # Precompute next significant line for each line
+        next_lines = [''] * len(lines)
+        for i in range(len(lines) - 1):
             for j in range(i + 1, len(lines)):
                 next_line = lines[j].strip()
                 if next_line:
-                    return next_line
-            return ''
+                    next_lines[i] = next_line
+                    break
 
         for i, line in enumerate(lines):
             s = line.rstrip()
@@ -46,18 +47,18 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
                 fixed_lines.append(line)
                 continue
 
-            s = re.sub(r'\s*//.*$', '', s)  # remove comments after each code line
-            s = re.sub(r'(,\s*){2,}', ',', s)
+            s = re.sub(r'\s*//.*$', '', s)  # Remove comments after each code line
+            s = re.sub(r'(,\s*){2,}', ',', s)  # Replace multiple commas with a single comma
             s = s.rstrip()
 
-             # Check if this line should have a comma
+            # Check if this line should have a comma
             if not s.endswith((',', '{', '[', ':')):
-                next_line = lines[i + 1].strip() if i + 1 < len(lines) else '' # Check next line to avoid false positives at end of blocks
+                next_line = lines[i + 1].strip() if i + 1 < len(lines) else ''
                 if next_line and not next_line.startswith(('}', ']')):
                     s += ','
 
             # Remove comma if line ends with ',' but next significant line is a closing bracket
-            next_line = get_next_significant_line(i)
+            next_line = next_lines[i]
             if s.endswith(',') and next_line.startswith(('}', ']')):
                 s = s.rstrip(',')
 
@@ -72,8 +73,8 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
             s = re.sub(r'(-?\d+(?:\.\d+)?)(?=\s+-?\d)', r'\1, ', s)  # add missing comma between 2 numbers like 0.00, -1.45
             s = re.sub(r'(\d+\.\d+)\s*(\{)', r'\1,\2', s)  # add missing commas in ex: "value": 5.5 { should be "value": 5.5,{
             s = re.sub(r'(".*?")\s*(?=[\{\[])', r'\1, ', s)  # add missing commas in "key" { should be "key",{ or for "key" [ should be "key",[ # previously #s = re.sub(r'(".*?")\s*(\{)', r'\1,\2', s)
-            s = re.sub(r'(-?\d+(?:\.\d+)?)(\s+)(")', r'\1, \3', s) # s = re.sub(r'(\d(?:\.\d+)?)(?="\w)', r'\1,', s)  # fix missing commas in lines like ["b14l", 0.43, 0.56, 0.75,{"nodeWeight":5.5"group":""}], which has missing coma between 5.5"group"
-            s = re.sub(r'(\d(?:\.\d+)?)(?="\w)', r'\1,', s)  # fix missing commas in lines like ["b14l", 0.43, 0.56, 0.75,{"nodeWeight":5.5"group":""}], which has missing coma between 5.5"group"
+            s = re.sub(r'(-?\d+(?:\.\d+)?)(\s+)(")', r'\1, \3', s)  # fix missing commas in lines like {"nodeWeight":5.5"group":""}], which has missing coma between 5.5"group"
+            s = re.sub(r'(\d(?:\.\d+)?)(?="\w)', r'\1,', s)  #  Add commas between numbers and the next string in certain cases similar to missing commas in lines like {"nodeWeight":5.5"group":""}, which has missing comma between 5.5 and "group"
 
             fixed_lines.append(s)
 

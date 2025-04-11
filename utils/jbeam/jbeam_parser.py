@@ -162,9 +162,6 @@ class JbeamParser:
         def get_index(indices):
             return lookup.get(tuple(sorted(indices)))
 
-        def make_hashable(d):
-            return tuple(sorted((k, tuple(v) if isinstance(v, list) else v) for k, v in d.items()))
-
         if not json_data:
             print(f"No {structure_type} to parse because json data doesn't have '{structure_type}' node in jbeam part '{part.part_name}'")
             return
@@ -191,9 +188,9 @@ class JbeamParser:
                     continue
 
                 index = get_index([n.index for n in nodes]) if lookup else -1
-                struct_id = tuple(sorted(entry[:len(nodes)])) + (make_hashable(inline_props) if inline_props else ())
+                struct_id = tuple(sorted(entry[:len(nodes)]))
 
-                # Determine instance count
+                # Determine instance count # FIXME: Currently there is no support for this syntax of inline scope modifier: ["BACKl1","BACKl5", {"highlight":{"radius":0.2, "col":"#00ff00ff" }}], like that in "vehicles\large_crusher\large_crusher_boxes.jbeam"
                 if struct_id not in seen_structures:
                     seen_structures[struct_id] = 1
                 else:

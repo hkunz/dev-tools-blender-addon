@@ -11,6 +11,7 @@ BUGS:
 Ctrl+Z not working when saving jbeam props, even though we use bl_options UNDO
 
 Loading Jbeam Bugs:
+Double check import of large crusher boxes, seems to have mixed up node,beam,triangle names C:\Users\hkunz\Documents\BeamNG.drive\editable_vehicles\vehicles\large_crusher
 C:\Users\hkunz\Documents\BeamNG.drive\editable_vehicles\vehicles\cargotrailer\cargotrailer_woodplanks_short.jbeam > Claims to have missing node but actually is a limitation in addon, since the missing nodes are in another base jbeam file
 C:\Users\hkunz\Documents\BeamNG.drive\editable_vehicles\vehicles\cargotrailer\cargotrailer.jbeam > bpy.data.objects['cargotrailer_cargotrailer']: Index 1111 out of range in Object Mode (edges)
 

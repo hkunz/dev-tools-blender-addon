@@ -22,6 +22,8 @@ class JbeamNodeMeshConfigurator:
         ref_nodes = parser.get_ref_nodes(part_name)
         nodes = parser.get_nodes(part_name)
         nodes_list = parser.get_nodes_list(part_name)
+        if not nodes_list:
+            return
         beams_list = parser.get_beams_list(part_name)
         tris_list = parser.get_triangles_list(part_name)
         JbeamNodeMeshConfigurator.create_node_mesh_attributes(obj)
@@ -74,11 +76,13 @@ class JbeamNodeMeshConfigurator:
 
     @staticmethod
     def store_beam_props_in_edge_attributes(obj, beams):
-        JbeamNodeMeshConfigurator.store_props_in_attributes(obj, beams, "beams", "edge", j.set_beam_props)
+        if beams:
+            JbeamNodeMeshConfigurator.store_props_in_attributes(obj, beams, "beams", "edge", j.set_beam_props)
 
     @staticmethod
     def store_triangle_props_in_face_attributes(obj, triangles):
-        JbeamNodeMeshConfigurator.store_props_in_attributes(obj, triangles, "triangles", "face", j.set_triangle_props)
+        if triangles:
+            JbeamNodeMeshConfigurator.store_props_in_attributes(obj, triangles, "triangles", "face", j.set_triangle_props)
 
     @staticmethod
     def store_props_in_attributes(obj, parsed_data, data_type, element_type, set_props_function):

@@ -25,7 +25,8 @@ class ButtonItemSelector(bpy.types.PropertyGroup):
     # https://blender.stackexchange.com/questions/201360/how-to-control-spacing-alignment-of-label-horizontal-enum-property
 
     def get_selected_instances(self):
-        return [i+1 for i, item in enumerate(self.buttons) if item.name != ""]
+        selected = [i + 1 for i, item in enumerate(self.buttons) if item.name != ""]
+        return selected if selected else [1]
 
 class ToggleDynamicButtonOperator(bpy.types.Operator):
     """Toggle Buttons with Shift+Click for Multi-Select"""

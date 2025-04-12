@@ -124,7 +124,7 @@ class JbeamUtils:
 
             attr_data = attr.data
             if index >= len(attr_data):
-                print(f"{repr(obj)}: Index {index} out of range in Object Mode ({domain})")
+                print(f"Get:{repr(obj)}: Index {index} out of range in Object Mode ({domain})")
                 return None
 
             value = attr_data[index].value
@@ -404,7 +404,7 @@ class JbeamUtils:
             attr_data = mesh.attributes[attr_name].data
 
             if index >= len(attr_data):
-                print(f"{repr(obj)}: Index {index} out of range in Object Mode ({domain})")
+                print(f"Set:{repr(obj)}: Index {index} out of range in Object Mode ({domain})")
                 return False
 
             if isinstance(attr_value, str):  # For string values

@@ -126,6 +126,25 @@ class JbeamParser:
             self.jbeam_parts[part_name] = p
             print(f"Registered part {p} named '{part_name}' with slot type '{p.slot_type}'")
 
+    def _split_quads_into_triangles(self, quads_json: list) -> list:
+        result = []
+        for entry in quads_json:
+            if isinstance(entry, list) and len(entry) >= 4:
+                *nodes, last = entry
+                has_props = isinstance(last, dict)
+                quad = nodes if has_props else entry
+                props = last if has_props else {}
+
+                if len(quad) >= 4:
+                    n1, n2, n3, n4 = quad[:4]
+                    result.append([n1, n2, n3, props.copy()])
+                    result.append([n3, n4, n1, props.copy()])
+                else:
+                    print(f"WARNING: entry {entry} not a proper quad (ignored)")
+            else:
+                result.append(entry)  # Keep dicts and others as-is
+        return result
+
     def parse_data_for_jbeam_object_conversion(self, obj, part_name="", get_vertex_indices=True):
         mesh = obj.data
         part = self.get_jbeam_part(part_name)
@@ -135,6 +154,13 @@ class JbeamParser:
             part.nodes.update({node.id: node for node in part.nodes_list})
             part.beams_list = self._parse_beams(part.json_beams, mesh, part_name)
             part.triangles_list = self._parse_triangles(part.json_triangles, mesh, part_name)
+            if not part.json_quads:
+                return
+            print("Extend triangles list with quads")
+            tris_from_quads = self._split_quads_into_triangles(part.json_quads)
+            tris_from_quads_list = self._parse_triangles(tris_from_quads, mesh, part_name)
+            part.triangles_list = (part.triangles_list or []) + tris_from_quads_list
+
         except Exception as e:
             Utils.log_and_raise(f"An error occurred while processing the remaining JBeam data: {e}", RuntimeError, e)   
 
@@ -142,6 +168,7 @@ class JbeamParser:
         nodes = []
         seen_node_ids = set()  # Track node_id uniqueness
         current_props = {}
+        print("Parsing nodes ...")
 
         for entry in json_nodes:
             if isinstance(entry, dict):

@@ -224,7 +224,7 @@ class JbeamParser:
                     nodes = [part.nodes.get(n) for n in entry[:3]]  # Always expect 3 node IDs
                     inline_props = entry[3] if len(entry) > 3 and isinstance(entry[3], dict) else {}
                 if any(n is None for n in nodes):
-                    print(f"Warning: Missing nodes accessed by element {entry[:len(entry)]}. Nodes possibly missing in jbeam file or limitation in the addon where some nodes reside in a base jbeam file")
+                    print(f"Warning: Missing nodes accessed by element {entry[:len(entry)]}. Nodes possibly missing in jbeam file or limitation in the addon (still work-in-progress) where some nodes reside in a base jbeam file")
                     continue
 
                 index = get_index([n.index for n in nodes]) if lookup else -1

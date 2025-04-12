@@ -46,7 +46,7 @@ class JbeamNodeMeshConfigurator:
         for refnode_name, node_id in ref_nodes.items():
             node = nodes.get(node_id)
             if node is None:
-                print(f"Node ID '{node_id}' not found in 'jbeam_parser::nodes', might be in another part but that's an addon limitation. skipping.")
+                print(f"Node ID '{node_id}' not found in 'jbeam_parser::nodes', might be in another part but that's an addon limitation (work-in-progress). skipping.")
                 continue
             idx = node.index
             if idx < 0:

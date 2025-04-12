@@ -6,6 +6,7 @@ from bpy.types import Operator
 
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
 from dev_tools.utils.jbeam.jbeam_node_mesh_configurator import JbeamNodeMeshConfigurator  # type: ignore
+from dev_tools.utils.jbeam.jbeam_props_storage import JbeamPropsStorageManager  # type: ignore JbeamPropsStorageManager.get_instance().register_object(obj)
 from dev_tools.utils.jbeam.jbeam_parser import JbeamParser  # type: ignore
 
 class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
@@ -54,6 +55,7 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
         return {'FINISHED'}
 
     def setup_jbeam_blender_mesh(self, obj):
+        JbeamPropsStorageManager.get_instance().register_object(obj)
         j.setup_default_scope_modifiers_and_node_ids(obj)
         JbeamNodeMeshConfigurator.process_node_mesh_props(obj)
 

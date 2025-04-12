@@ -55,9 +55,10 @@ class Triangle(JBeamElement):
 
 class JbeamPart:
     def __init__(self):
-        self.part_name = None
+        self.part_name: str = None
         self.part_data = None
-        self.json_str = None
+        self.json_str: str = None
+        self.slot_type: str = None
         self.refnodes: dict[str, str] = {}
         self.nodes: dict[NodeID, Node] = {}
         self.nodes_list: list[Node] = []
@@ -69,6 +70,7 @@ class JbeamPart:
 class JbeamParser:
     def __init__(self):
         self.jbeam_data = None
+        self.jbeam_main_part = None
         self.jbeam_parts: dict[str, JbeamPart] = {}
 
     def load_jbeam(self, filepath):
@@ -101,17 +103,27 @@ class JbeamParser:
         self.jbeam_data = json.loads(self.json_str)
 
         for part_name, part_data in self.jbeam_data.items(): 
-            if "nodes" not in part_data:
-                continue
             p = JbeamPart()
-            json_nodes = part_data.get("nodes", [])
-            p.json_beams = part_data.get("beams", [])
-            p.json_triangles = part_data.get("triangles", [])
+
+            if "nodes" in part_data:
+                json_nodes = part_data.get("nodes")
+                p.nodes_list = self.parse_nodes(json_nodes)
+            if "beams" in part_data:
+                p.json_beams = part_data.get("beams")
+            if "triangles" in part_data:
+                p.json_triangles = part_data.get("triangles")
+            if "quads" in part_data:
+                p.json_triangles = part_data.get("quads")
+            if "slotType" in part_data:
+                p.slot_type = part_data.get("slotType")
+                if p.slot_type == "main":
+                    self.jbeam_main_part = p
             if "refNodes" in part_data:
                 headers, values = part_data["refNodes"]
                 p.refnodes = {h[:-1]: v for h, v in zip(headers[:], values[:])}  # Trim last char from keys
-            p.nodes_list = self.parse_nodes(json_nodes)
+
             self.jbeam_parts[part_name] = p
+            print(f"Registered part {p} named '{part_name}' with slot type '{p.slot_type}'")
 
     def parse_data_for_jbeam_object_conversion(self, obj, part_name="", get_vertex_indices=True):
         mesh = obj.data
@@ -267,6 +279,16 @@ class JbeamParser:
             return self.jbeam_parts.get(part_name)
         return next(iter(self.jbeam_parts.values()), None)
 
+    def get_jbeam_part_main(self):
+        return self.get_jbeam_part_by_slot_type("main")
+
+    def get_jbeam_part_by_slot_type(self, slot_type: str) -> JbeamPart | None:
+        for part in self.jbeam_parts.values():
+            if part.slot_type == slot_type:
+                return part
+        print(f"Parser: No part with slot_type '{slot_type}' found")
+        return None
+
     def get_json_str(self) -> str:
         return self.json_str
 
@@ -288,5 +310,10 @@ class JbeamParser:
 
     def get_ref_nodes(self, part_name: str = "") -> dict[str, str]:
         part = self.get_jbeam_part(part_name)
-        return part.refnodes if part else {}
-
+        if part and part.refnodes:
+            return part.refnodes
+        part = self.get_jbeam_part_main()
+        if part and part.refnodes:
+            return part.refnodes
+        print(f"[JBeam Parser] No refnodes found for part `{part_name}` or main part: '{part.part_name if part else 'None'}'")
+        return {}

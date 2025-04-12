@@ -16,7 +16,6 @@ class JbeamNodeMeshConfigurator:
 
     @staticmethod
     def process_node_mesh_props(obj, parser=None, part_name=""):
-        JbeamPropsStorageManager.get_instance().register_object(obj)
         j.set_jbeam_visuals(obj)
         j.add_gn_jbeam_visualizer_modifier(obj)
         if not parser:
@@ -26,6 +25,7 @@ class JbeamNodeMeshConfigurator:
         nodes_list = parser.get_nodes_list(part_name)
         if not nodes_list:
             return
+        JbeamPropsStorageManager.get_instance().register_object(obj)
         beams_list = parser.get_beams_list(part_name)
         tris_list = parser.get_triangles_list(part_name)
         JbeamNodeMeshConfigurator.create_node_mesh_attributes(obj)

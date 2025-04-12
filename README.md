@@ -4,6 +4,8 @@
 
 This is an unofficial Blender addon designed to simplify the process of editing JBeam files for BeamNG.drive. The addon provides an intuitive interface within Blender, enabling users to easily manipulate and visualize JBeam structures, such as nodes, beams, and triangles. In addition to basic editing, it also allows for the adjustment of scope modifiers related to each node, beam, and triangle. Whether you're working with vehicle mods or other custom JBeam configurations, this tool helps streamline the workflow by integrating JBeam editing directly within Blender's 3D environment.
 
+![image](https://github.com/user-attachments/assets/2f429210-28d3-4437-bde5-6b4ce8094ba8)
+
 **Features**:
 
 * Edit and manage JBeam files without leaving Blender.

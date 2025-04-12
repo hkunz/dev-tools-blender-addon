@@ -9,7 +9,7 @@ from typing import Union
 from dev_tools.ui.addon_preferences import MyAddonPreferences as a # type: ignore
 from dev_tools.utils.file_utils import FileUtils  # type: ignore
 from dev_tools.utils.object_utils import ObjectUtils  # type: ignore
-from dev_tools.utils.jbeam.jbeam_props_storage import JbeamPropsStorage  # type: ignore
+from dev_tools.utils.jbeam.jbeam_props_storage import JbeamPropsStorage, JbeamPropsStorageManager  # type: ignore
 
 class JbeamUtils:
 
@@ -248,32 +248,37 @@ class JbeamUtils:
     def get_node_props(obj, vertex_index, instance=1) -> str:
         domain = "verts"
         key = JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, domain)
-        return JbeamPropsStorage.get_instance().fetch_props(domain, key, instance)
+        storage_inst: JbeamPropsStorage = JbeamPropsStorageManager.get_instance().get_props_storage(obj)
+        return storage_inst.fetch_props(domain, key, instance)
 
     @staticmethod
     def get_beam_props(obj, edge_index, instance=1) -> str:
         domain = "edges"
         key = JbeamUtils.get_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, domain)
-        return JbeamPropsStorage.get_instance().fetch_props(domain, key, instance)
+        storage_inst: JbeamPropsStorage = JbeamPropsStorageManager.get_instance().get_props_storage(obj)
+        return storage_inst.fetch_props(domain, key, instance)
 
     @staticmethod
     def get_triangle_props(obj, face_index, instance=1) -> str:
         domain = "faces"
         key = JbeamUtils.get_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, domain)
-        return JbeamPropsStorage.get_instance().fetch_props(domain, key, instance)
+        storage_inst: JbeamPropsStorage = JbeamPropsStorageManager.get_instance().get_props_storage(obj)
+        return storage_inst.fetch_props(domain, key, instance)
 
     @staticmethod
     def set_node_props(obj, vertex_index, node_props: dict, instance=1):
         domain = "verts"
         key = JbeamUtils.get_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, domain)
-        key = JbeamPropsStorage.get_instance().store_props(domain, key, node_props, instance=instance)
+        storage_inst: JbeamPropsStorage = JbeamPropsStorageManager.get_instance().get_props_storage(obj)
+        key = storage_inst.store_props(domain, key, node_props, instance=instance)
         JbeamUtils.set_attribute_value(obj, vertex_index, JbeamUtils.ATTR_NODE_PROPS, key, domain=domain)
 
     @staticmethod
     def set_beam_props(obj, edge_index, beam_props: dict, instance: int=1):
         domain = "edges"
         key = JbeamUtils.get_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, domain)
-        key = JbeamPropsStorage.get_instance().store_props(domain, key, beam_props, instance=instance)
+        storage_inst: JbeamPropsStorage = JbeamPropsStorageManager.get_instance().get_props_storage(obj)
+        key = storage_inst.store_props(domain, key, beam_props, instance=instance)
         # Update the Blender attribute with the (possibly new) key
         JbeamUtils.set_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, key, domain=domain)
 
@@ -281,14 +286,16 @@ class JbeamUtils:
     def set_triangle_props(obj, face_index, triangle_props: dict, instance: int=1):
         domain = "faces"
         key = JbeamUtils.get_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, domain)
-        key = JbeamPropsStorage.get_instance().store_props(domain, key, triangle_props, instance=instance)
+        storage_inst: JbeamPropsStorage = JbeamPropsStorageManager.get_instance().get_props_storage(obj)
+        key = storage_inst.store_props(domain, key, triangle_props, instance=instance)
         JbeamUtils.set_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, key, domain=domain)
 
     @staticmethod
     def delete_props(obj, domain, index, attr_name, instance: int=None):
         key = JbeamUtils.get_attribute_value(obj, index, attr_name, domain)
         if key:
-            JbeamPropsStorage.get_instance().delete_props(domain, key, instance)
+            storage_inst: JbeamPropsStorage = JbeamPropsStorageManager.get_instance().get_props_storage(obj)
+            storage_inst.delete_props(domain, key, instance)
         else:
             print(f"Warning: key '{key}' does not exist")
         JbeamUtils.set_attribute_value(obj, index, attr_name, key, domain=domain)
@@ -309,13 +316,15 @@ class JbeamUtils:
     def get_total_beam_instances(obj, edge_index) -> str:
         domain = "edges"
         key = JbeamUtils.get_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, domain)
-        return JbeamPropsStorage.get_instance().get_total_instances(domain, key)
+        storage_inst: JbeamPropsStorage = JbeamPropsStorageManager.get_instance().get_props_storage(obj)
+        return storage_inst.get_total_instances(domain, key)
 
     @staticmethod
     def get_total_triangle_instances(obj, face_index) -> str:
         domain = "faces"
         key = JbeamUtils.get_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, domain)
-        return JbeamPropsStorage.get_instance().get_total_instances(domain, key)
+        storage_inst: JbeamPropsStorage = JbeamPropsStorageManager.get_instance().get_props_storage(obj)
+        return storage_inst.get_total_instances(domain, key)
 
     @staticmethod
     def validate_and_fix_storage_keys(obj, bm):
@@ -332,6 +341,7 @@ class JbeamUtils:
             'faces': (bm.faces, JbeamUtils.ATTR_TRIANGLE_PROPS),
         }
         modified = False
+        storage_inst: JbeamPropsStorage = JbeamPropsStorageManager.get_instance().get_props_storage(obj)
         for domain, (elements, attr_name) in domains.items():
             layer = elements.layers.string.get(attr_name)
             if not layer:
@@ -339,9 +349,8 @@ class JbeamUtils:
             for elem in elements:
                 key = elem[layer].decode('utf-8') if elem[layer] else None
                 if key and key in key_sets[domain]:
-                    storage = JbeamPropsStorage.get_instance()
-                    props = storage.fetch_props(domain, key)
-                    new_key = storage.store_props(domain, None, copy.deepcopy(props))
+                    props = storage_inst.fetch_props(domain, key)
+                    new_key = storage_inst.store_props(domain, None, copy.deepcopy(props))
                     elem[layer] = new_key.encode('utf-8')
                     print(f"Duplicate detected in domain '{domain}' for key '{key}'. Generated new key: '{new_key}'")
                     modified = True

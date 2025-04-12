@@ -1,6 +1,7 @@
 import bpy
 
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
+from dev_tools.utils.jbeam.jbeam_props_storage import JbeamPropsStorageManager  # type: ignore
 
 class JbeamNodeMesh:
     def __init__(self, name="NodeMesh"):
@@ -16,6 +17,7 @@ class JbeamNodeMesh:
     def setup(self):
         j.set_jbeam_visuals(self.obj)
         j.add_gn_jbeam_visualizer_modifier(self.obj)
+        JbeamPropsStorageManager.get_instance().register_object(self.obj)
 
     def get_obj(self):
         return self.obj

@@ -45,7 +45,7 @@ from dev_tools.utils.file_utils import FileUtils # type: ignore
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
 from dev_tools.utils.temp_file_manager import TempFileManager # type: ignore
 from dev_tools.utils.icons_manager import IconsManager # type: ignore
-from dev_tools.utils.jbeam.jbeam_props_storage import JbeamPropsStorage  # type: ignore
+from dev_tools.utils.jbeam.jbeam_props_storage import JbeamPropsStorage, JbeamPropsStorageManager  # type: ignore
 from dev_tools.utils.jbeam.jbeam_selection_tracker import JbeamSelectionTracker # type: ignore
 from dev_tools.translation.translations import register as register_translations, unregister as unregister_translations # type: ignore
 from dev_tools.ui.sidebar_menu import register as register_devtools_panel, unregister as unregister_devtools_panel # type: ignore
@@ -114,12 +114,12 @@ DEVTOOLS_CLASSES = [
 @persistent
 def save_pre_handler(dummy):
     print("DevTools::save_pre_handler ==============>")
-    JbeamPropsStorage.get_instance().save_jbeam_props_to_mesh()
+    JbeamPropsStorageManager.get_instance().save_all_jbeam_props_to_mesh()
 
 @persistent
 def on_load_post_handler(scene):
     print("DevTools::on_load_post_handler ==============>")
-    JbeamPropsStorage.get_instance().load_jbeam_props_from_mesh()
+    JbeamPropsStorageManager.get_instance().load_all_jbeam_props_from_mesh()
     JbeamSelectionTracker.get_instance().register()
 
 def menu_func_import(self, context):

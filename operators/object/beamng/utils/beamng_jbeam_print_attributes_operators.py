@@ -2,7 +2,7 @@ import bpy
 import json
 
 from dev_tools.utils.utils import Utils  # type: ignore
-from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j, JbeamPropsStorage  # type: ignore
+from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j, JbeamPropsStorage, JbeamPropsStorageManager  # type: ignore
 
 
 class OBJECT_OT_PrintJBeamPropsBase(bpy.types.Operator):
@@ -23,8 +23,9 @@ class OBJECT_OT_PrintJBeamPropsBase(bpy.types.Operator):
             if mode != context.object.mode:
                 bpy.ops.object.mode_set(mode=mode)
 
-        storage_inst = JbeamPropsStorage.get_instance()
+        props_manager = JbeamPropsStorageManager.get_instance()
         for obj in context.selected_objects:
+            storage_inst: JbeamPropsStorage = props_manager.get_props_storage(obj)
             if not j.is_node_mesh(obj):
                 self.report({'WARNING'}, f"Object '{obj.name}' ({self.attr_name}): Object is not a Node Mesh")
                 continue

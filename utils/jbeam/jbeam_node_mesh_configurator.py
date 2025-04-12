@@ -2,6 +2,7 @@ import bpy
 import json
 
 from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j, JbeamRefnodeUtils as jr  # type: ignore
+from dev_tools.utils.jbeam.jbeam_props_storage import JbeamPropsStorageManager  # type: ignore
 
 class JbeamNodeMeshConfigurator:
 
@@ -15,6 +16,7 @@ class JbeamNodeMeshConfigurator:
 
     @staticmethod
     def process_node_mesh_props(obj, parser=None, part_name=""):
+        JbeamPropsStorageManager.get_instance().register_object(obj)
         j.set_jbeam_visuals(obj)
         j.add_gn_jbeam_visualizer_modifier(obj)
         if not parser:

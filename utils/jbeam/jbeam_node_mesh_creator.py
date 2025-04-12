@@ -26,7 +26,6 @@ class JbeamNodeMeshCreator:
             vertices.append(node.position)
             self.vertex_indices[node.id] = i  # Map NodeID to its vertex index
 
-        # Update the mesh with vertices
         self.mesh.from_pydata(vertices, [], [])
         self.mesh.update()
         print(f"Added {len(vertices)} vertices to the mesh.")

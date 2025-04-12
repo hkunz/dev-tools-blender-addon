@@ -59,7 +59,7 @@ class MyAddonPreferences(bpy.types.AddonPreferences):
 
     show_import_warnings: bpy.props.BoolProperty(
         name="Show Import Warnings",
-        default=True,
+        default=False,
         update=lambda self, context: on_property_update(self, context, "import_warnings")
     ) # type: ignore
 

@@ -49,7 +49,7 @@ class PreJbeamStructureHelper:
         #return {i: json.dumps(j.get_node_props(self.obj, i)) for i in range(len(self.obj.data.vertices))}
         return {
             i: {
-                instance: json.dumps(j.get_node_props(self.obj, i, instance+1))
+                instance + 1: json.dumps(j.get_node_props(self.obj, i, instance+1))
                 for instance in range(j.get_total_node_instances(self.obj, i))  # Instances per vertex
             }
             for i in range(len(self.obj.data.vertices))  # Iterate through each vertex
@@ -61,7 +61,7 @@ class PreJbeamStructureHelper:
             i: {
                 instance: json.dumps(j.get_beam_props(self.obj, i, instance+1))
                 for instance in range(j.get_total_beam_instances(self.obj, i))  # Instances per edge
-            }
+            } or {1:{}}  # if no data, then use default 1st instance empty props
             for i in range(len(self.obj.data.edges))  # Iterate through each edge
         }
 
@@ -71,7 +71,7 @@ class PreJbeamStructureHelper:
             i: {
                 instance: json.dumps(j.get_triangle_props(self.obj, i, instance+1))
                 for instance in range(j.get_total_triangle_instances(self.obj, i))  # Instances per edge
-            }
+            } or {1:{}}  # if no data, then use default 1st instance empty props
             for i in range(len(self.obj.data.polygons))  # Iterate through each face
         }
 

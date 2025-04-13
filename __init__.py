@@ -52,6 +52,7 @@ from dev_tools.ui.sidebar_menu import register as register_devtools_panel, unreg
 from dev_tools.operators.common.operator_generic_popup import register as register_generic_popup, unregister as unregister_generic_popup # type: ignore
 from dev_tools.operators.file.beamng.beamng_export_node_mesh_to_jbeam import DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam # type: ignore
 from dev_tools.operators.file.beamng.beamng_import_jbeam_as_node_mesh import DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh  # type: ignore
+from dev_tools.operators.file.beamng.beamng_import_pc_file_as_node_meshes import DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportPcFileToNodeMeshes  # type: ignore
 
 from dev_tools.operators.object.armature.armature_create_bones_random_vertices_operator import OBJECT_OT_ArmatureCreateBonesRandomVertices # type: ignore
 from dev_tools.operators.object.armature.armature_create_bones_from_edge_selection_operator import OBJECT_OT_ArmatureCreateBonesFromEdgeSelection # type: ignore
@@ -80,6 +81,7 @@ DEVTOOLS_CLASSES = [
     OBJECT_OT_BeamngJbeamSelectRefNode,
     DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh,
     DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam,
+    DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportPcFileToNodeMeshes,
     OBJECT_OT_BeamngCreateEmptiesBase,
     OBJECT_OT_BeamngCreateMetaBallCloud,
     OBJECT_OT_BeamngParentToStart01Empty,

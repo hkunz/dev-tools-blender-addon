@@ -56,7 +56,7 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
             self.parser.load_jbeam_from_string(jbeam_str)
             print(f"Auto-Fix and Load Success {self.filename}")
         except Exception as e2:
-            error_text = JbeamFileHelper.extract_json_error_snippet(e2, json_str)
+            error_text = JbeamFileHelper.extract_json_error_snippet(e2, jbeam_str)
             Utils.log_and_report(f"Failed to fix and load file: '{e2}' Error Text: {error_text}\nWrote attempted fix file to: {file_path1}", self, "ERROR")
             return False
         try:

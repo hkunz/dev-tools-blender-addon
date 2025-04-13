@@ -235,7 +235,7 @@ class JbeamFileHelper:
         return cleaned_lines
     
     @staticmethod
-    def attempt_fix_jbeam_commas(content: str) -> str:
+    def attempt_fix_jbeam_commas(content: str, is_jbeam=True) -> str:
         lines = JbeamFileHelper.remove_block_and_line_comments(content)
         fixed_lines = []
 
@@ -271,19 +271,20 @@ class JbeamFileHelper:
             if s.endswith(',') and next_line.startswith(('}', ']')):
                 s = s.rstrip(',')
 
-            s = re.sub(r'"\s*\{', '",{', s)  # s = s.replace('"{', '",{')  # math "{ and put comma ",{
-            s = re.sub(r'\]\s*\{', '],{', s)  # s = s.replace(']{', '],{')  # math "]{ and put comma ],{
-            s = re.sub(r'(?<=[}\]0-9"e])\s*(?="[^"]+"\s*:)', r', ', s)  # missing comma in ex: s = 'k""d and also k"  "d'
+            if is_jbeam:
+                s = re.sub(r'"\s*\{', '",{', s)  # s = s.replace('"{', '",{')  # math "{ and put comma ",{
+                s = re.sub(r'\]\s*\{', '],{', s)  # s = s.replace(']{', '],{')  # math "]{ and put comma ],{
+                s = re.sub(r'(?<=[}\]0-9"e])\s*(?="[^"]+"\s*:)', r', ', s)  # missing comma in ex: s = 'k""d and also k"  "d'
 
-            # Match only number-like segments (space-separated) NOT inside quotes or dicts
-            s = re.sub(r'(\[\s*"[^"]*")(?=\s*-?\d)', r'\1,', s)  # Add comma between quoted string and number (but avoid dicts)
-            s = re.sub(r'(-?\d+(?:\.\d+)?)(\s+)(?=-?\d)', r'\1, ', s)  # Add commas between space-separated numbers
+                # Match only number-like segments (space-separated) NOT inside quotes or dicts
+                s = re.sub(r'(\[\s*"[^"]*")(?=\s*-?\d)', r'\1,', s)  # Add comma between quoted string and number (but avoid dicts)
+                s = re.sub(r'(-?\d+(?:\.\d+)?)(\s+)(?=-?\d)', r'\1, ', s)  # Add commas between space-separated numbers
 
-            s = re.sub(r'(-?\d+(?:\.\d+)?)(?=\s+-?\d)', r'\1, ', s)  # add missing comma between 2 numbers like 0.00, -1.45
-            s = re.sub(r'(\d+\.\d+)\s*(\{)', r'\1,\2', s)  # add missing commas in ex: "value": 5.5 { should be "value": 5.5,{
-            s = re.sub(r'(".*?")\s*(?=[\{\[])', r'\1, ', s)  # add missing commas in "key" { should be "key",{ or for "key" [ should be "key",[ # previously #s = re.sub(r'(".*?")\s*(\{)', r'\1,\2', s)
-            s = re.sub(r'(-?\d+(?:\.\d+)?)(\s+)(")', r'\1, \3', s)  # fix missing commas in lines like {"nodeWeight":5.5"group":""}], which has missing coma between 5.5"group"
-            s = re.sub(r'(\d(?:\.\d+)?)(?="\w)', r'\1,', s)  #  Add commas between numbers and the next string in certain cases similar to missing commas in lines like {"nodeWeight":5.5"group":""}, which has missing comma between 5.5 and "group"
+                s = re.sub(r'(-?\d+(?:\.\d+)?)(?=\s+-?\d)', r'\1, ', s)  # add missing comma between 2 numbers like 0.00, -1.45
+                s = re.sub(r'(\d+\.\d+)\s*(\{)', r'\1,\2', s)  # add missing commas in ex: "value": 5.5 { should be "value": 5.5,{
+                s = re.sub(r'(".*?")\s*(?=[\{\[])', r'\1, ', s)  # add missing commas in "key" { should be "key",{ or for "key" [ should be "key",[ # previously #s = re.sub(r'(".*?")\s*(\{)', r'\1,\2', s)
+                s = re.sub(r'(-?\d+(?:\.\d+)?)(\s+)(")', r'\1, \3', s)  # fix missing commas in lines like {"nodeWeight":5.5"group":""}], which has missing coma between 5.5"group"
+                s = re.sub(r'(\d(?:\.\d+)?)(?="\w)', r'\1,', s)  #  Add commas between numbers and the next string in certain cases similar to missing commas in lines like {"nodeWeight":5.5"group":""}, which has missing comma between 5.5 and "group"
 
             fixed_lines.append(s)
 

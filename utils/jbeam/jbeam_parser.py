@@ -263,6 +263,7 @@ class JbeamParser:
         lookup = {tuple(sorted(f.vertices)): f.index for f in mesh.polygons} if mesh else None
         return self._parse_elements(json_triangles, "triangles", part_name, lookup)
 
+    # deprecated function: used to get the vertex indices of a BeamNG's Jbeam Editor object mesh during conversion into this addon's Node Mesh
     def _retrieve_closest_vertex_indices(self, obj, part: JbeamPart, epsilon=0.0005):
         for node in part.nodes_list:
             closest_vert_idx = None

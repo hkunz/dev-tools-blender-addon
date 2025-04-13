@@ -38,14 +38,14 @@ class PreJbeamStructureHelper:
 
         props = None
         if self.domain == "vertex":
-            props = self.get_node_properties()
+            props = self._get_node_properties()
         elif self.domain == "edge":
-            props = self.get_beam_properties()
+            props = self._get_beam_properties()
         elif self.domain == "face":
-            props = self.get_triangle_properties()
+            props = self._get_triangle_properties()
         return props
 
-    def get_node_properties(self):
+    def _get_node_properties(self):
         #return {i: json.dumps(j.get_node_props(self.obj, i)) for i in range(len(self.obj.data.vertices))}
         return {
             i: {
@@ -55,7 +55,7 @@ class PreJbeamStructureHelper:
             for i in range(len(self.obj.data.vertices))  # Iterate through each vertex
         }
 
-    def get_beam_properties(self):
+    def _get_beam_properties(self):
         #return {i: json.dumps(j.get_beam_props(self.obj, i)) for i in range(len(self.obj.data.edges))}
         return {
             i: {
@@ -65,7 +65,7 @@ class PreJbeamStructureHelper:
             for i in range(len(self.obj.data.edges))  # Iterate through each edge
         }
 
-    def get_triangle_properties(self):
+    def _get_triangle_properties(self):
         #return {i: json.dumps(j.get_triangle_props(self.obj, i)) for i in range(len(self.obj.data.polygons))}
         return {
             i: {
@@ -75,7 +75,7 @@ class PreJbeamStructureHelper:
             for i in range(len(self.obj.data.polygons))  # Iterate through each face
         }
 
-    def parse_properties(self, properties_str):
+    def _parse_properties(self, properties_str):
         if not properties_str:
             return {}
 
@@ -93,7 +93,7 @@ class PreJbeamStructureHelper:
         data_dict = {}
         for v_idx, instances in props.items():
             for instance, prop in instances.items():  # Iterate over the instances in each vertex/edge/face
-                data_dict[f"{v_idx}_{instance+1}"] = self.parse_properties(prop)
+                data_dict[f"{v_idx}_{instance+1}"] = self._parse_properties(prop)
         unique_props = set()  # Collect all unique properties dynamically
         for node_info in data_dict.values():
             unique_props.update(node_info.keys())
@@ -152,29 +152,13 @@ class RedundancyReducerJbeamGenerator:
         self.domain = domain
     
     def reduce_redundancy(self):
-        hierarchy = []
-        property_dict = defaultdict(list)  # Initialize a defaultdict to keep track of nodes by each property
-
-        # Iterate over the data to group nodes by their properties
-        for item_idx, properties in self.data.items():
-            # Split item_idx into element_index and instance
-            idx_str, instance_str = item_idx.split("_")
-            idx = int(idx_str)
-            instance = int(instance_str)
-
-            for key, value in properties.items():
-                if isinstance(value, list):
-                    value = tuple(value)  # Use tuple for immutable storage in dictionary
-                property_dict[(key, value)].append((idx, instance))  # Store the pair (element_index, instance)
-
         # Start from the bottom of the hierarchy (reverse the order of nodes)
-        list_item = list(self.data.keys())
-        list_item.reverse()
+        hierarchy = []
+        items: list[str] = list(self.data.keys())  # list of element format {index}_{instance} ex: ['0_1', '1_1', '2_1', '3_1', '4_1', '5_1', '6_1', '7_1']
+        items.reverse()
+        curr_props = defaultdict(lambda: None)  # Track the current hierarchy for each property to avoid redundancy
 
-        # Track the current hierarchy for each property to avoid redundancy
-        curr_props = defaultdict(lambda: None)  # Default value for missing properties is None
-
-        for item_idx in list_item:  # node = vertex index
+        for item_idx in items:
             properties = self.data[item_idx]
 
             for key, value in properties.items():
@@ -221,5 +205,3 @@ class RedundancyReducerJbeamGenerator:
             hierarchy.append({key: DEFAULT_SCOPE_MODIFIER_VALUES.get(key, '')})
 
         return hierarchy
-
-

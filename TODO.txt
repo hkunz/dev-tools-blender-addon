@@ -12,6 +12,7 @@ Ctrl+Z not working when saving jbeam props, even though we use bl_options UNDO
 
 Loading Jbeam Bugs:
 C:\Users\hkunz\Documents\BeamNG.drive\editable_vehicles\vehicles\cargotrailer\cargotrailer_woodplanks_short.jbeam > Claims to have missing node but actually is a limitation in addon, since the missing nodes are in another base jbeam file
+C:\Users\hkunz\Documents\BeamNG.drive\editable_vehicles\vehicles\log_trailer\log_trailer_taillights.jbeam
 
 Export Bugs:
 When exporting jbeam without any scope modifiers, the beams and triangles dont get exported
@@ -20,4 +21,4 @@ Cannot export/overwrite a file's nodes/beams/triangles if there are syntax probl
 TASKS:
 
 Load Quads https://documentation.beamng.com/modding/vehicle/sections/triangles/quads/ A quad with nodes n1, n2, n3, n4 will create 2 triangles with the nodes n1, n2, n3 and n3, n4, n1 respectively. Even though there is no technical disadvantage of using them, they make it somewhat harder to understand the Jbeam files
-Quads used by C:\Users\hkunz\Documents\BeamNG.drive\editable_vehicles\vehicles\blockwall\blockwall.jbeam
+Quads used by C:\Users\hkunz\Documents\BeamNG.drive\editable_vehicles\vehicles\blockwall\blockwall.jbeam    

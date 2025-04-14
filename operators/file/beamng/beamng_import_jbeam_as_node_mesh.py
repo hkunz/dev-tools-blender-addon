@@ -34,7 +34,8 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
             jbeam_json: JbeamJson = loader.load()
             self.parser = JbeamParser()
             self.parser.parse(jbeam_json)
-        except Exception:
+        except Exception as e:
+            print(e)
             return {'CANCELLED'}
 
         self.create_node_meshes()

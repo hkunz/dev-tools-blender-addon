@@ -1,7 +1,12 @@
 import mathutils
 
 from dev_tools.utils.utils import Utils  # type: ignore
-from dev_tools.utils.jbeam.jbeam_models import JbeamJson, JbeamPart, NodeID, Node, Beam, Triangle  # type: ignore
+from dev_tools.utils.jbeam.jbeam_models import JbeamJson, JbeamPart, NodeID, Node, Beam, Triangle, JbeamPartSectionName, JbeamPartData  # type: ignore
+
+#JbeamPartName = str
+#JbeamPartSectionName = str  # section names include: information, slotType, sounds, flexbodies, nodes, beams, triangles, quads, etc
+#JbeamPartData = dict[JbeamPartSectionName, Any]
+#JbeamJson = dict[JbeamPartName, JbeamPartData]
 
 class JbeamParser:
     def __init__(self):
@@ -9,18 +14,14 @@ class JbeamParser:
         self.jbeam_parts: dict[str, JbeamPart] = {}
 
     def parse(self, jbeam_json: JbeamJson):
-        for part_name, part_data in jbeam_json.items(): 
+        for part_name, part_data in jbeam_json.items():
             p = JbeamPart()
-
-            if "nodes" in part_data:
-                json_nodes = part_data.get("nodes")
-                p.nodes_list = self._parse_nodes(json_nodes)
-            if "beams" in part_data:
-                p.json_beams = part_data.get("beams")
-            if "triangles" in part_data:
-                p.json_triangles = part_data.get("triangles")
-            if "quads" in part_data:
-                p.json_quads = part_data.get("quads")
+            nodes: list = self._get_section("nodes", part_data)
+            if nodes:
+                p.nodes_list = self._parse_nodes(nodes)
+            p.json_beams = self._get_section("beams", part_data)
+            p.json_triangles = self._get_section("triangles", part_data)
+            p.json_quads = self._get_section("quads", part_data)
             if "slotType" in part_data:
                 p.slot_type = part_data.get("slotType")
                 if p.slot_type == "main":
@@ -31,6 +32,9 @@ class JbeamParser:
 
             self.jbeam_parts[part_name] = p
             print(f"Registered part {p} named '{part_name}' with slot type '{p.slot_type}'")
+
+    def _get_section(self, section_name: JbeamPartSectionName, part_data: JbeamPartData) -> list:
+        return part_data.get(section_name, [])
 
     def _split_quads_into_triangles(self, quads_json: list) -> list:
         result = []
@@ -70,7 +74,7 @@ class JbeamParser:
         except Exception as e:
             Utils.log_and_raise(f"An error occurred while processing the remaining JBeam data: {e}", RuntimeError, e)   
 
-    def _parse_nodes(self, json_nodes):
+    def _parse_nodes(self, json_nodes: list):
         nodes = []
         seen_node_ids = set()  # Track node_id uniqueness
         current_props = {}

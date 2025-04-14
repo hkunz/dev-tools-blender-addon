@@ -5,6 +5,10 @@ JbeamJsonSectionName = str  # section names include: information, slotType, soun
 JbeamJsonSection = dict[JbeamJsonSectionName, Any]
 JbeamJson = dict[JbeamPartName, JbeamJsonSection]
 
+JbeamPartName = str
+JbeamPartSectionName = str  # section names include: information, slotType, sounds, flexbodies, nodes, beams, triangles, quads, etc
+JbeamPartData = dict[JbeamPartSectionName, Any]
+JbeamJson = dict[JbeamPartName, JbeamPartData]
 
 class JbeamLoadItem:
     def __init__(self, file_path: str, part_name: str="", slot_type: str=""):

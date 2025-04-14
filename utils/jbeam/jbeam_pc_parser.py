@@ -5,6 +5,7 @@ import re
 from dev_tools.ui.addon_preferences import MyAddonPreferences as a # type: ignore
 from dev_tools.utils.json_cleanup import json_cleanup  # type: ignore
 from dev_tools.utils.utils import Utils  # type: ignore
+from dev_tools.utils.jbeam.jbeam_models import JbeamLoadItem  # type: ignore
 
 
 class PartConfig:
@@ -18,16 +19,6 @@ class PartConfig:
 
     def __repr__(self):
         return f"{self.__class__.__name__}(format={self.format}, model={self.model}, parts={self.part_names})"
-
-
-class JbeamLoadItem:
-    def __init__(self, part_name: str, slot_type: str, file_path: str):
-        self.part_name = part_name
-        self.slot_type = slot_type
-        self.file_path = file_path
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(part_name={self.part_name}, slot_type={self.slot_type}, file_path={self.file_path})"
 
 class JbeamPcParser:
 
@@ -113,6 +104,6 @@ class JbeamPcParser:
                     if found_slot_type != slot_type or curr_part_name != part_name:
                         continue
                     print(f"===> Part Match 🎯 on line {i+1}: '{curr_part_name}' matches slotType '{found_slot_type}'")
-                    load_items.append(JbeamLoadItem(curr_part_name, found_slot_type, file_path))
+                    load_items.append(JbeamLoadItem(file_path, curr_part_name, found_slot_type))
                     curr_part_name = None  # reset after checking
         return load_items

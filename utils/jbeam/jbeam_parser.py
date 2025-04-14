@@ -2,8 +2,6 @@ import mathutils
 import json
 import os
 
-from typing import Optional, Iterable, Tuple
-
 from dev_tools.utils.utils import Utils  # type: ignore
 from dev_tools.utils.json_cleanup import json_cleanup  # type: ignore
 

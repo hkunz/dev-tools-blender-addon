@@ -1,5 +1,6 @@
 import os
 
+from dev_tools.utils.jbeam.jbeam_models import JbeamLoadItem  # type: ignore
 from dev_tools.utils.jbeam.jbeam_parser import JbeamParser  # type: ignore
 from dev_tools.utils.temp_file_manager import TempFileManager  # type: ignore
 from dev_tools.utils.jbeam.jbeam_helper import JbeamFileHelper  # type: ignore
@@ -9,15 +10,15 @@ from dev_tools.utils.utils import Utils  # type: ignore
 
 class JbeamFileLoader:
 
-    def __init__(self, filepath: str, operator=None):
-        self.filepath = filepath
-        self.filename = os.path.basename(self.filepath)
+    def __init__(self, load_item:JbeamLoadItem, operator=None):
+        self.load_item  = load_item
+        self.filename = os.path.basename(load_item.file_path)
         self.operator = operator
         self.parser = JbeamParser()
 
     def load(self) -> JbeamParser:
         try:
-            path = self.filepath
+            path = self.load_item.file_path
             print(f"🔄 Loading {path}")
             self.parser.load_jbeam(path)
         except Exception as e:
@@ -47,7 +48,7 @@ class JbeamFileLoader:
             return True
         except Exception as e:
             error_text = JbeamFileHelper.extract_json_error_snippet(e, jbeam_str)
-            Utils.log_and_report(f"🚫 Failed to fix and load file: {self.filepath} with error '{e}'. Error Text: {error_text}", self.operator, "ERROR")
+            Utils.log_and_report(f"🚫 Failed to fix and load file: {self.load_item.file_path} with error '{e}'. Error Text: {error_text}", self.operator, "ERROR")
         return False
 
     def _write_debug_files(self, jbeam_str: str):

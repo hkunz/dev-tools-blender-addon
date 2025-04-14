@@ -7,6 +7,7 @@ from bpy_extras.io_utils import ImportHelper
 
 from dev_tools.ui.addon_preferences import MyAddonPreferences as a # type: ignore
 from dev_tools.utils.utils import Utils  # type: ignore
+from dev_tools.utils.jbeam.jbeam_models import JbeamLoadItem  # type: ignore
 from dev_tools.utils.jbeam.jbeam_pc_parser import JbeamPcParser  # type: ignore
 from dev_tools.utils.jbeam.jbeam_pc_file_loader import JbeamPcFileLoader  # type: ignore
 from dev_tools.utils.jbeam.jbeam_node_mesh_creator import JbeamNodeMeshCreator  # type: ignore
@@ -43,7 +44,7 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportPcFileToNodeMeshes(Operator, Im
         return {'FINISHED'}
 
     def _load_jbeam_files(self):
-        load_items = self.parser.get_jbeam_load_items()
+        load_items: list[JbeamLoadItem] = self.parser.get_jbeam_load_items()
         print("Load items:", load_items)
 
     def _create_node_meshes(self):

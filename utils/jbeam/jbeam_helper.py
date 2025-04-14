@@ -236,6 +236,7 @@ class JbeamFileHelper:
     
     @staticmethod
     def attempt_fix_jbeam_commas(content: str, is_jbeam=True) -> str:
+        print("🛠️  Fixing .jbeam syntax errors in content...")
         lines = JbeamFileHelper.remove_block_and_line_comments(content)
         fixed_lines = []
 
@@ -253,7 +254,7 @@ class JbeamFileHelper:
             while s.lstrip().startswith(","):
                 s = s.lstrip().lstrip(",")
 
-            s = re.sub(r'\s*//.*$', '', s)  # Remove comments after each code line
+            s = re.sub(r'(?<!:)\s*//.*$', '', s) # s = re.sub(r'\s*//.*$', '', s)  # Remove comments after each code line but not urls like local://local/vehicles/common/analogOdo.html
             s = re.sub(r'(,\s*){2,}', ',', s)  # Replace multiple commas with a single comma
             s = s.rstrip()
 
@@ -272,8 +273,9 @@ class JbeamFileHelper:
                 s = s.rstrip(',')
 
             if is_jbeam:
-                s = re.sub(r'"\s*\{', '",{', s)  # s = s.replace('"{', '",{')  # math "{ and put comma ",{
-                s = re.sub(r'\]\s*\{', '],{', s)  # s = s.replace(']{', '],{')  # math "]{ and put comma ],{
+                s = re.sub(r'"\s*\{', '",{', s)  # s = s.replace('"{', '",{')  # match "{ and put comma ",{
+                s = re.sub(r'\]\s*\{', '],{', s)  # s = s.replace(']{', '],{')  # match "]{ and put comma ],{
+                s = re.sub(r'\}\s*\{', '}, {', s)  # math } { and put comma },{
                 s = re.sub(r'(?<=[}\]0-9"e])\s*(?="[^"]+"\s*:)', r', ', s)  # missing comma in ex: s = 'k""d and also k"  "d'
 
                 # Match only number-like segments (space-separated) NOT inside quotes or dicts

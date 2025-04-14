@@ -1,5 +1,4 @@
 import bpy
-import re
 import os
 
 from bpy.types import Operator
@@ -26,17 +25,15 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
 
     def execute(self, context):
         bpy.ops.object.select_all(action='DESELECT')
-        self.jbeam_path = self.filepath
-        self.filename = os.path.basename(self.jbeam_path)
-
-        loader = JbeamFileLoader(self.filename, operator=self)
+        self.filename = os.path.basename(self.filepath)
+        loader = JbeamFileLoader(self.filepath, operator=self)
         try:
-            self.parser = loader.load(self.jbeam_path)
+            self.parser = loader.load()
         except Exception:
             return {'CANCELLED'}
 
         self.create_node_meshes()
-        Utils.log_and_report(f"Import Success: {self.filename}", self, "INFO")
+        Utils.log_and_report(f"✅ Import Success: {self.filename}", self, "INFO")
         return {'FINISHED'}
 
     def create_node_meshes(self):

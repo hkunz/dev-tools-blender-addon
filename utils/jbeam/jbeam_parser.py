@@ -140,7 +140,7 @@ class JbeamParser:
                     result.append([n1, n2, n3, props.copy()])
                     result.append([n3, n4, n1, props.copy()])
                 else:
-                    print(f"WARNING: entry {entry} not a proper quad (ignored)")
+                    print(f"⚠️ WARNING: entry {entry} not a proper quad (ignored)")
             else:
                 result.append(entry)  # Keep dicts and others as-is
         return result

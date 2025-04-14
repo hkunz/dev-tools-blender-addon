@@ -16,6 +16,7 @@ class JbeamPcFileLoader:
 
     def try_load(self):
         try:
+            print(f"\n🔄 Loading {self.filepath}")
             self.parser.load_pc_file(self.filepath)
             return True
         except Exception as e:
@@ -52,7 +53,7 @@ class JbeamPcFileLoader:
         json_str = self.parser.get_json_str()
         error_text = JbeamFileHelper.extract_json_error_snippet(e, json_str)
         show_warning = a.is_addon_option_enabled("show_import_warnings")
-        print(f"Initial load failed with '{e}' Error Text: {error_text}. Trying to auto-fix commas and attempt reload...")
+        print(f"⚠️  Init load failed with '{e}' Error Text: {error_text}. Trying to auto-fix commas and attempt reload...")
         with open(self.filepath, "r", encoding="utf-8") as f:
             raw = f.read()
         return JbeamFileHelper.attempt_fix_jbeam_commas(raw, False)

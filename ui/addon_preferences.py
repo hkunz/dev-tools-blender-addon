@@ -119,6 +119,10 @@ class MyAddonPreferences(bpy.types.AddonPreferences):
     def is_addon_visualizer_enabled():
         return MyAddonPreferences.is_addon_option_enabled("use_vizualizer")
 
+    @staticmethod
+    def is_warnings_enabled():
+        return MyAddonPreferences.is_addon_option_enabled("show_import_warnings")
+
 def register() -> None:
     bpy.utils.register_class(MyAddonPreferences)
     bpy.utils.register_class(PREFERENCES_OT_CheckCheckboxesOperator)

@@ -8,7 +8,8 @@ from bpy_extras.io_utils import ImportHelper
 from dev_tools.ui.addon_preferences import MyAddonPreferences as a # type: ignore
 from dev_tools.utils.utils import Utils  # type: ignore
 from dev_tools.utils.jbeam.jbeam_loader import JbeamFileLoader  # type: ignore
-from dev_tools.utils.jbeam.jbeam_models import JbeamLoadItem  # type: ignore
+from dev_tools.utils.jbeam.jbeam_parser import JbeamParser  # type: ignore
+from dev_tools.utils.jbeam.jbeam_models import JbeamLoadItem, JbeamJson  # type: ignore
 from dev_tools.utils.jbeam.jbeam_node_mesh_creator import JbeamNodeMeshCreator  # type: ignore
 from dev_tools.utils.jbeam.jbeam_node_mesh_configurator import JbeamNodeMeshConfigurator  # type: ignore
 
@@ -30,7 +31,9 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
         load_item = JbeamLoadItem(self.filepath)
         loader = JbeamFileLoader(load_item, operator=self)
         try:
-            self.parser = loader.load()
+            jbeam_json: JbeamJson = loader.load()
+            self.parser = JbeamParser()
+            self.parser.parse(jbeam_json)
         except Exception:
             return {'CANCELLED'}
 

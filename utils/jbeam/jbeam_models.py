@@ -1,3 +1,11 @@
+from typing import Any
+
+JbeamPartName = str
+JbeamJsonSectionName = str  # section names include: information, slotType, sounds, flexbodies, nodes, beams, triangles, quads, etc
+JbeamJsonSection = dict[JbeamJsonSectionName, Any]
+JbeamJson = dict[JbeamPartName, JbeamJsonSection]
+
+
 class JbeamLoadItem:
     def __init__(self, file_path: str, part_name: str="", slot_type: str=""):
         self.part_name = part_name

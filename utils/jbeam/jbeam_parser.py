@@ -1,6 +1,7 @@
 import mathutils
 
 from dev_tools.utils.utils import Utils  # type: ignore
+from dev_tools.utils.jbeam.jbeam_models import JbeamJson  # type: ignore
 
 NodeID = str
 ElementID = str  # can be NodeID or beam id (i.e. [node_1|node_2]) or triangle id (i.e. [node_1|node_2|node_3])
@@ -67,7 +68,7 @@ class JbeamParser:
         self.jbeam_main_part = None
         self.jbeam_parts: dict[str, JbeamPart] = {}
 
-    def parse(self, jbeam_json):
+    def parse(self, jbeam_json: JbeamJson):
         for part_name, part_data in jbeam_json.items(): 
             p = JbeamPart()
 

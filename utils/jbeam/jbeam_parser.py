@@ -1,9 +1,6 @@
 import mathutils
-import json
-import os
 
 from dev_tools.utils.utils import Utils  # type: ignore
-from dev_tools.utils.json_cleanup import json_cleanup  # type: ignore
 
 NodeID = str
 ElementID = str  # can be NodeID or beam id (i.e. [node_1|node_2]) or triangle id (i.e. [node_1|node_2|node_3])
@@ -55,7 +52,6 @@ class JbeamPart:
     def __init__(self):
         self.part_name: str = None
         self.part_data = None
-        self.json_str: str = None
         self.slot_type: str = None
         self.refnodes: dict[str, str] = {}
         self.nodes: dict[NodeID, Node] = {}
@@ -68,40 +64,11 @@ class JbeamPart:
 
 class JbeamParser:
     def __init__(self):
-        self.jbeam_data = None
         self.jbeam_main_part = None
         self.jbeam_parts: dict[str, JbeamPart] = {}
 
-    def load_jbeam(self, filepath):
-        """Load and clean JBeam file from path."""
-        if not os.path.exists(filepath):
-            raise FileNotFoundError(f"File not found: {filepath}")
-        try:
-            print("=============================================================")
-            print("Loading:", filepath)
-            with open(filepath, "r", encoding="utf-8") as f:
-                raw_text = f.read()
-            print("Raw data loaded. Start parsing...")
-            self._load_jbeam_data(raw_text)
-        except FileNotFoundError as e:
-            Utils.log_and_raise(f"File not found: {filepath}", FileNotFoundError, e)
-        except json.JSONDecodeError as e:
-            Utils.log_and_raise(f"Error decoding JSON from JBeam file: {e}", ValueError, e)
-
-    def load_jbeam_from_string(self, text):
-        """Load and clean JBeam file from string."""
-        try:
-            self._load_jbeam_data(text)
-            print("Loaded jbeam successfully from fixed string")
-        except json.JSONDecodeError as e:
-            Utils.log_and_raise(f"Error decoding JSON from JBeam string: {e}", ValueError, e)
-
-    def _load_jbeam_data(self, text):
-        """Internal shared logic to clean and parse JBeam text."""
-        self.json_str = json_cleanup(text)
-        self.jbeam_data = json.loads(self.json_str)
-
-        for part_name, part_data in self.jbeam_data.items(): 
+    def parse(self, jbeam_json):
+        for part_name, part_data in jbeam_json.items(): 
             p = JbeamPart()
 
             if "nodes" in part_data:
@@ -315,9 +282,6 @@ class JbeamParser:
                 return part
         print(f"Parser: No part with slot_type '{slot_type}' found")
         return None
-
-    def get_json_str(self) -> str:
-        return self.json_str
 
     def get_nodes(self, part_name: str = "") -> dict[NodeID, Node]:
         part = self.get_jbeam_part(part_name)

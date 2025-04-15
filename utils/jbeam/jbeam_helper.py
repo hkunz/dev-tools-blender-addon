@@ -206,8 +206,10 @@ class RedundancyReducerJbeamGenerator:
 
         return hierarchy
 
+
 class JbeamFileHelper:
-    
+
+    # 🔧 Precompiled regex patterns (your patterns, unchanged)
     RE_LINE_COMMENT = re.compile(r'(?<!:)\s*//.*$')
     RE_DOUBLE_COMMAS = re.compile(r'(,\s*){2,}')
     RE_QUOTED_DICT = re.compile(r'"\s*\{')
@@ -227,6 +229,7 @@ class JbeamFileHelper:
         print("🩹 Fixing syntax errors in content...")
         lines = JbeamFileHelper.remove_block_and_line_comments(content)
         fixed_lines = []
+        total_fixes = 0
 
         # Precompute next significant line for each line
         next_lines = [''] * len(lines)
@@ -242,40 +245,49 @@ class JbeamFileHelper:
             while s.lstrip().startswith(","):
                 s = s.lstrip().lstrip(",")
 
-            s = JbeamFileHelper.RE_LINE_COMMENT.sub('', s)
-            s = JbeamFileHelper.RE_DOUBLE_COMMAS.sub(',', s)
-            s = s.rstrip()
+            s, fixes = JbeamFileHelper.RE_LINE_COMMENT.subn('', s)
+            total_fixes += fixes
 
+            s, fixes = JbeamFileHelper.RE_DOUBLE_COMMAS.subn(',', s)
+            total_fixes += fixes
+
+            s = s.rstrip()
             if not s.strip():
                 continue
 
-            # Check if this line should have a comma
             if not s.endswith((',', '{', '[', ':')):
                 next_line = lines[i + 1].strip() if i + 1 < len(lines) else ''
                 if next_line and not next_line.startswith(('}', ']')):
-                    s += ','
+                    s += ','  # add missing comma
+                    total_fixes += 1
 
-            # Remove comma if line ends with ',' but next significant line is a closing bracket
             next_line = next_lines[i]
             if s.endswith(',') and next_line.startswith(('}', ']')):
                 s = s.rstrip(',')
+                total_fixes += 1
 
             if is_jbeam:
-                s = JbeamFileHelper.RE_QUOTED_DICT.sub('",{', s)
-                s = JbeamFileHelper.RE_ARRAY_DICT.sub('],{', s)
-                s = JbeamFileHelper.RE_CURLY_DICT.sub('}, {', s)
-                s = JbeamFileHelper.RE_MISSING_COMMA_BEFORE_KEY.sub(', ', s)
-                s = JbeamFileHelper.RE_QUOTED_STRING_NUMBER.sub(r'\1,', s)
-                s = JbeamFileHelper.RE_SPACE_SEPARATED_NUMBERS_1.sub(r'\1, ', s)
-                s = JbeamFileHelper.RE_SPACE_SEPARATED_NUMBERS_2.sub(r'\1, ', s)
-                s = JbeamFileHelper.RE_FLOAT_DICT.sub(r'\1,\2', s)
-                s = JbeamFileHelper.RE_KEY_DICT.sub(r'\1, ', s)
-                s = JbeamFileHelper.RE_NUMBER_STRING.sub(r'\1, \3', s)
-                s = JbeamFileHelper.RE_NUMBER_STRING_NO_SPACE.sub(r'\1,', s)
+                for regex, replacement in [
+                    (JbeamFileHelper.RE_QUOTED_DICT, '",{'),
+                    (JbeamFileHelper.RE_ARRAY_DICT, '],{'),
+                    (JbeamFileHelper.RE_CURLY_DICT, '}, {'),
+                    (JbeamFileHelper.RE_MISSING_COMMA_BEFORE_KEY, ', '),
+                    (JbeamFileHelper.RE_QUOTED_STRING_NUMBER, r'\1,'),
+                    (JbeamFileHelper.RE_SPACE_SEPARATED_NUMBERS_1, r'\1, '),
+                    (JbeamFileHelper.RE_SPACE_SEPARATED_NUMBERS_2, r'\1, '),
+                    (JbeamFileHelper.RE_FLOAT_DICT, r'\1,\2'),
+                    (JbeamFileHelper.RE_KEY_DICT, r'\1, '),
+                    (JbeamFileHelper.RE_NUMBER_STRING, r'\1, \3'),
+                    (JbeamFileHelper.RE_NUMBER_STRING_NO_SPACE, r'\1,'),
+                ]:
+                    s, fixes = regex.subn(replacement, s)
+                    total_fixes += fixes
 
             fixed_lines.append(s)
 
+        print(f"✅ Total fixes made: {total_fixes}")
         return '\n'.join(fixed_lines)
+
 
     @staticmethod
     def extract_json_error_snippet(e, raw_content):

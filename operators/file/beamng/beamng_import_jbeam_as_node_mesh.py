@@ -30,16 +30,16 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
         self.filename = os.path.basename(self.filepath)
         load_item = JbeamLoadItem(self.filepath)
         loader = JbeamFileLoader(load_item, operator=self)
-        try:
-            jbeam_json: JbeamJson = loader.load()
-            self.parser = JbeamParser()
-            self.parser.parse(jbeam_json)
-        except Exception as e:
-            print(e)
+        jbeam_json: JbeamJson = loader.load()
+
+        if not jbeam_json:
             return {'CANCELLED'}
 
+        self.parser = JbeamParser()
+        self.parser.parse(jbeam_json)
+
         self.create_node_meshes()
-        Utils.log_and_report(f"✅ Import Success: {self.filename}", self, "INFO")
+        Utils.log_and_report(f"✅ Import Success: {self.filepath}", self, "INFO")
         return {'FINISHED'}
 
     def create_node_meshes(self):

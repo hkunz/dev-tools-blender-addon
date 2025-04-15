@@ -78,7 +78,7 @@ class JbeamParser:
         nodes = []
         seen_node_ids = set()  # Track node_id uniqueness
         current_props = {}
-        print("Parsing nodes ...")
+        print("🧩 Parsing Nodes ⚪ ...")
 
         for entry in json_nodes:
             if isinstance(entry, dict):
@@ -134,7 +134,7 @@ class JbeamParser:
                     nodes = [part.nodes.get(n) for n in entry[:3]]  # Always expect 3 node IDs
                     inline_props = entry[3] if len(entry) > 3 and isinstance(entry[3], dict) else {}
                 if any(n is None for n in nodes):
-                    print(f"Warning: Missing nodes accessed by element {entry[:len(entry)]}. Nodes possibly missing in jbeam file or limitation in the addon (still work-in-progress) where some nodes reside in a base jbeam file")
+                    print(f"⚠️  Missing nodes accessed by element {entry[:len(entry)]}. Nodes possibly missing in jbeam file or limitation in the addon (still work-in-progress) where some nodes reside in a base jbeam file")
                     continue
 
                 index = get_index([n.index for n in nodes]) if lookup else -1
@@ -164,12 +164,12 @@ class JbeamParser:
         return structures
 
     def _parse_beams(self, json_beams, mesh=None, part_name=""):
-        print("Parsing beams ...")
+        print("🧩 Parsing Beams 🟰  ...")
         lookup = {tuple(sorted((e.vertices[0], e.vertices[1]))): e.index for e in mesh.edges} if mesh else None
         return self._parse_elements(json_beams, "beams", part_name, lookup)
 
     def _parse_triangles(self, json_triangles, mesh=None, part_name=""):
-        print("Parsing triangles ...")
+        print("🧩 Parsing triangles 📐")
         lookup = {tuple(sorted(f.vertices)): f.index for f in mesh.polygons} if mesh else None
         return self._parse_elements(json_triangles, "triangles", part_name, lookup)
 

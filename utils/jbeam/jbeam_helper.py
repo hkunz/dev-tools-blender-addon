@@ -236,7 +236,7 @@ class JbeamFileHelper:
     
     @staticmethod
     def attempt_fix_jbeam_commas(content: str, is_jbeam=True) -> str:
-        print("🛠️  Fixing syntax errors in content...")
+        print("🩹 Fixing syntax errors in content...")
         lines = JbeamFileHelper.remove_block_and_line_comments(content)
         fixed_lines = []
 

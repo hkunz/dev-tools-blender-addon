@@ -9,6 +9,7 @@ from dev_tools.utils.jbeam.jbeam_models import PcJson  # type: ignore
 
 class JbeamPcFileLoader(JbeamLoaderBase):
     def _load_main(self, filepath: str) -> PcJson:
+        self.is_jbeam = False
         with open(filepath, "r", encoding="utf-8") as f:
             raw_json = json.load(f)
         self.json_str = json.dumps(raw_json)
@@ -27,7 +28,3 @@ class JbeamPcFileLoader(JbeamLoaderBase):
             return data
         else:
             return data[next(iter(data))]
-
-    def _attempt_fix(self, path: str, error: Exception) -> str:
-        raw = super()._attempt_fix(path, error)
-        return JbeamFileHelper.attempt_fix_jbeam_commas(raw, False)

@@ -17,6 +17,7 @@ class JbeamLoaderBase(ABC):
         self.directory = os.path.dirname(filepath)
         self.filename = os.path.basename(filepath)
         self.operator = operator
+        self.is_jbeam = True
         self.json_str = ""
 
     def load(self):
@@ -47,7 +48,8 @@ class JbeamLoaderBase(ABC):
         print(f"Fix attempt due to: {error}. Snippet: {snippet}")
         with open(path, "r", encoding="utf-8") as f:
             raw = f.read()
-        return raw  # override method and return JbeamFileHelper.attempt_fix_jbeam_commas(raw, False)
+        fixed = JbeamFileHelper.attempt_fix_jbeam_commas(raw, self.is_jbeam)
+        return fixed
 
     def _write_debug_files(self, fixed_str: str):
         try:
@@ -88,7 +90,3 @@ class JbeamFileLoader(JbeamLoaderBase):
         self.json_str = json_cleanup(text)
         print("✅ Loaded .jbeam from fixed string")
         return json.loads(self.json_str)
-
-    def _attempt_fix(self, path: str, error: Exception) -> str:
-        raw = super()._attempt_fix(path, error)
-        return JbeamFileHelper.attempt_fix_jbeam_commas(raw)

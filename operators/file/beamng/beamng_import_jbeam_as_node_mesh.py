@@ -43,12 +43,13 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
         return {'FINISHED'}
 
     def create_node_meshes(self):
+        print(f"\n🧊 Creating Node Meshes from jbeam part names in: {self.filepath}")
         jbeam_parts: dict[str, object] = self.parser.get_jbeam_parts()
         for part_name, part in jbeam_parts.items():
             self.create_node_mesh(part_name)
 
     def create_node_mesh(self, part_name):
-        print(f"Creating Part with name '{part_name}' ================================>")
+        print(f"🧰 {self.filename}: '{part_name}' > assembling part structure ...")
         nodes_list = self.parser.get_nodes_list(part_name)
         if not nodes_list:
             Utils.log_and_report(f"No nodes list in part name '{part_name}'", self, "INFO")

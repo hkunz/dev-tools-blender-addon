@@ -11,7 +11,7 @@ class JbeamNodeMeshCreator:
         self.mesh = bpy.data.meshes.new(mesh_name)
         self.obj = bpy.data.objects.new(mesh_name, self.mesh)
         bpy.context.collection.objects.link(self.obj)
-        print(f"Empty mesh object '{mesh_name}' created.")
+        print(f"Created container mesh object '{mesh_name}'.")
         return self.obj
 
     def add_vertices(self, nodes_list: list[object]):

@@ -297,7 +297,7 @@ class JbeamUtils:
             storage_inst: JbeamPropsStorage = JbeamPropsStorageManager.get_instance().get_props_storage(obj)
             storage_inst.delete_props(domain, key, instance)
         else:
-            print(f"Warning: key '{key}' does not exist")
+            print(f"⚠️  Warning: key '{key}' does not exist")
         JbeamUtils.set_attribute_value(obj, index, attr_name, key, domain=domain)
 
     @staticmethod
@@ -329,7 +329,7 @@ class JbeamUtils:
     @staticmethod
     def validate_and_fix_storage_keys(obj, bm):
         """Ensures unique keys in attributes and fixes duplicates for each domain separately."""
-        print("Running integrity check: Ensuring JBeam data storage consistency...")
+        print("🔎 Running integrity check: Ensuring JBeam data storage consistency...")
         key_sets = {
             'verts': set(),
             'edges': set(),
@@ -352,7 +352,7 @@ class JbeamUtils:
                     props = storage_inst.fetch_props(domain, key)
                     new_key = storage_inst.store_props(domain, None, copy.deepcopy(props))
                     elem[layer] = new_key.encode('utf-8')
-                    print(f"Duplicate detected in domain '{domain}' for key '{key}'. Generated new key: '{new_key}'")
+                    print(f"🔧 Duplicate detected in domain '{domain}' for key '{key}'. Generated new key: '{new_key}'")
                     modified = True
                 else:
                     key_sets[domain].add(key)

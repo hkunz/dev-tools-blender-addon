@@ -91,7 +91,7 @@ class JbeamParser:
                     continue  # Skip header row
 
                 if node_id in seen_node_ids:
-                    print(f"Warning: Duplicate node_id found and skipped: {node_id}")
+                    print(f"⚠️  Warning: Duplicate node '{node_id}' found and skipped ...")
                     continue  # Skip duplicate node_id
 
                 seen_node_ids.add(node_id)

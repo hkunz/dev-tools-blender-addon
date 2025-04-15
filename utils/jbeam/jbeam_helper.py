@@ -207,6 +207,96 @@ class RedundancyReducerJbeamGenerator:
         return hierarchy
 
 class JbeamFileHelper:
+    
+    RE_LINE_COMMENT = re.compile(r'(?<!:)\s*//.*$')
+    RE_DOUBLE_COMMAS = re.compile(r'(,\s*){2,}')
+    RE_QUOTED_DICT = re.compile(r'"\s*\{')
+    RE_ARRAY_DICT = re.compile(r'\]\s*\{')
+    RE_CURLY_DICT = re.compile(r'\}\s*\{')
+    RE_MISSING_COMMA_BEFORE_KEY = re.compile(r'(?<=[}\]0-9"e])\s*(?="[^"]+"\s*:)')
+    RE_QUOTED_STRING_NUMBER = re.compile(r'(\[\s*"[^"]*")(?=\s*-?\d)')
+    RE_SPACE_SEPARATED_NUMBERS_1 = re.compile(r'(-?\d+(?:\.\d+)?)(\s+)(?=-?\d)')
+    RE_SPACE_SEPARATED_NUMBERS_2 = re.compile(r'(-?\d+(?:\.\d+)?)(?=\s+-?\d)')
+    RE_FLOAT_DICT = re.compile(r'(\d+\.\d+)\s*(\{)')
+    RE_KEY_DICT = re.compile(r'(".*?")\s*(?=[\{\[])')
+    RE_NUMBER_STRING = re.compile(r'(-?\d+(?:\.\d+)?)(\s+)(")')
+    RE_NUMBER_STRING_NO_SPACE = re.compile(r'(\d(?:\.\d+)?)(?="\w)')
+
+    @staticmethod
+    def attempt_fix_jbeam_commas(content: str, is_jbeam=True) -> str:
+        print("🩹 Fixing syntax errors in content...")
+        lines = JbeamFileHelper.remove_block_and_line_comments(content)
+        fixed_lines = []
+
+        # Precompute next significant line for each line
+        next_lines = [''] * len(lines)
+        for i in range(len(lines) - 1):
+            for j in range(i + 1, len(lines)):
+                next_line = lines[j].strip()
+                if next_line:
+                    next_lines[i] = next_line
+                    break
+
+        for i, line in enumerate(lines):
+            s = line.rstrip()
+            while s.lstrip().startswith(","):
+                s = s.lstrip().lstrip(",")
+
+            s = JbeamFileHelper.RE_LINE_COMMENT.sub('', s)
+            s = JbeamFileHelper.RE_DOUBLE_COMMAS.sub(',', s)
+            s = s.rstrip()
+
+            if not s.strip():
+                continue
+
+            # Check if this line should have a comma
+            if not s.endswith((',', '{', '[', ':')):
+                next_line = lines[i + 1].strip() if i + 1 < len(lines) else ''
+                if next_line and not next_line.startswith(('}', ']')):
+                    s += ','
+
+            # Remove comma if line ends with ',' but next significant line is a closing bracket
+            next_line = next_lines[i]
+            if s.endswith(',') and next_line.startswith(('}', ']')):
+                s = s.rstrip(',')
+
+            if is_jbeam:
+                s = JbeamFileHelper.RE_QUOTED_DICT.sub('",{', s)
+                s = JbeamFileHelper.RE_ARRAY_DICT.sub('],{', s)
+                s = JbeamFileHelper.RE_CURLY_DICT.sub('}, {', s)
+                s = JbeamFileHelper.RE_MISSING_COMMA_BEFORE_KEY.sub(', ', s)
+                s = JbeamFileHelper.RE_QUOTED_STRING_NUMBER.sub(r'\1,', s)
+                s = JbeamFileHelper.RE_SPACE_SEPARATED_NUMBERS_1.sub(r'\1, ', s)
+                s = JbeamFileHelper.RE_SPACE_SEPARATED_NUMBERS_2.sub(r'\1, ', s)
+                s = JbeamFileHelper.RE_FLOAT_DICT.sub(r'\1,\2', s)
+                s = JbeamFileHelper.RE_KEY_DICT.sub(r'\1, ', s)
+                s = JbeamFileHelper.RE_NUMBER_STRING.sub(r'\1, \3', s)
+                s = JbeamFileHelper.RE_NUMBER_STRING_NO_SPACE.sub(r'\1,', s)
+
+            fixed_lines.append(s)
+
+        return '\n'.join(fixed_lines)
+
+    @staticmethod
+    def extract_json_error_snippet(e, raw_content):
+        error_message = str(e)
+        if 'Expecting' in error_message:
+            parts = error_message.split('char')
+            char_position = parts[1].strip().split()[0]  # Get the first part before any non-numeric characters
+            char_position = ''.join(filter(str.isdigit, char_position))  # Remove non-numeric characters (like ')') from char_position
+            try:
+                char_position = int(char_position)  # Convert char_position to an integer
+            except ValueError:
+                print("❌ Failed to extract valid character position.")
+                return
+
+            snippet_start = max(0, char_position - 40)  # 40 characters before the error
+            snippet_end = min(len(raw_content), char_position + 40)  # 40 characters after
+            error_text = raw_content[snippet_start:snippet_end]
+            print(f"Error position: {char_position}")
+            return error_text
+        return
+    
     @staticmethod
     def remove_block_and_line_comments(content: str) -> list[str]:
         lines = content.splitlines()
@@ -233,80 +323,3 @@ class JbeamFileHelper:
                         cleaned_lines.append(after_comment)
                 # else: still inside a block comment, skip
         return cleaned_lines
-    
-    @staticmethod
-    def attempt_fix_jbeam_commas(content: str, is_jbeam=True) -> str:
-        print("🩹 Fixing syntax errors in content...")
-        lines = JbeamFileHelper.remove_block_and_line_comments(content)
-        fixed_lines = []
-
-        # Precompute next significant line for each line
-        next_lines = [''] * len(lines)
-        for i in range(len(lines) - 1):
-            for j in range(i + 1, len(lines)):
-                next_line = lines[j].strip()
-                if next_line:
-                    next_lines[i] = next_line
-                    break
-
-        for i, line in enumerate(lines):
-            s = line.rstrip()
-            while s.lstrip().startswith(","):
-                s = s.lstrip().lstrip(",")
-
-            s = re.sub(r'(?<!:)\s*//.*$', '', s) # s = re.sub(r'\s*//.*$', '', s)  # Remove comments after each code line but not urls like local://local/vehicles/common/analogOdo.html
-            s = re.sub(r'(,\s*){2,}', ',', s)  # Replace multiple commas with a single comma
-            s = s.rstrip()
-
-            if not s.strip():
-                continue
-
-            # Check if this line should have a comma
-            if not s.endswith((',', '{', '[', ':')):
-                next_line = lines[i + 1].strip() if i + 1 < len(lines) else ''
-                if next_line and not next_line.startswith(('}', ']')):
-                    s += ','
-
-            # Remove comma if line ends with ',' but next significant line is a closing bracket
-            next_line = next_lines[i]
-            if s.endswith(',') and next_line.startswith(('}', ']')):
-                s = s.rstrip(',')
-
-            if is_jbeam:
-                s = re.sub(r'"\s*\{', '",{', s)  # s = s.replace('"{', '",{')  # match "{ and put comma ",{
-                s = re.sub(r'\]\s*\{', '],{', s)  # s = s.replace(']{', '],{')  # match "]{ and put comma ],{
-                s = re.sub(r'\}\s*\{', '}, {', s)  # math } { and put comma },{
-                s = re.sub(r'(?<=[}\]0-9"e])\s*(?="[^"]+"\s*:)', r', ', s)  # missing comma in ex: s = 'k""d and also k"  "d'
-
-                # Match only number-like segments (space-separated) NOT inside quotes or dicts
-                s = re.sub(r'(\[\s*"[^"]*")(?=\s*-?\d)', r'\1,', s)  # Add comma between quoted string and number (but avoid dicts)
-                s = re.sub(r'(-?\d+(?:\.\d+)?)(\s+)(?=-?\d)', r'\1, ', s)  # Add commas between space-separated numbers
-
-                s = re.sub(r'(-?\d+(?:\.\d+)?)(?=\s+-?\d)', r'\1, ', s)  # add missing comma between 2 numbers like 0.00, -1.45
-                s = re.sub(r'(\d+\.\d+)\s*(\{)', r'\1,\2', s)  # add missing commas in ex: "value": 5.5 { should be "value": 5.5,{
-                s = re.sub(r'(".*?")\s*(?=[\{\[])', r'\1, ', s)  # add missing commas in "key" { should be "key",{ or for "key" [ should be "key",[ # previously #s = re.sub(r'(".*?")\s*(\{)', r'\1,\2', s)
-                s = re.sub(r'(-?\d+(?:\.\d+)?)(\s+)(")', r'\1, \3', s)  # fix missing commas in lines like {"nodeWeight":5.5"group":""}], which has missing coma between 5.5"group"
-                s = re.sub(r'(\d(?:\.\d+)?)(?="\w)', r'\1,', s)  #  Add commas between numbers and the next string in certain cases similar to missing commas in lines like {"nodeWeight":5.5"group":""}, which has missing comma between 5.5 and "group"
-
-            fixed_lines.append(s)
-
-        return '\n'.join(fixed_lines)
-
-    def extract_json_error_snippet(e, raw_content):
-        error_message = str(e)
-        if 'Expecting' in error_message:
-            parts = error_message.split('char')
-            char_position = parts[1].strip().split()[0]  # Get the first part before any non-numeric characters
-            char_position = ''.join(filter(str.isdigit, char_position))  # Remove non-numeric characters (like ')') from char_position
-            try:
-                char_position = int(char_position)  # Convert char_position to an integer
-            except ValueError:
-                print("❌ Failed to extract valid character position.")
-                return
-
-            snippet_start = max(0, char_position - 40)  # 40 characters before the error
-            snippet_end = min(len(raw_content), char_position + 40)  # 40 characters after
-            error_text = raw_content[snippet_start:snippet_end]
-            print(f"Error position: {char_position}")
-            return error_text
-        return

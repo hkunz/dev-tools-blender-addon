@@ -1,7 +1,7 @@
 import mathutils
 
 from dev_tools.utils.utils import Utils  # type: ignore
-from dev_tools.utils.jbeam.jbeam_models import JbeamJson, JbeamPart, NodeID, Node, Beam, Triangle, JbeamPartSectionName, JbeamPartData  # type: ignore
+from dev_tools.utils.jbeam.jbeam_models import JbeamJson, JbeamPart, NodeID, Node, Beam, Triangle, JbeamPartName, JbeamPartSectionName, JbeamPartData  # type: ignore
 
 #JbeamPartName = str
 #JbeamPartSectionName = str  # section names include: information, slotType, sounds, flexbodies, nodes, beams, triangles, quads, etc
@@ -11,7 +11,7 @@ from dev_tools.utils.jbeam.jbeam_models import JbeamJson, JbeamPart, NodeID, Nod
 class JbeamParser:
     def __init__(self):
         self.jbeam_main_part = None
-        self.jbeam_parts: dict[str, JbeamPart] = {}
+        self.jbeam_parts: dict[JbeamPartName, JbeamPart] = {}
 
     def parse(self, jbeam_json: JbeamJson):
         for part_name, part_data in jbeam_json.items():

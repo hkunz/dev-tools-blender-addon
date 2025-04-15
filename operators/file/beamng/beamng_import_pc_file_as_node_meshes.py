@@ -28,17 +28,19 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportPcFileToNodeMeshes(Operator, Im
 
     def execute(self, context):
         bpy.ops.object.select_all(action='DESELECT')
-        self.pc_path = self.filepath
-        self.filename = os.path.basename(self.pc_path)
-        self.parser = JbeamPcParser()
+        #self.pc_path = self.filepath
+        self.filename = os.path.basename(self.filepath)
+        loader = JbeamPcFileLoader(self.filepath, self)
+        data = loader.load()
 
-        loader = JbeamPcFileLoader(self.pc_path, self.filename, self.parser)
-        success = loader.try_load()
-
-        if not success:
+        if not data:
             Utils.log_and_report(f"🚫 Failed to parse PC file {self.filepath}", self, "ERROR")
             return {'CANCELLED'}
 
+        self.directory = os.path.dirname(self.filepath)
+        self.parser = JbeamPcParser(self.directory)
+        self.parser.parse(data)
+        
         Utils.log_and_report(f"✅ Part Configurator Load Success: {self.filepath}", self, "INFO")
         self._load_jbeam_files()
         return {'FINISHED'}

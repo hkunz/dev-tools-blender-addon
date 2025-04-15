@@ -3,7 +3,6 @@ import os
 import re
 
 from dev_tools.ui.addon_preferences import MyAddonPreferences as a # type: ignore
-from dev_tools.utils.json_cleanup import json_cleanup  # type: ignore
 from dev_tools.utils.utils import Utils  # type: ignore
 from dev_tools.utils.jbeam.jbeam_models import JbeamLoadItem  # type: ignore
 
@@ -22,56 +21,26 @@ class PartConfig:
 
 class JbeamPcParser:
 
-    def __init__(self):
+    def __init__(self, directory):
         self.pc = PartConfig()
-        self.json_str: str = ""
+        self.directory = directory
 
-    def load_pc_file(self, filepath):
-        import os
-
-        self.pc.filepath = filepath
-        self.pc.directory = os.path.dirname(filepath)
+    def parse(self, data):
         try:
-            with open(filepath, 'r', encoding='utf-8') as f:
-                raw_json = json.load(f)
-                self.json_str = raw_json
-
-            if "format" in raw_json and "model" in raw_json and "parts" in raw_json:
-                data = raw_json
-            else:
-                main_key = next(iter(raw_json))
-                data = raw_json[main_key]
-
-            self._on_pc_data_load(data)
-
+            self.pc.directory = self.directory
+            self.pc.format = data.get("format")
+            self.pc.model = data.get("model")
+            self.pc.part_names = data.get("parts", {})
         except Exception as e:
-            print(f"Failed to parse PC file {filepath}: {e}")
-            Utils.log_and_raise(f"Failed to parse PC file {filepath}: {e}", ValueError, e)
-
-    def _on_pc_data_load(self, data):
-        self.pc.format = data.get("format")
-        self.pc.model = data.get("model")
-        self.pc.part_names = data.get("parts", {})
+            Utils.log_and_report(f"Failed to parse PC file {self.pc.filepath}: {e}", None, "ERROR")
+            return
 
         print(f"Loaded part configurator: {self.pc} ")
         print(f"Part Configurator Loaded from File: {self.pc.filepath}")
 
-    def load_pc_file_from_string(self, text):
-        """Load and clean JBeam file from string."""
-        try:
-            self.json_str = json_cleanup(text)
-            data = json.loads(self.json_str)
-            self._on_pc_data_load(data)
-            print("Loaded pc file data successfully from fixed string")
-        except json.JSONDecodeError as e:
-            Utils.log_and_raise(f"Error decoding JSON from JBeam string: {e}", ValueError, e)
-
-    def get_json_str(self) -> str:
-        return self.json_str
-
     def get_jbeam_load_items(self):
         load_items: list[JbeamLoadItem] = []
-        d = self.pc.directory
+        d = self.directory
         print(f"🔎📁 Search .jbeam files in directory {d} for jbeam part names {self.pc.part_names}")
         part_name_pattern = r'^\s*"([^"]+)"\s*:\s*'  # r'^\s*"([^"]+)"\s*:\s*{'
 

@@ -16,6 +16,7 @@ class JbeamParser:
     def parse(self, jbeam_json: JbeamJson):
         for part_name, part_data in jbeam_json.items():
             p = JbeamPart()
+            p.part_name = part_name
             nodes: list = self._get_section("nodes", part_data)
             if nodes:
                 p.nodes_list = self._parse_nodes(nodes)
@@ -31,7 +32,7 @@ class JbeamParser:
                 p.refnodes = {h[:-1]: v for h, v in zip(headers[:], values[:])}  # Trim last char from keys
 
             self.jbeam_parts[part_name] = p
-            print(f"Registered part {p} named '{part_name}' with slot type '{p.slot_type}'")
+            print(f"Registered part {p}")
 
     def _get_section(self, section_name: JbeamPartSectionName, part_data: JbeamPartData) -> list:
         return part_data.get(section_name, [])
@@ -50,7 +51,7 @@ class JbeamParser:
                     result.append([n1, n2, n3, props.copy()])
                     result.append([n3, n4, n1, props.copy()])
                 else:
-                    print(f"⚠️ WARNING: entry {entry} not a proper quad (ignored)")
+                    print(f"⚠️  WARNING: entry {entry} not a proper quad (ignored)")
             else:
                 result.append(entry)  # Keep dicts and others as-is
         return result

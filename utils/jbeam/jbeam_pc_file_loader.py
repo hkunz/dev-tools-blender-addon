@@ -1,15 +1,14 @@
 import json
 
 from dev_tools.ui.addon_preferences import MyAddonPreferences as a # type: ignore
-from dev_tools.utils.temp_file_manager import TempFileManager  # type: ignore
 from dev_tools.utils.json_cleanup import json_cleanup  # type: ignore
-from dev_tools.utils.utils import Utils  # type: ignore
 from dev_tools.utils.jbeam.jbeam_helper import JbeamFileHelper  # type: ignore
 from dev_tools.utils.jbeam.jbeam_loader import JbeamLoaderBase  # type: ignore
+from dev_tools.utils.jbeam.jbeam_models import PcJson  # type: ignore
 
 
 class JbeamPcFileLoader(JbeamLoaderBase):
-    def _load_main(self, filepath: str) -> dict:
+    def _load_main(self, filepath: str) -> PcJson:
         with open(filepath, "r", encoding="utf-8") as f:
             raw_json = json.load(f)
         self.json_str = json.dumps(raw_json)
@@ -20,7 +19,7 @@ class JbeamPcFileLoader(JbeamLoaderBase):
             main_key = next(iter(raw_json))
             return raw_json[main_key]
 
-    def _load_from_string(self, text: str) -> dict:
+    def _load_from_string(self, text: str) -> PcJson:
         self.json_str = json_cleanup(text)
         data = json.loads(self.json_str)
         print("✅ Loaded .pc file data from fixed string")

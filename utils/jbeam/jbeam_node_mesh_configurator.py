@@ -54,7 +54,7 @@ class JbeamNodeMeshConfigurator:
                 print(f"❌ Error: No vertex index assigned to '{node.id}'")
                 continue
             jr.set_refnode_id(obj, idx, ref_label.value)
-            print(f"Assigned Node '{node.id}' with index {idx} as ref node '{refnode_name}({ref_label.value})'.")
+            print(f"🎯 Assigned Node '{node.id}' with index {idx} as ref node '{refnode_name}({ref_label.value})'.")
 
     @staticmethod
     def create_node_mesh_attributes(obj):
@@ -91,6 +91,6 @@ class JbeamNodeMeshConfigurator:
     def store_props_in_attributes(obj, parsed_data, data_type, element_type, set_props_function):
         for item in parsed_data:
             if item.index < 0 or item.index is None:
-                print(f"Error: Structure missing: No {element_type} found for {data_type[:-1]} {item.id}")
+                print(f"❌ Error: Structure missing: No {element_type} found for {data_type[:-1]} {item.id}")
                 continue
             set_props_function(obj, item.index, item.props, item.instance)

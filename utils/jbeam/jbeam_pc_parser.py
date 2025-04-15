@@ -4,7 +4,7 @@ import re
 
 from dev_tools.ui.addon_preferences import MyAddonPreferences as a # type: ignore
 from dev_tools.utils.utils import Utils  # type: ignore
-from dev_tools.utils.jbeam.jbeam_models import JbeamLoadItem  # type: ignore
+from dev_tools.utils.jbeam.jbeam_models import JbeamLoadItem, PcJson, PcJbeamParts  # type: ignore
 
 
 class PartConfig:
@@ -14,7 +14,7 @@ class PartConfig:
         self.filepath: str = ""
         self.format: int = 0
         self.model: str = ""
-        self.part_names: dict[str, str] = {}  # key (slot type) value (part name)
+        self.part_names: PcJbeamParts = {}  # key (slot type) value (part name)
 
     def __repr__(self):
         return f"{self.__class__.__name__}(format={self.format}, model={self.model}, parts={self.part_names})"
@@ -25,7 +25,7 @@ class JbeamPcParser:
         self.pc = PartConfig()
         self.directory = directory
 
-    def parse(self, data):
+    def parse(self, data: PcJson):
         try:
             self.pc.directory = self.directory
             self.pc.format = data.get("format")

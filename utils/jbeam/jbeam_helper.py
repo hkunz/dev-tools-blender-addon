@@ -34,7 +34,7 @@ class PreJbeamStructureHelper:
 
     def get_props(self):
         if not j.has_jbeam_node_id(self.obj):
-            raise ValueError(f"ERROR: Required attributes \"jbeam_node_id\" and \"jbeam_node_props\" not found in mesh")
+            raise ValueError(f"❌ ERROR: Required attributes \"jbeam_node_id\" and \"jbeam_node_props\" not found in mesh")
 
         props = None
         if self.domain == "vertex":
@@ -301,7 +301,7 @@ class JbeamFileHelper:
             try:
                 char_position = int(char_position)  # Convert char_position to an integer
             except ValueError:
-                print("Failed to extract valid character position.")
+                print("❌ Failed to extract valid character position.")
                 return
 
             snippet_start = max(0, char_position - 40)  # 40 characters before the error

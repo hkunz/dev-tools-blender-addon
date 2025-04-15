@@ -332,7 +332,7 @@ class ObjectUtils:
             print(f"Verifying {group_node_name}={ng[group_node_name]}")
             print(f"{'Linked' if link else 'Appended'} node tree: {ng.name}")
         else:
-            print(f"Error: Node tree '{group_node_name}' not found after {'linking' if link else 'appending'}.")
+            print(f"❌ Error: Node tree '{group_node_name}' not found after {'linking' if link else 'appending'}.")
 
         return ng
 
@@ -384,7 +384,7 @@ class ObjectUtils:
             layers = getattr(bm, bm_domain).layers
             elements = getattr(bm, bm_domain)
         except AttributeError:
-            raise ValueError(f"Unsupported domain: {bm_domain}")
+            raise ValueError(f"❌ Error: Unsupported domain: {bm_domain}")
 
         layer = layers.bool.get(attribute.name) if newv else layers.int.get(attribute.name)
         selected_value, unselected_value = (True, False) if newv else (1, 0)

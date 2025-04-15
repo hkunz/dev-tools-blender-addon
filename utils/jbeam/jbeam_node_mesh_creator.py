@@ -11,21 +11,23 @@ class JbeamNodeMeshCreator:
         self.mesh = bpy.data.meshes.new(mesh_name)
         self.obj = bpy.data.objects.new(mesh_name, self.mesh)
         bpy.context.collection.objects.link(self.obj)
-        print(f"Created container mesh object '{mesh_name}'.")
+        print(f"🧊 [JbeamNodeMeshCreator] Created container Node Mesh object '{mesh_name}'.")
         return self.obj
+
+    def check_mesh_created(self):
+        if not self.mesh:
+            raise RuntimeError("❌ Mesh object has not been created yet. Call 'create_object' first.")
 
     def add_vertices(self, nodes_list: list[object]):
         """Add vertices to the existing mesh."""
-        if not self.mesh:
-            raise RuntimeError("Mesh object has not been created yet. Call 'create_object' first.")
-
+        self.check_mesh_created()
         vertices = []
         for i, node in enumerate(nodes_list):  # `i` will serve as the vertex index
             #print(f"Processing NodeID: {node.id}, Position: {node.position}")
             node.index = i
             vertices.append(node.position)
             self.vertex_indices[node.id] = i  # Map NodeID to its vertex index
-        print(f"Processing Node ID list complete")
+        # print(f"Processing Node ID list complete")
         self.mesh.from_pydata(vertices, [], [])
         self.mesh.update()
         print(f"Added {len(vertices)} vertices to the mesh.")
@@ -39,7 +41,7 @@ class JbeamNodeMeshCreator:
             node_ids = get_node_ids(element)
 
             if len(node_ids) != node_count:
-                print(f"Warning: Expected {node_count} node IDs, got {len(node_ids)}")
+                print(f"⚠️  Warning: Expected {node_count} node IDs, got {len(node_ids)}")
                 assign_index(element, -1)
                 continue
 
@@ -54,14 +56,13 @@ class JbeamNodeMeshCreator:
                 assign_index(element, unique_map[key])
             else:
                 missing = [nid for nid in node_ids if nid not in self.vertex_indices]
-                print(f"Warning: Missing vertex indices for {missing}")
+                print(f"⚠️  Warning: Missing vertex indices for {missing}")
                 assign_index(element, -1)
 
         return result
 
     def add_edges(self, beam_list: list[object]) -> None:
-        if not self.mesh:
-            raise RuntimeError("Mesh object has not been created yet. Call 'create_object' first.")
+        self.check_mesh_created()
         if not beam_list:
             return
 
@@ -77,8 +78,7 @@ class JbeamNodeMeshCreator:
         print(f"Added {len(edges)} edges to the mesh.")
 
     def add_faces(self, tris_list: list[object]) -> None:
-        if not self.mesh:
-            raise RuntimeError("Mesh object has not been created yet. Call 'create_object' first.")
+        self.check_mesh_created()
         if not tris_list:
             return
 

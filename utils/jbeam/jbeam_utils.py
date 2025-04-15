@@ -468,11 +468,11 @@ class JbeamUtils:
         # Find the node tree by attribute
         node_tree = next((nt for nt in bpy.data.node_groups if nt.get(JbeamUtils.GN_JBEAM_VISUALIZER_GROUP_NODE_NAME) == JbeamUtils.GN_JBEAM_VISUALIZER_GROUP_NODE_NAME), None)
         if not node_tree:
-            print("Error: Node tree not found. Cannot set selected vertices.")
+            print("❌ Error: Node tree not found. Cannot set selected vertices.")
             return None
         mod = next((m for m in obj.modifiers if m.type == 'NODES' and m.node_group == node_tree), None)
         if not mod:
-            pass #print("Error: Modifier using the node tree not found.")
+            pass #print("❌ Error: Modifier using the node tree not found.")
         return mod
 
     @staticmethod
@@ -539,7 +539,7 @@ class JbeamUtils:
             node_tree = next((nt for nt in bpy.data.node_groups if nt.get(group_node_name) == group_node_name), None)
 
         if not node_tree:
-            print("Error: Node tree could not be found or appended.")
+            print("❌ Error: Node tree could not be found or appended.")
             return
 
         # Check if any existing modifier is already using this node tree
@@ -770,7 +770,7 @@ class JbeamRefnodeUtils:
         try:
             return JbeamRefnodeUtils.RefNode(value)
         except ValueError:
-            print(f"Invalid value: {value}")
+            print(f"❌ [JbeamRefnodeUtils] Invalid value: {value}")
         return None
 
     @staticmethod

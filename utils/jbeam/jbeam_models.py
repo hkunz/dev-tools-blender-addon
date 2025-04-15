@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, TypedDict
 
 JbeamPartName = str
 JbeamJsonSectionName = str  # section names include: information, slotType, sounds, flexbodies, nodes, beams, triangles, quads, etc
@@ -9,6 +9,14 @@ JbeamPartName = str
 JbeamPartSectionName = str  # section names include: information, slotType, sounds, flexbodies, nodes, beams, triangles, quads, etc
 JbeamPartData = dict[JbeamPartSectionName, Any]
 JbeamJson = dict[JbeamPartName, JbeamPartData]
+
+JbeamSlotType = str
+PcJbeamParts = dict[JbeamSlotType, JbeamPartName]
+
+class PcJson(TypedDict):
+    format: int
+    model: str
+    parts: PcJbeamParts
 
 class JbeamLoadItem:
     def __init__(self, file_path: str, part_name: str="", slot_type: str=""):
@@ -80,3 +88,6 @@ class JbeamPart:
         self.json_beams = None
         self.json_triangles = None
         self.json_quads = None
+    
+    def __repr__(self):
+        return f"JbeamPart(part_name={self.part_name}, slot_type={self.slot_type}, refnodes={self.refnodes})"

@@ -45,15 +45,16 @@ class JbeamNodeMeshConfigurator:
     def assign_ref_nodes(obj, ref_nodes, nodes):
         for refnode_name, node_id in ref_nodes.items():
             node = nodes.get(node_id)
+            ref_label = jr.get_refnode_from_label(refnode_name)
             if node is None:
-                print(f"Node ID '{node_id}' not found in 'jbeam_parser::nodes', might be in another part but that's an addon limitation (work-in-progress). skipping.")
+                print(f"⚠️  Trying to assign refnode '{ref_label}' to Node ID '{node_id}' but it's not found in 'jbeam_parser::nodes', might be in another part but that's an addon limitation (work-in-progress). skipping.")
                 continue
             idx = node.index
             if idx < 0:
-                print(f"Error: No vertex index assigned to {node.id}")
+                print(f"❌ Error: No vertex index assigned to '{node.id}'")
                 continue
-            jr.set_refnode_id(obj, idx, jr.get_refnode_from_label(refnode_name).value)
-            print(f"Assigned Node '{node.id}' with index {idx} as ref node '{refnode_name}({jr.get_refnode_from_label(refnode_name).value})'.")
+            jr.set_refnode_id(obj, idx, ref_label.value)
+            print(f"Assigned Node '{node.id}' with index {idx} as ref node '{refnode_name}({ref_label.value})'.")
 
     @staticmethod
     def create_node_mesh_attributes(obj):
@@ -64,7 +65,7 @@ class JbeamNodeMeshConfigurator:
     def store_node_props_in_vertex_attributes(obj, nodes):
         for node in nodes:
             if node.index < 0:
-                print(f"Error: Invalid vertex index for node {node.id}")
+                print(f"❌ Error: Invalid vertex index for node '{node.id}'")
                 continue
 
             idx = node.index

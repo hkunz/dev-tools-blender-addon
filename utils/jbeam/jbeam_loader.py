@@ -41,6 +41,8 @@ class JbeamLoaderBase(ABC):
             self._write_debug_files(fixed_str)
             if not data:
                 Utils.log_and_report(f"❌ Failed to fix and parse file {self.filepath}", self.operator, "ERROR")
+                return None
+            print("✅ Loaded data from fixed string")
             return data
 
     def _attempt_fix(self, path: str, error: Exception) -> str:
@@ -50,6 +52,16 @@ class JbeamLoaderBase(ABC):
             raw = f.read()
         fixed = JbeamFileHelper.attempt_fix_jbeam_commas(raw, self.is_jbeam)
         return fixed
+
+    def json_loads(self, json_string) -> dict:
+        self.json_str = json_string
+        json_data = json.loads(self.json_str)
+        if not isinstance(json_data, dict):
+            raise ValueError("❌ Expected a JSON object (dictionary) at the top level")
+        main_key = next(iter(json_data), None)
+        if main_key is None:
+            raise ValueError("❌ Empty JSON structure")
+        return json_data
 
     def _write_debug_files(self, fixed_str: str):
         try:
@@ -64,12 +76,18 @@ class JbeamLoaderBase(ABC):
         except Exception as write_error:
             Utils.log_and_report(f"❌ Failed to write debug files: {write_error}", self.operator, "ERROR")
 
+    def _load_from_string(self, text: str) -> JbeamJson:
+        json_data = self.json_loads(json_cleanup(text))
+        return self._validate_content(json_data)
+
     @abstractmethod
-    def _load_main(self, filepath: str):
+    def _validate_content(self, json_data: dict):
+        # Check if json data is valid: if not, try to fix the content then return
         pass
 
     @abstractmethod
-    def _load_from_string(self, text: str):
+    def _load_main(self, filepath: str):
+        # Returns: A parsed JSON structure as a specific dictionary type.
         pass
 
 
@@ -80,13 +98,11 @@ class JbeamFileLoader(JbeamLoaderBase):
 
     def _load_main(self, filepath: str) -> JbeamJson:
         if not os.path.exists(filepath):
-            raise FileNotFoundError(f"File not found: {filepath}")
+            raise FileNotFoundError(f"❌ File not found: {filepath}")
         with open(filepath, "r", encoding="utf-8") as f:
             raw_text = f.read()
-        self.json_str = json_cleanup(raw_text)
-        return json.loads(self.json_str)
+        return self.json_loads(json_cleanup(raw_text))
 
-    def _load_from_string(self, text: str) -> JbeamJson:
-        self.json_str = json_cleanup(text)
-        print("✅ Loaded .jbeam from fixed string")
-        return json.loads(self.json_str)
+    def _validate_content(self, json_data: dict):
+        # TODO: check content for possible issues
+        return json_data

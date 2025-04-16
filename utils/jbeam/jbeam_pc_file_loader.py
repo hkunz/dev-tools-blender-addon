@@ -11,20 +11,64 @@ class JbeamPcFileLoader(JbeamLoaderBase):
     def _load_main(self, filepath: str) -> PcJson:
         self.is_jbeam = False
         with open(filepath, "r", encoding="utf-8") as f:
-            raw_json = json.load(f)
+            raw_json: dict = json.load(f)
         self.json_str = json.dumps(raw_json)
+        return self._validate_content(raw_json)
 
-        if "format" in raw_json and "model" in raw_json and "parts" in raw_json:
-            return raw_json
-        else:
-            main_key = next(iter(raw_json))
-            return raw_json[main_key]
+    def _validate_content(self, json_data: dict) -> PcJson:
+        required_keys = {"format", "model", "parts"}
 
-    def _load_from_string(self, text: str) -> PcJson:
-        self.json_str = json_cleanup(text)
-        data = json.loads(self.json_str)
-        print("✅ Loaded .pc file data from fixed string")
-        if "format" in data and "model" in data and "parts" in data:
-            return data
-        else:
-            return data[next(iter(data))]
+        # Case 1: fully valid .pc structure
+        if required_keys.issubset(json_data):
+            if not isinstance(json_data["parts"], dict) or not json_data["parts"]:
+                raise ValueError("❌ Invalid .pc file: 'parts' must be a non-empty object.")
+            return json_data
+
+        # Case 2: modern .pc structure missing optional keys
+        if "parts" in json_data:
+            parts = json_data["parts"]
+            if not isinstance(parts, dict) or not parts:
+                raise ValueError("❌ Invalid .pc file: 'parts' must be a non-empty object.")
+
+            missing_keys = []
+            if "format" not in json_data:
+                json_data["format"] = 2
+                missing_keys.append("format")
+            if "model" not in json_data:
+                json_data["model"] = "undefined"
+                missing_keys.append("model")
+
+            if missing_keys:
+                print(f"⚠️  Warning: .pc file was missing {missing_keys}; defaults have been inserted.")
+            return json_data
+
+        # Case 3: legacy-style wrapped structure
+        if len(json_data) == 1:
+            main_key = next(iter(json_data))
+            inner = json_data[main_key]
+
+            if not isinstance(inner, dict):
+                raise ValueError(f"❌ Expected dict under key '{main_key}', got {type(inner).__name__}")
+
+            parts = inner.get("parts")
+            if isinstance(parts, dict) and parts:
+                missing_keys = []
+                if "format" not in inner:
+                    inner["format"] = 2
+                    missing_keys.append("format")
+                if "model" not in inner:
+                    inner["model"] = "undefined"
+                    missing_keys.append("model")
+
+                if missing_keys:
+                    print(f"⚠️  Legacy .pc file under '{main_key}' was missing {missing_keys}; defaults have been inserted.")
+                return inner
+            else:
+                raise ValueError(f"❌ Invalid .pc file: 'parts' under '{main_key}' must be a non-empty object.")
+
+        # Case 4: completely invalid or ambiguous structure
+        raise ValueError("❌ Invalid .pc file: missing 'parts' section and no legacy structure detected.")
+
+
+
+

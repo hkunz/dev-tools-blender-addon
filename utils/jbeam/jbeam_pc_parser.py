@@ -36,7 +36,6 @@ class JbeamPcParser:
             return
 
         print(f"Loaded part configurator: {self.pc} ")
-        print(f"Part Configurator Loaded from File: {self.pc.filepath}")
 
     def get_jbeam_load_items(self):
         load_items: list[JbeamLoadItem] = []

@@ -23,6 +23,10 @@ class JbeamLoaderBase(ABC):
     def load(self):
         print(f"\n🔄 Loading {self.filepath}")
         data = None
+        if not os.path.exists(self.filepath):
+            #raise FileNotFoundError(f"❌ File not found: {self.filepath}")
+            Utils.log_and_report(f"❌ [FileNotFoundError] {self.filepath}", self.operator, "ERROR")
+            return
         try:
             return self._load_main(self.filepath)
         except Exception as e:
@@ -97,8 +101,6 @@ class JbeamFileLoader(JbeamLoaderBase):
         self.load_item = load_item
 
     def _load_main(self, filepath: str) -> JbeamJson:
-        if not os.path.exists(filepath):
-            raise FileNotFoundError(f"❌ File not found: {filepath}")
         with open(filepath, "r", encoding="utf-8") as f:
             raw_text = f.read()
         return self.json_loads(json_cleanup(raw_text))

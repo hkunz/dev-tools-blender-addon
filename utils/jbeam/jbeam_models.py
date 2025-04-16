@@ -1,11 +1,6 @@
 from typing import Any, TypedDict
 
 JbeamPartName = str
-JbeamJsonSectionName = str  # section names include: information, slotType, sounds, flexbodies, nodes, beams, triangles, quads, etc
-JbeamJsonSection = dict[JbeamJsonSectionName, Any]
-JbeamJson = dict[JbeamPartName, JbeamJsonSection]
-
-JbeamPartName = str
 JbeamPartSectionName = str  # section names include: information, slotType, sounds, flexbodies, nodes, beams, triangles, quads, etc
 JbeamPartData = dict[JbeamPartSectionName, Any]
 JbeamJson = dict[JbeamPartName, JbeamPartData]

@@ -9,7 +9,7 @@ from dev_tools.ui.addon_preferences import MyAddonPreferences as a # type: ignor
 from dev_tools.utils.utils import Utils  # type: ignore
 from dev_tools.utils.jbeam.jbeam_loader import JbeamFileLoader  # type: ignore
 from dev_tools.utils.jbeam.jbeam_parser import JbeamParser  # type: ignore
-from dev_tools.utils.jbeam.jbeam_models import JbeamLoadItem, JbeamJson  # type: ignore
+from dev_tools.utils.jbeam.jbeam_models import JbeamLoadItem, JbeamJson, JbeamPart, NodeID, Node, Beam, Triangle, JbeamPartName, JbeamPartSectionName, JbeamPartData  # type: ignore
 from dev_tools.utils.jbeam.jbeam_node_mesh_creator import JbeamNodeMeshCreator  # type: ignore
 from dev_tools.utils.jbeam.jbeam_node_mesh_configurator import JbeamNodeMeshConfigurator  # type: ignore
 
@@ -44,7 +44,7 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
 
     def create_node_meshes(self):
         print(f"\n🧊 Creating Node Meshes from jbeam part names in: {self.filepath}")
-        jbeam_parts: dict[str, object] = self.parser.get_jbeam_parts()
+        jbeam_parts: dict[JbeamPartName, JbeamPart] = self.parser.get_jbeam_parts()
         for part_name, part in jbeam_parts.items():
             self.create_node_mesh(part_name)
 

@@ -208,7 +208,7 @@ class JbeamParser:
             print(f"{node_id} => {node}")
             # i.e.: 'node_1' => Node(instance=1, id=a1ll, index=5, pos=<Vector (0.6800, -0.9350, 0.1100)>, props={'frictionCoef': 1.2, 'nodeMaterial': '|NM_RUBBER', 'nodeWeight': 1, 'collision': True, 'selfCollision': True, 'group': 'mattress'})
 
-    def get_jbeam_parts(self) -> dict[str, JbeamPart]:
+    def get_jbeam_parts(self) -> dict[JbeamPartName, JbeamPart]:
         return self.jbeam_parts
 
     def get_jbeam_part(self, part_name: str = "") -> JbeamPart | None:

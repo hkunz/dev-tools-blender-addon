@@ -26,9 +26,10 @@ class JbeamLoaderBase(ABC):
         if not os.path.exists(self.filepath):
             #raise FileNotFoundError(f"❌ File not found: {self.filepath}")
             Utils.log_and_report(f"❌ [FileNotFoundError] {self.filepath}", self.operator, "ERROR")
-            return
+            return None
         try:
-            return self._load_main(self.filepath)
+            data = self._load_main(self.filepath)
+            return self._validate_content(data)
         except Exception as e:
             Utils.log_and_report(f"⚠️  Initial load failed with '{e}'. Attempting auto-fix...", self.operator if a.is_warnings_enabled() else None, "WARNING")
             fixed_str = self._attempt_fix(self.filepath, e)
@@ -40,6 +41,9 @@ class JbeamLoaderBase(ABC):
                 Utils.log_and_report(f"Unicode decode error in fixed file: {e}", self.operator, "ERROR")
             except TypeError as e:
                 Utils.log_and_report(f"Type error (maybe fixed_str is None?): {e}", self.operator, "ERROR")
+            except ValueError as e:
+                Utils.log_and_report(f"Value error '{e}'", self.operator, "ERROR")
+                return None
             except Exception as e:
                 Utils.log_and_report(f"Unexpected error: {e}", self.operator, "ERROR")
             self._write_debug_files(fixed_str)
@@ -106,5 +110,11 @@ class JbeamFileLoader(JbeamLoaderBase):
         return self.json_loads(json_cleanup(raw_text))
 
     def _validate_content(self, json_data: dict):
-        # TODO: check content for possible issues
+        if not isinstance(json_data, dict):
+            raise ValueError("❌ Root of the JBeam file must be a dictionary.")
+        for part_name, part_data in json_data.items():
+            if not isinstance(part_data, dict):
+                raise ValueError(f"❌ Part '{part_name}' must be a dictionary.")
+            if not part_data:
+                raise ValueError(f"❌ Part '{part_name}' must not be empty.")
         return json_data

@@ -13,6 +13,7 @@ class OBJECT_OT_PrintJBeamPropsBase(bpy.types.Operator):
     attr_name = ""
     domain = ""
     id_function = None
+    emoji = None
 
     def execute(self, context):
         mode = context.object.mode
@@ -27,7 +28,7 @@ class OBJECT_OT_PrintJBeamPropsBase(bpy.types.Operator):
         for obj in context.selected_objects:
             storage_inst: JbeamPropsStorage = props_manager.get_props_storage(obj)
             if not j.is_node_mesh(obj):
-                self.report({'WARNING'}, f"Object '{obj.name}' ({self.attr_name}): Object is not a Node Mesh")
+                self.report({'WARNING'}, f"⚠️  Object '{obj.name}' ({self.attr_name}): Object is not a Node Mesh")
                 continue
 
             mesh = obj.data
@@ -36,10 +37,10 @@ class OBJECT_OT_PrintJBeamPropsBase(bpy.types.Operator):
             selected_elements = [element for element in elements if element.select]
 
             if not selected_elements:
-                self.report({'WARNING'}, f"Object '{obj.name}' ({self.attr_name}): No selected {self.domain}")
+                self.report({'WARNING'}, f"⚠️  Object '{obj.name}' ({self.attr_name}): No selected {self.domain}")
                 continue
 
-            info = f"Object '{obj.name}' ({self.attr_name})"
+            info = f"ℹ️  Object '{obj.name}' ({self.attr_name})"
             print(f"{info}:")
 
             for i, element in enumerate(selected_elements):
@@ -53,11 +54,11 @@ class OBJECT_OT_PrintJBeamPropsBase(bpy.types.Operator):
                         for instance_key, instance_props in props.items():
                             # Convert properties to a single-line JSON string
                             props_str = json.dumps(instance_props, separators=(",", ":"))
-                            print(f"{id_str}({index}): {key} [{instance_key}] => {props_str}")
+                            print(f"{self.emoji}{id_str}({index}): {key} [{instance_key}] => {props_str}")
                     else:
-                        print(f"{id_str}({index}): {key} => No properties found")
+                        print(f"{self.emoji}{id_str}({index}): {key} => No properties found")
                 else:
-                    print(f"{id_str}({index}): No key, no attribute value (no scope modifiers assigned)")
+                    print(f"{self.emoji}{id_str}({index}): No key, no attribute value (no scope modifiers assigned)")
 
         if len(context.selected_objects) > 0:
             self.report({'INFO'}, "Node Mesh Attributes have been printed. Check the console for detailed output.")
@@ -73,6 +74,7 @@ class OBJECT_OT_BeamngPrintJbeamNodeProps(OBJECT_OT_PrintJBeamPropsBase):
     attr_name = j.ATTR_NODE_PROPS
     domain = "vertices"
     id_function = staticmethod(j.get_node_id)
+    emoji = "⚪ "
 
 
 class OBJECT_OT_BeamngPrintJbeamBeamProps(OBJECT_OT_PrintJBeamPropsBase):
@@ -82,6 +84,7 @@ class OBJECT_OT_BeamngPrintJbeamBeamProps(OBJECT_OT_PrintJBeamPropsBase):
     attr_name = j.ATTR_BEAM_PROPS
     domain = "edges"
     id_function = staticmethod(j.get_beam_id)
+    emoji = "🟰  "
 
 
 class OBJECT_OT_BeamngPrintJbeamTriangleProps(OBJECT_OT_PrintJBeamPropsBase):
@@ -91,3 +94,4 @@ class OBJECT_OT_BeamngPrintJbeamTriangleProps(OBJECT_OT_PrintJBeamPropsBase):
     attr_name = j.ATTR_TRIANGLE_PROPS
     domain = "polygons"
     id_function = staticmethod(j.get_triangle_id)
+    emoji = "📐 "

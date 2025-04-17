@@ -22,9 +22,20 @@ class OBJECT_OT_BeamngJbeamSelectSpecificElement(bpy.types.Operator):
     def execute(self, context):
         obj = context.object
         bpy.ops.object.mode_set(mode='OBJECT')
+    
+        # Deselect all elements
+        mesh = obj.data
+        for v in mesh.vertices:
+            v.select = False
+        for e in mesh.edges:
+            e.select = False
+        for f in mesh.polygons:
+            f.select = False
+
         bpy.ops.object.mode_set(mode='EDIT')
         bm = bmesh.from_edit_mesh(obj.data)
         search_by_index = not self.element_id or self.is_shift_held
+
 
         def get_element_indices(getter_func, element_type, nodes_str):
             """Helper function to get element indices or handle index-based search."""
@@ -40,13 +51,6 @@ class OBJECT_OT_BeamngJbeamSelectSpecificElement(bpy.types.Operator):
             node_string = node_string.strip().strip('[]').replace('"', '')
             return [node.strip() for node in re.split(r'[;|,]+', node_string)]
 
-        # Deselect all elements
-        for v in bm.verts:
-            v.select = False
-        for e in bm.edges:
-            e.select = False
-        for f in bm.faces:
-            f.select = False
 
         elements = []
         element_type = None

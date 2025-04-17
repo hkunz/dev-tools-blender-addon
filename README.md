@@ -18,9 +18,18 @@ This is an unofficial Blender addon designed to simplify the process of editing 
 
 * Convenient for working on mods for BeamNG.drive.
 
+**Example Console Output When Importing single Jbeam Files**
+
+![image](https://github.com/user-attachments/assets/811d2479-6b9c-45c5-843a-ee6c8bd1e647)
+
+**Example Console Output When Importing PC Files**
+
+![image](https://github.com/user-attachments/assets/bb2048a4-46bd-4013-ad71-3556ac8c20b4)
+
+
 **Limitations**:
 
-This is still a Work-In-Progress. Currently, only a single JBeam file can be loaded at a time, and it must be fully self-contained—including all nodes, beams, and triangles. If your setup relies on base JBeam files for shared elements, those will not be included in the import.
+This is still a Work-In-Progress. I'm currently working on .pc imports. Currently, only a single JBeam file can be loaded at a time, and it must be fully self-contained—including all nodes, beams, and triangles. If your setup relies on base JBeam files for shared elements, those will not be included in the import.
 If you're interested in contributing or helping extend the functionality of this addon, feel free to get in touch!
 
 **Note**: This addon is not affiliated with BeamNG, and is meant as a community-driven tool to enhance Blender's utility for JBeam file manipulation.

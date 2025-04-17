@@ -27,12 +27,17 @@ class JbeamParser:
                 p.slot_type = part_data.get("slotType")
                 if p.slot_type == "main":
                     self.jbeam_main_part = p
+
             if load_item and load_item.part_name and (load_item.part_name != p.part_name or load_item.slot_type != p.slot_type):
                 #print(f" - Ignore irrelevant part {p.part_name} with slot type {p.slot_type}")
                 continue
             if "refNodes" in part_data:
                 headers, values = part_data["refNodes"]
                 p.refnodes = {h[:-1]: v for h, v in zip(headers[:], values[:])}  # Trim last char from keys
+            if "slots" in part_data:
+                slot_rows = part_data["slots"]
+                if isinstance(slot_rows, list) and len(slot_rows) > 1:
+                    p.slots = [row[0] for row in slot_rows[1:] if isinstance(row, list) and len(row) > 0]
             nodes = self._get_section("nodes", part_data)
             print(f"🧩 Parsing Nodes ⚪ {part_name}")
             if nodes:

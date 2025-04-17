@@ -21,6 +21,7 @@ class JbeamParser:
             p.part_name = part_name
             nodes: list = self._get_section("nodes", part_data)
             if nodes:
+                print(f"🧩 Parsing Nodes ⚪ {part_name}")
                 p.nodes_list = self._parse_nodes(nodes)
             p.json_beams = self._get_section("beams", part_data)
             p.json_triangles = self._get_section("triangles", part_data)
@@ -34,7 +35,7 @@ class JbeamParser:
                 p.refnodes = {h[:-1]: v for h, v in zip(headers[:], values[:])}  # Trim last char from keys
 
             self.jbeam_parts[part_name] = p
-            print(f"Registered part {p}")
+            print(f"    - Registered part {p}")
 
     def _get_section(self, section_name: JbeamPartSectionName, part_data: JbeamPartData) -> list:
         return part_data.get(section_name, [])
@@ -81,7 +82,6 @@ class JbeamParser:
         nodes = []
         seen_node_ids = set()  # Track node_id uniqueness
         current_props = {}
-        print("🧩 Parsing Nodes ⚪ ...")
 
         for entry in json_nodes:
             if isinstance(entry, dict):
@@ -126,7 +126,7 @@ class JbeamParser:
 
             elif isinstance(entry, list):
                 if all(isinstance(item, str) and item.startswith("id") and item.endswith(":") for item in entry):
-                    print(f"Header detected: {entry} (ignored)")
+                    print(f"    - Header detected: {entry} (ignored)")
                     continue
 
                 nodes = None
@@ -177,12 +177,12 @@ class JbeamParser:
         return structures
 
     def _parse_beams(self, json_beams, mesh=None, part_name=""):
-        print("🧩 Parsing Beams 🟰  ...")
+        print(f"🧩 Parsing Beams 🟰  {part_name}")
         lookup = {tuple(sorted((e.vertices[0], e.vertices[1]))): e.index for e in mesh.edges} if mesh else None
         return self._parse_elements(json_beams, "beams", part_name, lookup)
 
     def _parse_triangles(self, json_triangles, mesh=None, part_name=""):
-        print("🧩 Parsing triangles 📐")
+        print(f"🧩 Parsing triangles 📐 {part_name}")
         lookup = {tuple(sorted(f.vertices)): f.index for f in mesh.polygons} if mesh else None
         return self._parse_elements(json_triangles, "triangles", part_name, lookup)
 

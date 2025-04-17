@@ -30,7 +30,7 @@ class JbeamNodeMeshCreator:
         # print(f"Processing Node ID list complete")
         self.mesh.from_pydata(vertices, [], [])
         self.mesh.update()
-        print(f"Added {len(vertices)} vertices to the mesh.")
+        print(f"    - Added {len(vertices)} vertices to the mesh.")
 
     def _process_elements(self, element_list: list[object], node_count: int, get_node_ids: callable, assign_index: callable) -> list[tuple[int, ...]]:
         """Generic handler for processing edges or faces."""
@@ -75,7 +75,7 @@ class JbeamNodeMeshCreator:
 
         self.mesh.from_pydata([], edges, [])
         self.mesh.update()
-        print(f"Added {len(edges)} edges to the mesh.")
+        print(f"    - Added {len(edges)} edges to the mesh.")
 
     def add_faces(self, tris_list: list[object]) -> None:
         self.check_mesh_created()
@@ -91,4 +91,4 @@ class JbeamNodeMeshCreator:
 
         self.mesh.from_pydata([], [], faces)
         self.mesh.update()
-        print(f"Added {len(faces)} unique faces to the mesh.")
+        print(f"    - Added {len(faces)} unique faces to the mesh.")

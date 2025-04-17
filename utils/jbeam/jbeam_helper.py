@@ -286,7 +286,7 @@ class JbeamFileHelper:
             fixed_lines.append(s)
 
         if total_fixes > 0:
-            print(f"✅ Total fixes made: {total_fixes}")
+            print(f"🆗 Total fixes made: {total_fixes}")
         return '\n'.join(fixed_lines)
 
 

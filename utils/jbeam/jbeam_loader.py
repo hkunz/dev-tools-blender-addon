@@ -21,7 +21,7 @@ class JbeamLoaderBase(ABC):
         self.json_str = ""
 
     def load(self):
-        print(f"\n🔄 Loading {self.filepath}")
+        print(f"\n🔄 Loading 📄 {self.filepath}")
         data = None
         if not os.path.exists(self.filepath):
             #raise FileNotFoundError(f"❌ File not found: {self.filepath}")
@@ -50,7 +50,7 @@ class JbeamLoaderBase(ABC):
             if not data:
                 Utils.log_and_report(f"❌ Failed to fix and parse file {self.filepath}", self.operator, "ERROR")
                 return None
-            print("✅ Loaded data from fixed string")
+            print(f"✅ Loaded data after fixing malformed content from 📄 {self.filepath}")
             return data
 
     def _attempt_fix(self, path: str, error: Exception) -> str:

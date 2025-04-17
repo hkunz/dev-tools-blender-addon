@@ -48,7 +48,8 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportPcFileToNodeMeshes(Operator, Im
     def _load_jbeam_files(self):
         load_items: list[JbeamLoadItem] = self.parser.get_jbeam_load_items()
         parsers: list[JbeamParser] = []
-        print("\n⏳🔄 Preparing to load Jbeam items:", load_items)
+        print("\n⏳🔄 Preparing to load Jbeam Load Items:\n" + "    - " + "\n    - ".join(str(item) for item in load_items))
+        load_items
         for load_item in load_items:
             loader = JbeamFileLoader(load_item, operator=self)
             jbeam_json: JbeamJson = loader.load()

@@ -1,8 +1,10 @@
 import mathutils
 
+from typing import Union
+
 from dev_tools.utils.utils import Utils  # type: ignore
 from dev_tools.utils.jbeam.jbeam_loader import JbeamLoadItem  # type: ignore
-from dev_tools.utils.jbeam.jbeam_models import JbeamJson, JbeamPart, NodeID, Node, Beam, Triangle, JbeamPartName, JbeamPartSectionName, JbeamPartData  # type: ignore
+from dev_tools.utils.jbeam.jbeam_models import JbeamJson, JbeamPart, NodeID, Node, Beam, Triangle, JbeamPartName, JbeamPartSectionName, JbeamPartData, JbeamStructure, Props  # type: ignore
 
 #JbeamPartName = str
 #JbeamPartSectionName = str  # section names include: information, slotType, sounds, flexbodies, nodes, beams, triangles, quads, etc
@@ -31,7 +33,7 @@ class JbeamParser:
             if "refNodes" in part_data:
                 headers, values = part_data["refNodes"]
                 p.refnodes = {h[:-1]: v for h, v in zip(headers[:], values[:])}  # Trim last char from keys
-            nodes: list = self._get_section("nodes", part_data)
+            nodes = self._get_section("nodes", part_data)
             print(f"🧩 Parsing Nodes ⚪ {part_name}")
             if nodes:
                 p.nodes_list = self._parse_nodes(nodes)
@@ -44,7 +46,7 @@ class JbeamParser:
             self.jbeam_parts[part_name] = p
             print(f"    - Registered part {p}")
 
-    def _get_section(self, section_name: JbeamPartSectionName, part_data: JbeamPartData) -> list:
+    def _get_section(self, section_name: JbeamPartSectionName, part_data: JbeamPartData) -> list[Union[Props, JbeamStructure]]:
         return part_data.get(section_name, [])
 
     def _split_quads_into_triangles(self, quads_json: list) -> list:
@@ -86,7 +88,7 @@ class JbeamParser:
             Utils.log_and_raise(f"An error occurred while processing the remaining JBeam data: {e}", RuntimeError, e)   
 
     def _parse_nodes(self, json_nodes: list):
-        nodes = []
+        nodes: list[Node] = []
         seen_node_ids = set()  # Track node_id uniqueness
         current_props = {}
 

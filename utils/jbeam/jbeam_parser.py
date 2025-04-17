@@ -16,23 +16,30 @@ class JbeamParser:
         self.jbeam_parts: dict[JbeamPartName, JbeamPart] = {}
 
     def parse(self, jbeam_json: JbeamJson):
+        load_item = self.source
+        #print(f"\n🧩 Prepare parsing Nodes from: 📄 {load_item.file_path}")
         for part_name, part_data in jbeam_json.items():
             p = JbeamPart()
             p.part_name = part_name
-            nodes: list = self._get_section("nodes", part_data)
-            if nodes:
-                print(f"🧩 Parsing Nodes ⚪ {part_name}")
-                p.nodes_list = self._parse_nodes(nodes)
-            p.json_beams = self._get_section("beams", part_data)
-            p.json_triangles = self._get_section("triangles", part_data)
-            p.json_quads = self._get_section("quads", part_data)
             if "slotType" in part_data:
                 p.slot_type = part_data.get("slotType")
                 if p.slot_type == "main":
                     self.jbeam_main_part = p
+            if load_item and load_item.part_name and (load_item.part_name != p.part_name or load_item.slot_type != p.slot_type):
+                #print(f" - Ignore irrelevant part {p.part_name} with slot type {p.slot_type}")
+                continue
             if "refNodes" in part_data:
                 headers, values = part_data["refNodes"]
                 p.refnodes = {h[:-1]: v for h, v in zip(headers[:], values[:])}  # Trim last char from keys
+            nodes: list = self._get_section("nodes", part_data)
+            print(f"🧩 Parsing Nodes ⚪ {part_name}")
+            if nodes:
+                p.nodes_list = self._parse_nodes(nodes)
+            else:
+                print(f"    - No Nodes found in {part_name}.")
+            p.json_beams = self._get_section("beams", part_data)
+            p.json_triangles = self._get_section("triangles", part_data)
+            p.json_quads = self._get_section("quads", part_data)
 
             self.jbeam_parts[part_name] = p
             print(f"    - Registered part {p}")

@@ -41,7 +41,7 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportPcFileToNodeMeshes(Operator, Im
         self.directory = os.path.dirname(self.filepath)
         self.parser = JbeamPcParser(self.directory)
         self.parser.parse(data)
-        Utils.log_and_report(f"✅ Part Configurator Load Success: {self.filepath}", self, "INFO")
+        Utils.log_and_report(f"✅ Part Configurator Load Success: 📄 {self.filepath}", self, "INFO")
         self._load_jbeam_files()
         return {'FINISHED'}
 
@@ -58,12 +58,13 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportPcFileToNodeMeshes(Operator, Im
             parser = JbeamParser(load_item)
             parser.parse(jbeam_json)
             parsers.append(parser)
-        print(f"\n⏳🧩 Starting to parse loaded jbeam files: {load_items}\n")
+
+        print("\n⏳🧩 Prepare parsing Beams and Triangles from loaded JBeam files to generate Node Meshes:\n" + "    - " + "\n    - ".join(str(item) for item in load_items))
         for parser in parsers:
             self._create_node_meshes(parser)
 
     def _create_node_meshes(self, parser: JbeamParser):
-        dict[JbeamPartName, JbeamPartData]
+        print(f"\n🧊 Creating Node Meshes from selected jbeam part names in: 📄 {self.filepath}")
         load_item = parser.parse_source
         jbeam_parts: dict[JbeamPartName, JbeamPart] = parser.get_jbeam_parts()
         for part_name, part in jbeam_parts.items():
@@ -73,7 +74,7 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportPcFileToNodeMeshes(Operator, Im
     def _create_node_mesh(self, parser: JbeamParser):
         load_item = parser.parse_source
         part_name = load_item.part_name
-        print(f"Creating Part with name '{part_name}' ================================>")
+        print(f"🧰 {self.filename}: '{part_name}' > assembling part structure ...")
         nodes_list: list[Node] = parser.get_nodes_list(part_name)
         if not nodes_list:
             Utils.log_and_report(f"No nodes list in part name '{part_name}'", self, "INFO")

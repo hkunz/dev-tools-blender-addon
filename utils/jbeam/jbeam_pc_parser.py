@@ -40,7 +40,7 @@ class JbeamPcParser:
     def get_jbeam_load_items(self):
         load_items: list[JbeamLoadItem] = []
         d = self.directory
-        print(f"🔎📁 Search .jbeam files in directory {d} for jbeam part names {self.pc.part_names}")
+        print(f"🔎 Search .jbeam files in directory 📁  {d} for jbeam part names {self.pc.part_names}")
         part_name_pattern = re.compile(r'^\s*"([^"]+)"\s*:\s*')
         slot_type_pattern = re.compile(r'"slotType"\s*:\s*"([^"]+)"')
         target_parts = set((v, k) for k, v in self.pc.part_names.items())  # (part_name, slot_type)
@@ -50,7 +50,7 @@ class JbeamPcParser:
                 continue
 
             file_path = os.path.join(d, filename)
-            print(f"🔎📄 Opening and reading file {file_path} ...")
+            print(f"🔎 Opening and reading file 📄 {file_path} ...")
             with open(file_path, 'r', encoding='utf-8') as f:
                 depth = 0
                 curr_part_name = None

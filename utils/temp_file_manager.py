@@ -34,7 +34,7 @@ class TempFileManager:
         random_suffix = "" #StringUtils.randomize_string(5)
         TempFileManager.TEMP_PARENT_DIRECTORY: str = os.path.join(appdata_local_temp_dir, f"j-editor-{Utils.get_addon_version()}-b{Utils.get_blender_version()}-tmp{random_suffix}") # j1.0.8-bv4.0.1-tmpEGjov
         self.create_directory(TempFileManager.TEMP_PARENT_DIRECTORY)
-        print(f"🗂️  Created temporary parent directory: {TempFileManager.TEMP_PARENT_DIRECTORY}")
+        print(f"🗂️  Created temporary parent directory: 🗂️  {TempFileManager.TEMP_PARENT_DIRECTORY}")
 
     def create_temp_dir(self) -> str:
         if TempFileManager.TEMP_PARENT_DIRECTORY and not os.path.exists(TempFileManager.TEMP_PARENT_DIRECTORY):

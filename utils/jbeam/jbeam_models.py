@@ -1,4 +1,4 @@
-from typing import Any, TypedDict
+from typing import Any, Union, TypedDict
 
 JbeamPartName = str
 JbeamPartSectionName = str  # section names include: information, slotType, sounds, flexbodies, nodes, beams, triangles, quads, etc
@@ -25,8 +25,9 @@ class JbeamLoadItem:
 
 NodeID = str
 ElementID = str  # can be NodeID or beam id (i.e. [node_1|node_2]) or triangle id (i.e. [node_1|node_2|node_3])
-ScopeModifier = ScopeModifierValue = str
-Props = dict[ScopeModifier, ScopeModifierValue]  # i.e. {"frictionCoef":"1.2","nodeMaterial":"|NM_RUBBER","nodeWeight":"1","collision":"true","selfCollision":"true","group":"mattress"}
+ScopeModifierName = str
+ScopeModifierValue = Union[str, int, float, bool, list]
+Props = dict[ScopeModifierName, ScopeModifierValue]  # i.e. {"frictionCoef":"1.2","nodeMaterial":"|NM_RUBBER","nodeWeight":"1","collision":"true","selfCollision":"true","group":"mattress"}
 
 
 class JBeamElement:
@@ -54,8 +55,8 @@ class Node(JBeamElement):
 class Beam(JBeamElement):
     def __init__(self, instance, beam_id, node_id1, node_id2, index, props=None):
         super().__init__(instance, beam_id, index, props)
-        self.node_id1: str = node_id1
-        self.node_id2: str = node_id2
+        self.node_id1: NodeID = node_id1
+        self.node_id2: NodeID = node_id2
 
     def __repr__(self):
         return f"Beam(instance={self.instance}, id={self.id}, node_id1={self.node_id1}, node_id2={self.node_id2}, index={self.index}, props={self.props})"
@@ -63,26 +64,29 @@ class Beam(JBeamElement):
 class Triangle(JBeamElement):
     def __init__(self, instance, triangle_id, node_id1, node_id2, node_id3, index, props=None):
         super().__init__(instance, triangle_id, index, props)
-        self.node_id1: str = node_id1
-        self.node_id2: str = node_id2
-        self.node_id3: str = node_id3
+        self.node_id1: NodeID = node_id1
+        self.node_id2: NodeID = node_id2
+        self.node_id3: NodeID = node_id3
 
     def __repr__(self):
         return f"Triangle(id={self.id}, node_id1={self.node_id1}, node_id2={self.node_id2}, node_id3={self.node_id3}, index={self.index}, props={self.props})"
 
+JbeamStructure = list[Any]  # node i.e. ["n",  0, 0, 0], beam i.e. ["n1", "n2"], triangle i.e. ["n1", "n2", "n3"], or quad i.e. ["n1", "n2", "n3", "n4"]
+
 class JbeamPart:
     def __init__(self):
-        self.part_name: str = None
-        self.part_data = None
-        self.slot_type: str = None
+        self.part_name: JbeamPartName = ""
+        self.part_data: JbeamPartData = {}
+        self.slots: list[JbeamSlotType] = []
+        self.slot_type: JbeamSlotType = ""
         self.refnodes: dict[str, str] = {}
         self.nodes: dict[NodeID, Node] = {}
         self.nodes_list: list[Node] = []
         self.beams_list: list[Beam] = []
         self.triangles_list: list[Triangle] = []
-        self.json_beams = None
-        self.json_triangles = None
-        self.json_quads = None
+        self.json_beams: list[Union[Props, JbeamStructure]] = []
+        self.json_triangles: list[Union[Props, JbeamStructure]] = []
+        self.json_quads: list[Union[Props, JbeamStructure]] = []
     
     def __repr__(self):
         return f"JbeamPart(part_name={self.part_name}, slot_type={self.slot_type}, refnodes={self.refnodes})"

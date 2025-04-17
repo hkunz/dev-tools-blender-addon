@@ -1,6 +1,7 @@
 import mathutils
 
 from dev_tools.utils.utils import Utils  # type: ignore
+from dev_tools.utils.jbeam.jbeam_loader import JbeamLoadItem  # type: ignore
 from dev_tools.utils.jbeam.jbeam_models import JbeamJson, JbeamPart, NodeID, Node, Beam, Triangle, JbeamPartName, JbeamPartSectionName, JbeamPartData  # type: ignore
 
 #JbeamPartName = str
@@ -9,7 +10,8 @@ from dev_tools.utils.jbeam.jbeam_models import JbeamJson, JbeamPart, NodeID, Nod
 #JbeamJson = dict[JbeamPartName, JbeamPartData]
 
 class JbeamParser:
-    def __init__(self):
+    def __init__(self, source:JbeamLoadItem=None):
+        self.source = source
         self.jbeam_main_part = None
         self.jbeam_parts: dict[JbeamPartName, JbeamPart] = {}
 
@@ -135,7 +137,7 @@ class JbeamParser:
                     nodes = [part.nodes.get(n) for n in entry[:3]]  # Always expect 3 node IDs
                     inline_props = entry[3] if len(entry) > 3 and isinstance(entry[3], dict) else {}
                 if any(n is None for n in nodes):
-                    print(f"⚠️  Missing nodes accessed by element {entry[:len(entry)]}. Nodes possibly missing in jbeam file or limitation in the addon (still work-in-progress) where some nodes reside in a base jbeam file")
+                    print(f"⚠️  Missing nodes accessed by element {entry[:len(entry)]}. Nodes may be missing or the part depends on a base JBeam. Try importing the matching .pc file.")
                     continue
 
                 index = get_index([n.index for n in nodes]) if lookup else -1
@@ -254,3 +256,7 @@ class JbeamParser:
             return part.refnodes
         print(f"[JBeam Parser] No refnodes found for part `{part_name}` or main part: '{part.part_name if part else 'None'}'")
         return {}
+
+    @property
+    def parse_source(self) -> JbeamLoadItem:
+        return self.source

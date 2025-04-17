@@ -47,7 +47,7 @@ class JbeamNodeMeshConfigurator:
             node = nodes.get(node_id)
             ref_label = jr.get_refnode_from_label(refnode_name)
             if node is None:
-                print(f"⚠️  Trying to assign refnode '{ref_label}' to Node ID '{node_id}' but it's not found in 'jbeam_parser::nodes', might be in another part but that's an addon limitation (work-in-progress). skipping.")
+                print(f"⚠️  Unable to assign refnode '{ref_label}' to Node ID '{node_id}': node might be missing or belong to a base JBeam part.")
                 continue
             idx = node.index
             if idx < 0:

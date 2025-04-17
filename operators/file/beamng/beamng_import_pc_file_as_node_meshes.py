@@ -47,24 +47,31 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportPcFileToNodeMeshes(Operator, Im
 
     def _load_jbeam_files(self):
         load_items: list[JbeamLoadItem] = self.parser.get_jbeam_load_items()
-        print("Load items:", load_items)
+        parsers: list[JbeamParser] = []
+        print("\n⏳🔄 Preparing to load Jbeam items:", load_items)
         for load_item in load_items:
             loader = JbeamFileLoader(load_item, operator=self)
             jbeam_json: JbeamJson = loader.load()
             if not jbeam_json:
                 continue
-            parser = JbeamParser()
+            parser = JbeamParser(load_item)
             parser.parse(jbeam_json)
-            self._create_node_meshes(parser, load_item)
+            parsers.append(parser)
+        print(f"\n⏳🧩 Starting to parse loaded jbeam files: {load_items}\n")
+        for parser in parsers:
+            self._create_node_meshes(parser)
 
-    def _create_node_meshes(self, parser: JbeamParser, load_item: JbeamLoadItem):
+    def _create_node_meshes(self, parser: JbeamParser):
         dict[JbeamPartName, JbeamPartData]
+        load_item = parser.parse_source
         jbeam_parts: dict[JbeamPartName, JbeamPart] = parser.get_jbeam_parts()
         for part_name, part in jbeam_parts.items():
             if part_name == load_item.part_name and part.slot_type == load_item.slot_type:
-                self._create_node_mesh(parser, part_name)
+                self._create_node_mesh(parser)
 
-    def _create_node_mesh(self, parser: JbeamParser, part_name):
+    def _create_node_mesh(self, parser: JbeamParser):
+        load_item = parser.parse_source
+        part_name = load_item.part_name
         print(f"Creating Part with name '{part_name}' ================================>")
         nodes_list: list[Node] = parser.get_nodes_list(part_name)
         if not nodes_list:

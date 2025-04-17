@@ -118,39 +118,42 @@ class JbeamParser:
         if not json_data:
             print(f"No {structure_type} to parse because json data doesn't have '{structure_type}' node in jbeam part '{part.part_name}'")
             return
+        missing_node_warnings = set()
+
         for entry in json_data:
             if isinstance(entry, dict):
                 current_props.update(entry)
-            elif isinstance(entry, list): # and len(entry) >= (2 if structure_type == "beams" else 3):
+
+            elif isinstance(entry, list):
                 if all(isinstance(item, str) and item.startswith("id") and item.endswith(":") for item in entry):
                     print(f"Header detected: {entry} (ignored)")
                     continue
+
                 nodes = None
                 inline_props = None
+
                 if structure_type == "beams" and len(entry) >= 2:
-                    # Beams have 2 items for the nodes, with optional properties after that
-                    nodes = [part.nodes.get(n) for n in entry[:2]]  # Always expect 2 node IDs
+                    nodes = [part.nodes.get(n) for n in entry[:2]]
                     inline_props = entry[2] if len(entry) > 2 and isinstance(entry[2], dict) else {}
 
                 elif structure_type == "triangles" and len(entry) >= 3:
-                    # Triangles have 3 items for the nodes, with optional properties after that
-                    nodes = [part.nodes.get(n) for n in entry[:3]]  # Always expect 3 node IDs
+                    nodes = [part.nodes.get(n) for n in entry[:3]]
                     inline_props = entry[3] if len(entry) > 3 and isinstance(entry[3], dict) else {}
+
                 if any(n is None for n in nodes):
-                    print(f"⚠️  Missing nodes accessed by element {entry[:len(entry)]}. Nodes may be missing or the part depends on a base JBeam. Try importing the matching .pc file.")
+                    # print(f"⚠️  Missing nodes accessed by element {entry[:len(entry)]}. Nodes may be missing or the part depends on  base JBeam. Try importing the matching .pc file.")
+                    missing_node_warnings.add(tuple(entry[:len(nodes)]))
                     continue
 
                 index = get_index([n.index for n in nodes]) if lookup else -1
                 struct_id = tuple(sorted(entry[:len(nodes)]))
 
-                # Determine instance count # FIXME: Currently there is no support for this syntax of inline scope modifier: ["BACKl1","BACKl5", {"highlight":{"radius":0.2, "col":"#00ff00ff" }}], like that in "vehicles\large_crusher\large_crusher_boxes.jbeam"
                 if struct_id not in seen_structures:
                     seen_structures[struct_id] = 1
                 else:
                     seen_structures[struct_id] += 1
 
                 instance = seen_structures[struct_id]
-                #print(f"{structure_type[:-1].capitalize()} detected: {struct_id} (Instance: {instance}) => {current_props}")
 
                 props = current_props.copy()
                 props.update(inline_props)
@@ -158,11 +161,18 @@ class JbeamParser:
                 structures.append(
                     (Beam if structure_type == "beams" else Triangle)(
                         instance, struct_id,
-                        nodes[0].id, nodes[1].id,  # For Beam, pass only two node IDs (node_id1, node_id2)
-                        *([nodes[2].id] if len(nodes) > 2 else []),  # For Triangle, pass three node IDs if available, otherwise just pass two valid IDs
+                        nodes[0].id, nodes[1].id,
+                        *([nodes[2].id] if len(nodes) > 2 else []),
                         index, props
                     )
                 )
+
+        if missing_node_warnings:
+            print(f"⚠️  Missing node references detected while accessing {structure_type.capitalize().rstrip('s')} elements:")
+            grouped_warnings = [', '.join([str(list(pair)) for pair in sorted(missing_node_warnings)[i:i+5]]) for i in range(0, len(missing_node_warnings), 5)]
+            for group in grouped_warnings:
+                print(f"    - {group}")
+            print("💡 Nodes may be missing or the part depends on a base JBeam. Try importing the matching .pc file.")
 
         return structures
 

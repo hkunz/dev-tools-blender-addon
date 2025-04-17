@@ -113,19 +113,20 @@ class JbeamParser:
 
         return nodes
 
-    def _parse_elements(self, json_data, structure_type, part_name="", lookup=None): # parse beams or triangles
+    def _parse_elements(self, json_data, structure_type, part_name="", lookup=None):
         """ Generic parser for beams and triangles """
         structures, current_props = [], {}
-        seen_structures = {}  # Track unique beams/triangles and their instance counts
         part = self.get_jbeam_part(part_name)
 
         def get_index(indices):
             return lookup.get(tuple(sorted(indices)))
 
         if not json_data:
-            print(f"No {structure_type} to parse because json data doesn't have '{structure_type}' node in jbeam part '{part.part_name}'")
+            print(f"No {structure_type} to parse because JSON data doesn't have '{structure_type}' node in JBeam part '{part.part_name}'")
             return
-        missing_node_warnings = set()
+
+        seen_structures = {}  # Track unique beams/triangles and their instance counts
+        missing_node_warnings = []
 
         for entry in json_data:
             if isinstance(entry, dict):
@@ -148,18 +149,15 @@ class JbeamParser:
                     inline_props = entry[3] if len(entry) > 3 and isinstance(entry[3], dict) else {}
 
                 if any(n is None for n in nodes):
-                    # print(f"⚠️  Missing nodes accessed by element {entry[:len(entry)]}. Nodes may be missing or the part depends on  base JBeam. Try importing the matching .pc file.")
-                    missing_node_warnings.add(tuple(entry[:len(nodes)]))
+                    # Store which node names were missing
+                    missing = [name for name, node in zip(entry, nodes) if node is None]
+                    missing_node_warnings.append((entry[:len(nodes)], missing))
                     continue
 
                 index = get_index([n.index for n in nodes]) if lookup else -1
                 struct_id = tuple(sorted(entry[:len(nodes)]))
 
-                if struct_id not in seen_structures:
-                    seen_structures[struct_id] = 1
-                else:
-                    seen_structures[struct_id] += 1
-
+                seen_structures[struct_id] = seen_structures.get(struct_id, 0) + 1
                 instance = seen_structures[struct_id]
 
                 props = current_props.copy()
@@ -176,9 +174,8 @@ class JbeamParser:
 
         if missing_node_warnings:
             print(f"⚠️  Missing node references detected while accessing {structure_type.capitalize().rstrip('s')} elements:")
-            grouped_warnings = [', '.join([str(list(pair)) for pair in sorted(missing_node_warnings)[i:i+5]]) for i in range(0, len(missing_node_warnings), 5)]
-            for group in grouped_warnings:
-                print(f"    - {group}")
+            for full_entry, missing_names in missing_node_warnings:
+                print(f"    - {full_entry} (missing: {missing_names})")
             print("💡 Nodes may be missing or the part depends on a base JBeam. Try importing the matching .pc file.")
 
         return structures

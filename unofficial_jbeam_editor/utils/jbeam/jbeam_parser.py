@@ -4,7 +4,7 @@ from typing import Union
 
 from unofficial_jbeam_editor.utils.utils import Utils
 from unofficial_jbeam_editor.utils.jbeam.jbeam_loader import JbeamLoadItem
-from unofficial_jbeam_editor.utils.jbeam.jbeam_models import JbeamJson, JbeamPart, NodeID, Node, Beam, Triangle, JbeamPartName, JbeamPartSectionName, JbeamPartData, JbeamStructure, Props
+from unofficial_jbeam_editor.utils.jbeam.jbeam_models import JbeamJson, JbeamPart, NodeID, Node, Beam, Triangle, JbeamPartName, JbeamPartSectionName, JbeamPartData, JsonJbeamElement, JbeamElementProps
 
 #JbeamPartName = str
 #JbeamPartSectionName = str  # section names include: information, slotType, sounds, flexbodies, nodes, beams, triangles, quads, etc
@@ -51,7 +51,7 @@ class JbeamParser:
             self.jbeam_parts[part_name] = p
             print(f"    - Registered part {p}")
 
-    def _get_section(self, section_name: JbeamPartSectionName, part_data: JbeamPartData) -> list[Union[Props, JbeamStructure]]:
+    def _get_section(self, section_name: JbeamPartSectionName, part_data: JbeamPartData) -> list[Union[JbeamElementProps, JsonJbeamElement]]:
         return part_data.get(section_name, [])
 
     def _split_quads_into_triangles(self, quads_json: list) -> list:

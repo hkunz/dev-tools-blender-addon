@@ -59,7 +59,7 @@ class TempFileManager:
     
     def clear_all_temp_directories(self, blender_version: str='\d+\.\d+\.\d+', addon_version: str='\d+\.\d+\.\d+') -> None:
         appdata_local_temp_dir: str = tempfile.gettempdir() # C:/Users/<user>/AppData/Local/Temp/
-        pattern: str = rf'Dev Tools{addon_version}-bv{blender_version}-tmp\w+'
+        pattern: str = rf'j-editor-{addon_version}-b{blender_version}-tmp\w+'
         for item in os.listdir(appdata_local_temp_dir):
             item_path: str = os.path.join(appdata_local_temp_dir, item)
             if os.path.isdir(item_path) and re.match(pattern, item):

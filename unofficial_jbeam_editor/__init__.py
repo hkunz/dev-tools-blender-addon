@@ -1,9 +1,9 @@
-# "Dev Tools"
+# "The Unofficial JBeam Editor"
 # Author: Harry McKenzie
 #
 # ##### BEGIN LICENSE BLOCK #####
 #
-# Dev Tools
+# The Unofficial JBeam Editor
 # Copyright (c) 2025 Harry McKenzie
 #
 # This program is free software: you can redistribute it and/or modify
@@ -22,16 +22,16 @@
 # ##### END LICENSE BLOCK #####
 
 bl_info = {
-    "name": "Dev Tools",
-    "description": "Dev Tools",
+    "name": "JBeam Editor",
+    "description": "The Unofficial JBeam Editor",
     "author" : "Harry McKenzie",
     "version": (0, 0, 0),
     "blender": (4, 2, 0),
-    "location": "N-Panel > Dev Tools",
+    "location": "N-Panel > JBeam Editor",
     "warning": "",
-    "doc_url": "https://blendermarket.com/products/dev_tools/docs",
-    "wiki_url": "https://blendermarket.com/products/dev_tools/docs",
-    "tracker_url": "https://blendermarket.com/products/dev_tools/docs",
+    "doc_url": "https://blendermarket.com/products/jbeam_editor/docs",
+    "wiki_url": "https://blendermarket.com/products/jbeam_editor/docs",
+    "tracker_url": "https://blendermarket.com/products/jbeam_editor/docs",
     "support": "COMMUNITY",
     "category": "Import-Export",
 }

@@ -30,7 +30,6 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportPcFileToNodeMeshes(Operator, Im
 
     def execute(self, context):
         bpy.ops.object.select_all(action='DESELECT')
-        #self.pc_path = self.filepath
         self.filename = os.path.basename(self.filepath)
         loader = JbeamPcFileLoader(self.filepath, self)
         data = loader.load()

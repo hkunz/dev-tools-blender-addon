@@ -1,5 +1,7 @@
 import bpy
 
+from unofficial_jbeam_editor.utils.jbeam.jbeam_models import JBeamElement, Beam, Triangle
+
 class JbeamNodeMeshCreator:
     def __init__(self):
         self.vertex_indices: dict[str, int] = {}  # Map NodeID to vertex index
@@ -32,7 +34,7 @@ class JbeamNodeMeshCreator:
         self.mesh.update()
         print(f"    - Added {len(vertices)} vertices to the mesh.")
 
-    def _process_elements(self, element_list: list[object], node_count: int, get_node_ids: callable, assign_index: callable) -> list[tuple[int, ...]]:
+    def _process_elements(self, element_list: list[JBeamElement], node_count: int, get_node_ids: callable, assign_index: callable) -> list[tuple[int, ...]]:
         """Generic handler for processing edges or faces."""
         result: list[tuple[int, ...]] = []
         unique_map: dict[tuple[int, ...], int] = {}
@@ -61,7 +63,7 @@ class JbeamNodeMeshCreator:
 
         return result
 
-    def add_edges(self, beam_list: list[object]) -> None:
+    def add_edges(self, beam_list: list[Beam]) -> None:
         self.check_mesh_created()
         if not beam_list:
             return
@@ -77,7 +79,7 @@ class JbeamNodeMeshCreator:
         self.mesh.update()
         print(f"    - Added {len(edges)} edges to the mesh.")
 
-    def add_faces(self, tris_list: list[object]) -> None:
+    def add_faces(self, tris_list: list[Triangle]) -> None:
         self.check_mesh_created()
         if not tris_list:
             return

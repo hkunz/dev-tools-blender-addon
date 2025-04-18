@@ -8,7 +8,7 @@ class Utils:
 
     @staticmethod
     def get_addon_module_name() -> str:
-        return "dev_tools"
+        return "unofficial_jbeam_editor"
 
     @staticmethod
     def get_blender_version(prependv: bool=True, separator: str='.') -> str:

@@ -7,7 +7,7 @@ class FileUtils:
 
     @staticmethod
     def get_addon_root_dir() -> str:
-        # __file__ = C:\Users\<user>\AppData\Roaming\Blender Foundation\Blender\4.0\scripts\addons\dev_tools\utils.py
+        # __file__ = C:\Users\<user>\AppData\Roaming\Blender Foundation\Blender\4.4\scripts\addons\unofficial_jbeam_editor\utils.py
         script_directory: str = os.path.dirname(os.path.abspath(__file__))
         addon_directory: str = os.path.dirname(script_directory)
         return addon_directory

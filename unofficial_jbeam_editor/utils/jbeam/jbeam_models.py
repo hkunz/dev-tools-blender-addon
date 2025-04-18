@@ -27,7 +27,7 @@ NodeID = str
 ElementID = str  # can be NodeID or beam id (i.e. [node_1|node_2]) or triangle id (i.e. [node_1|node_2|node_3])
 ScopeModifierName = str
 ScopeModifierValue = Union[str, int, float, bool, list]
-Props = dict[ScopeModifierName, ScopeModifierValue]  # i.e. {"frictionCoef":"1.2","nodeMaterial":"|NM_RUBBER","nodeWeight":"1","collision":"true","selfCollision":"true","group":"mattress"}
+JbeamElementProps = dict[ScopeModifierName, ScopeModifierValue]  # i.e. {"frictionCoef":"1.2","nodeMaterial":"|NM_RUBBER","nodeWeight":"1","collision":"true","selfCollision":"true","group":"mattress"}
 
 
 class JBeamElement:
@@ -36,7 +36,7 @@ class JBeamElement:
         self.instance: int = instance  # you can have multiple instances of a beam or a triangle in jbeam
         self.id: ElementID  = element_id
         self.index: int = index  # vertex, edge, or face index
-        self.props: Props = props if props is not None else {}
+        self.props: JbeamElementProps = props if props is not None else {}
 
     def __repr__(self):
         return f"{self.__class__.__name__}(instance={self.instance}, id={self.id}, index={self.index}, props={self.props})"
@@ -71,7 +71,7 @@ class Triangle(JBeamElement):
     def __repr__(self):
         return f"Triangle(id={self.id}, node_id1={self.node_id1}, node_id2={self.node_id2}, node_id3={self.node_id3}, index={self.index}, props={self.props})"
 
-JbeamStructure = list[Any]  # node i.e. ["n",  0, 0, 0], beam i.e. ["n1", "n2"], triangle i.e. ["n1", "n2", "n3"], or quad i.e. ["n1", "n2", "n3", "n4"]
+JsonJbeamElement = list[Any]  # node i.e. ["n",  0, 0, 0], beam i.e. ["n1", "n2"], triangle i.e. ["n1", "n2", "n3"], or quad i.e. ["n1", "n2", "n3", "n4"]
 
 class JbeamPart:
     def __init__(self):
@@ -84,9 +84,9 @@ class JbeamPart:
         self.nodes_list: list[Node] = []
         self.beams_list: list[Beam] = []
         self.triangles_list: list[Triangle] = []
-        self.json_beams: list[Union[Props, JbeamStructure]] = []
-        self.json_triangles: list[Union[Props, JbeamStructure]] = []
-        self.json_quads: list[Union[Props, JbeamStructure]] = []
+        self.json_beams: list[Union[JbeamElementProps, JsonJbeamElement]] = []
+        self.json_triangles: list[Union[JbeamElementProps, JsonJbeamElement]] = []
+        self.json_quads: list[Union[JbeamElementProps, JsonJbeamElement]] = []
     
     def __repr__(self):
         return f"JbeamPart(part_name={self.part_name}, slot_type={self.slot_type}, refnodes={self.refnodes})"

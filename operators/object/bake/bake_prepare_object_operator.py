@@ -1,6 +1,6 @@
 import bpy
 
-from dev_tools.utils.utils import Utils # type: ignore
+from dev_tools.utils.utils import Utils
 
 class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
     """Prepare Object for Baking"""

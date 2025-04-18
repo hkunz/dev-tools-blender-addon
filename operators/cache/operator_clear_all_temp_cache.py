@@ -1,8 +1,8 @@
 import bpy
 import bpy_types
 
-from dev_tools.utils.temp_file_manager import TempFileManager # type: ignore
-from dev_tools.operators.common.operator_generic_popup import OperatorGenericPopup # type: ignore
+from dev_tools.utils.temp_file_manager import TempFileManager
+from dev_tools.operators.common.operator_generic_popup import OperatorGenericPopup
 
 class FILE_OT_ClearAllTempCacheOperator(OperatorGenericPopup):
     bl_idname = "file.dev_tools_clear_all_temp_cache"

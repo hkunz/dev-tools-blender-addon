@@ -1,8 +1,8 @@
 import bpy
 import bmesh
 import re
-from dev_tools.utils.object_utils import ObjectUtils as o  # type: ignore
-from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
+from dev_tools.utils.object_utils import ObjectUtils as o
+from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j
 
 class OBJECT_OT_BeamngJbeamSelectSpecificElement(bpy.types.Operator):
     bl_idname = "object.devtools_beamng_jbeam_select_element_by_id_or_index"

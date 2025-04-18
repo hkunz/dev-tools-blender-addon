@@ -2,9 +2,9 @@ import mathutils
 
 from typing import Union
 
-from dev_tools.utils.utils import Utils  # type: ignore
-from dev_tools.utils.jbeam.jbeam_loader import JbeamLoadItem  # type: ignore
-from dev_tools.utils.jbeam.jbeam_models import JbeamJson, JbeamPart, NodeID, Node, Beam, Triangle, JbeamPartName, JbeamPartSectionName, JbeamPartData, JbeamStructure, Props  # type: ignore
+from dev_tools.utils.utils import Utils
+from dev_tools.utils.jbeam.jbeam_loader import JbeamLoadItem
+from dev_tools.utils.jbeam.jbeam_models import JbeamJson, JbeamPart, NodeID, Node, Beam, Triangle, JbeamPartName, JbeamPartSectionName, JbeamPartData, JbeamStructure, Props
 
 #JbeamPartName = str
 #JbeamPartSectionName = str  # section names include: information, slotType, sounds, flexbodies, nodes, beams, triangles, quads, etc

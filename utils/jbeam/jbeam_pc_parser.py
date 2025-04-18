@@ -2,9 +2,9 @@ import json
 import os
 import re
 
-from dev_tools.ui.addon_preferences import MyAddonPreferences as a # type: ignore
-from dev_tools.utils.utils import Utils  # type: ignore
-from dev_tools.utils.jbeam.jbeam_models import JbeamLoadItem, PcJson, PcJbeamParts  # type: ignore
+from dev_tools.ui.addon_preferences import MyAddonPreferences as a
+from dev_tools.utils.utils import Utils
+from dev_tools.utils.jbeam.jbeam_models import JbeamLoadItem, PcJson, PcJbeamParts
 
 
 class PartConfig:

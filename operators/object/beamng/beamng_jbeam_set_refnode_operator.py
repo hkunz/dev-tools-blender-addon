@@ -1,7 +1,7 @@
 import bpy
 import bmesh
 
-from dev_tools.utils.jbeam.jbeam_utils import JbeamRefnodeUtils as jr  # type: ignore
+from dev_tools.utils.jbeam.jbeam_utils import JbeamRefnodeUtils as jr
 
 class OBJECT_OT_BeamngJbeamSetRefnodeOperator(bpy.types.Operator):
     """Operator to set the refnode ID of a selected Node"""

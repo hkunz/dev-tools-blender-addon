@@ -5,13 +5,13 @@ from bpy.types import Operator
 from bpy.props import StringProperty
 from bpy_extras.io_utils import ImportHelper
 
-from dev_tools.ui.addon_preferences import MyAddonPreferences as a # type: ignore
-from dev_tools.utils.utils import Utils  # type: ignore
-from dev_tools.utils.jbeam.jbeam_loader import JbeamFileLoader  # type: ignore
-from dev_tools.utils.jbeam.jbeam_parser import JbeamParser  # type: ignore
-from dev_tools.utils.jbeam.jbeam_models import JbeamLoadItem, JbeamJson, JbeamPart, NodeID, Node, Beam, Triangle, JbeamPartName, JbeamPartSectionName, JbeamPartData  # type: ignore
-from dev_tools.utils.jbeam.jbeam_node_mesh_creator import JbeamNodeMeshCreator  # type: ignore
-from dev_tools.utils.jbeam.jbeam_node_mesh_configurator import JbeamNodeMeshConfigurator  # type: ignore
+from dev_tools.ui.addon_preferences import MyAddonPreferences as a
+from dev_tools.utils.utils import Utils
+from dev_tools.utils.jbeam.jbeam_loader import JbeamFileLoader
+from dev_tools.utils.jbeam.jbeam_parser import JbeamParser
+from dev_tools.utils.jbeam.jbeam_models import JbeamLoadItem, JbeamJson, JbeamPart, NodeID, Node, Beam, Triangle, JbeamPartName, JbeamPartSectionName, JbeamPartData
+from dev_tools.utils.jbeam.jbeam_node_mesh_creator import JbeamNodeMeshCreator
+from dev_tools.utils.jbeam.jbeam_node_mesh_configurator import JbeamNodeMeshConfigurator
 
 class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, ImportHelper):
     """Import a .jbeam file"""

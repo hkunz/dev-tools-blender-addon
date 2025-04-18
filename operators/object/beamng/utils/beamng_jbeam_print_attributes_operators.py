@@ -1,8 +1,8 @@
 import bpy
 import json
 
-from dev_tools.utils.utils import Utils  # type: ignore
-from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j, JbeamPropsStorage, JbeamPropsStorageManager  # type: ignore
+from dev_tools.utils.utils import Utils
+from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j, JbeamPropsStorage, JbeamPropsStorageManager
 
 
 class OBJECT_OT_PrintJBeamPropsBase(bpy.types.Operator):

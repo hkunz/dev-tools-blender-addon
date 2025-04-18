@@ -1,7 +1,7 @@
 import bpy
 
-from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j  # type: ignore
-from dev_tools.utils.jbeam.jbeam_props_storage import JbeamPropsStorageManager  # type: ignore
+from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j
+from dev_tools.utils.jbeam.jbeam_props_storage import JbeamPropsStorageManager
 
 class JbeamNodeMesh:
     def __init__(self, name="NodeMesh"):

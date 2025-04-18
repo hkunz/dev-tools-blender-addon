@@ -3,8 +3,8 @@ import re
 import tempfile
 import shutil
 
-from dev_tools.utils.utils import Utils # type: ignore
-from dev_tools.utils.string_utils import StringUtils # type: ignore
+from dev_tools.utils.utils import Utils
+from dev_tools.utils.string_utils import StringUtils
 
 class TempFileManager:
 

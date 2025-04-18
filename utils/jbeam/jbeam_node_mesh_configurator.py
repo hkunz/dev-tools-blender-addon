@@ -1,8 +1,8 @@
 import bpy
 import json
 
-from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j, JbeamRefnodeUtils as jr  # type: ignore
-from dev_tools.utils.jbeam.jbeam_props_storage import JbeamPropsStorageManager  # type: ignore
+from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j, JbeamRefnodeUtils as jr
+from dev_tools.utils.jbeam.jbeam_props_storage import JbeamPropsStorageManager
 
 class JbeamNodeMeshConfigurator:
 

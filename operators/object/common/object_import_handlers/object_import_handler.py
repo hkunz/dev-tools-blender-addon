@@ -1,7 +1,7 @@
 import bpy
 
-from dev_tools.utils.string_utils import StringUtils # type: ignore
-from dev_tools.utils.object_utils import ObjectUtils # type: ignore
+from dev_tools.utils.string_utils import StringUtils
+from dev_tools.utils.object_utils import ObjectUtils
 
 class ObjectImportHandler:
     IMPORTED_OBJ_BASE_NAME = "ObjectImport"

@@ -9,7 +9,7 @@ from bpy.types import (
 )
 
 from abc import ABC, abstractmethod
-from dev_tools.operators.common.context.context_executer_override import ContextExecuterOverride # type: ignore
+from dev_tools.operators.common.context.context_executer_override import ContextExecuterOverride
 
 class ContextScriptExecuter(ABC):
 

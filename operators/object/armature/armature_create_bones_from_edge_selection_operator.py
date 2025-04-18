@@ -2,7 +2,7 @@ import bpy
 import bmesh
 from collections import defaultdict, deque
 
-from dev_tools.utils.object_utils import ObjectUtils # type: ignore
+from dev_tools.utils.object_utils import ObjectUtils
 
 # Make sure Mesh and Armature both have their Origins at World Origin
 # Select Mesh Objects and go into Edit mode and select Edges where you want create and position bones

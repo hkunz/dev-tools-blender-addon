@@ -2,8 +2,8 @@ import bpy
 import bmesh
 import json
 
-from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j, JbeamRefnodeUtils as jr  # type: ignore
-from dev_tools.utils.ui_utils import UiUtils  # type: ignore
+from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j, JbeamRefnodeUtils as jr
+from dev_tools.utils.ui_utils import UiUtils
 
 def update_element_index(self, context):
     # FIXME this function gets called 3 times preventing IntProperty change, workaround delay also useless

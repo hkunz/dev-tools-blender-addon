@@ -3,8 +3,8 @@ import json
 import re
 from collections import defaultdict, OrderedDict
 
-from dev_tools.utils.number_utils import NumberUtils # type: ignore
-from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
+from dev_tools.utils.number_utils import NumberUtils
+from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j
 
 DEFAULT_SCOPE_MODIFIER_VALUES = {
     "frictionCoef": 1.0,

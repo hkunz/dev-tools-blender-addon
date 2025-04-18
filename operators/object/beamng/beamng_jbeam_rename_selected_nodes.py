@@ -2,7 +2,7 @@ import bpy
 import bmesh
 import re
 
-from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j # type: ignore
+from dev_tools.utils.jbeam.jbeam_utils import JbeamUtils as j
 
 class OBJECT_OT_BeamngJbeamRenameSelectedNodes(bpy.types.Operator):
     bl_idname = "object.devtools_beamng_jbeam_rename_selected_nodes"

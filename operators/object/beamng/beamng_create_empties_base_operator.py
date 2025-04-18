@@ -1,6 +1,6 @@
 import bpy
 
-from dev_tools.utils.utils import Utils # type: ignore
+from dev_tools.utils.utils import Utils
 
 class OBJECT_OT_BeamngCreateEmptiesBase(bpy.types.Operator):
     """Create 'base00' and 'start01' empties with 'start01' as a child of 'base00', placed in a 'beamng_export' collection"""

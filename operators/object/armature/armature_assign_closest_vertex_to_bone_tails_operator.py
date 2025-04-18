@@ -1,7 +1,7 @@
 import bpy
 import bmesh
 
-from dev_tools.utils.object_utils import ObjectUtils # type: ignore
+from dev_tools.utils.object_utils import ObjectUtils
 
 # Run operator OBJECT_OT_ArmatureCreateBonesFromEdgeSelection
 # Select Mesh and Armature as active and run operator

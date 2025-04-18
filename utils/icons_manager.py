@@ -2,7 +2,7 @@ import bpy
 import os
 import bpy.utils.previews
 
-from dev_tools.utils.file_utils import FileUtils # type: ignore
+from dev_tools.utils.file_utils import FileUtils
 
 
 class IconsManager:

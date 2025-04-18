@@ -1,8 +1,6 @@
 import json
 
 from dev_tools.ui.addon_preferences import MyAddonPreferences as a # type: ignore
-from dev_tools.utils.json_cleanup import json_cleanup  # type: ignore
-from dev_tools.utils.jbeam.jbeam_helper import JbeamFileHelper  # type: ignore
 from dev_tools.utils.jbeam.jbeam_loader import JbeamLoaderBase  # type: ignore
 from dev_tools.utils.jbeam.jbeam_models import PcJson  # type: ignore
 

@@ -1,4 +1,5 @@
 {
-    "python.analysis.extraPaths": [".."]
-  }
-  
+  "python.analysis.extraPaths": [
+      "./unofficial_jbeam_editor"
+  ]
+}

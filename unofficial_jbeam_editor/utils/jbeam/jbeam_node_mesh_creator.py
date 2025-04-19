@@ -1,6 +1,6 @@
 import bpy
 
-from unofficial_jbeam_editor.utils.jbeam.jbeam_models import JBeamElement, Beam, Triangle
+from unofficial_jbeam_editor.utils.jbeam.jbeam_models import JBeamElement, Node, Beam, Triangle
 
 class JbeamNodeMeshCreator:
     def __init__(self):
@@ -20,7 +20,7 @@ class JbeamNodeMeshCreator:
         if not self.mesh:
             raise RuntimeError("❌ Mesh object has not been created yet. Call 'create_object' first.")
 
-    def add_vertices(self, nodes_list: list[object]):
+    def add_vertices(self, nodes_list: list[Node]):
         """Add vertices to the existing mesh."""
         self.check_mesh_created()
         vertices = []

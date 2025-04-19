@@ -4,7 +4,7 @@ from typing import Union
 
 from unofficial_jbeam_editor.utils.utils import Utils
 from unofficial_jbeam_editor.utils.jbeam.jbeam_loader import JbeamLoadItem
-from unofficial_jbeam_editor.utils.jbeam.jbeam_models import JbeamJson, JbeamPart, NodeID, Node, Beam, Triangle, JbeamPartName, JbeamPartSectionName, JbeamPartData, JsonJbeamElement, JbeamElementProps
+from unofficial_jbeam_editor.utils.jbeam.jbeam_models import JbeamJson, JbeamPart, JbeamSlotType, NodeID, Node, Beam, Triangle, JbeamPartName, JbeamPartSectionName, JbeamPartData, JsonJbeamElement, JbeamElementProps
 
 #JbeamPartName = str
 #JbeamPartSectionName = str  # section names include: information, slotType, sounds, flexbodies, nodes, beams, triangles, quads, etc

@@ -1,6 +1,6 @@
 import bpy
 
-from typing import List, Callable, Any, Tuple
+from typing import Callable, Any, Tuple
 
 from unofficial_jbeam_editor import bl_info # type: ignore
 
@@ -36,21 +36,6 @@ class Utils:
             if level not in {'INFO', 'WARNING', 'ERROR'}:
                 level = 'INFO'
             operator.report({level}, msg)
-
-    @staticmethod
-    def get_gn_version():
-        v: Tuple[int, int, int] = bpy.app.version
-        if v >= (4, 0, 0):
-            return '4_0'
-        elif v >= (3, 4, 0):
-            return '3_4'
-        elif v >= (3, 3, 0):
-            return '3_3'
-        elif v >= (3, 1, 0):
-            return '3_1'
-        else:
-            pass
-        return '2_93'
 
     @staticmethod
     def is_class_registered(cls) -> bool:

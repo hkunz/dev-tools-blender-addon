@@ -11,7 +11,7 @@ class JbeamPcFileLoader(JbeamLoaderBase):
         with open(filepath, "r", encoding="utf-8") as f:
             raw_json: dict = json.load(f)
         self.json_str = json.dumps(raw_json)
-        return self._validate_content(raw_json)
+        return raw_json
 
     def _validate_content(self, json_data: dict) -> PcJson:
         required_keys = {"format", "model", "parts"}

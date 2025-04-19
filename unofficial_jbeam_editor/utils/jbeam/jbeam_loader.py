@@ -3,7 +3,7 @@ import os
 
 from abc import ABC, abstractmethod
 
-from unofficial_jbeam_editor.utils.jbeam.jbeam_models import JbeamLoadItem, JbeamJson
+from unofficial_jbeam_editor.utils.jbeam.jbeam_models import JbeamLoadItem, JbeamJson, PcJson
 from unofficial_jbeam_editor.utils.temp_file_manager import TempFileManager
 from unofficial_jbeam_editor.utils.jbeam.jbeam_helper import JbeamFileHelper
 from unofficial_jbeam_editor.utils.json_cleanup import json_cleanup
@@ -12,6 +12,8 @@ from unofficial_jbeam_editor.utils.utils import Utils
 
 
 class JbeamLoaderBase(ABC):
+    _cache: dict[str, JbeamJson | PcJson | dict | None] = {}
+
     def __init__(self, filepath: str, operator=None):
         self.filepath = filepath
         self.directory = os.path.dirname(filepath)
@@ -22,36 +24,55 @@ class JbeamLoaderBase(ABC):
 
     def load(self):
         print(f"\n🔄 Loading 📄 {self.filepath}")
-        data = None
+        cls = type(self)
+
+        if self.filepath in cls._cache:
+            cached = cls._cache[self.filepath]
+            if cached is None:
+                print(f"⚠️  Cached failure for {self.filepath}, skipping reattempt.")
+                return None
+            print(f"✅ Loaded from cache: {self.filepath}")
+            return cached
+
         if not os.path.exists(self.filepath):
-            #raise FileNotFoundError(f"❌ File not found: {self.filepath}")
             Utils.log_and_report(f"❌ [FileNotFoundError] {self.filepath}", self.operator, "ERROR")
+            cls._cache[self.filepath] = None
             return None
+
         try:
             data = self._load_main(self.filepath)
-            return self._validate_content(data)
+            result = self._validate_content(data)
+            cls._cache[self.filepath] = result
+            return result
         except Exception as e:
             Utils.log_and_report(f"⚠️  Initial load failed with '{e}'. Attempting auto-fix...", self.operator if a.is_warnings_enabled() else None, "WARNING")
             fixed_str = self._attempt_fix(self.filepath, e)
             try:
                 data = self._load_from_string(fixed_str)
-            except json.JSONDecodeError as e:
-                Utils.log_and_report(f"JSON decode error: {e}", self.operator, "ERROR")
-            except UnicodeDecodeError as e:
-                Utils.log_and_report(f"Unicode decode error in fixed file: {e}", self.operator, "ERROR")
-            except TypeError as e:
-                Utils.log_and_report(f"Type error (maybe fixed_str is None?): {e}", self.operator, "ERROR")
-            except ValueError as e:
-                Utils.log_and_report(f"Value error '{e}'", self.operator, "ERROR")
+                result = self._validate_content(data)
+                cls._cache[self.filepath] = result
+                self._write_debug_files(fixed_str)
+                print(f"✅ Loaded data after fixing malformed content from 📄 {self.filepath}")
+                return result
+            except Exception as e2:
+                self._handle_fix_errors(e2, fixed_str)
+                cls._cache[self.filepath] = None
                 return None
-            except Exception as e:
-                Utils.log_and_report(f"Unexpected error: {e}", self.operator, "ERROR")
-            self._write_debug_files(fixed_str)
-            if not data:
-                Utils.log_and_report(f"❌ Failed to fix and parse file {self.filepath}", self.operator, "ERROR")
-                return None
-            print(f"✅ Loaded data after fixing malformed content from 📄 {self.filepath}")
-            return data
+
+    def _handle_fix_errors(self, e, fixed_str: str):
+        if isinstance(e, json.JSONDecodeError):
+            Utils.log_and_report(f"JSON decode error: {e}", self.operator, "ERROR")
+        elif isinstance(e, UnicodeDecodeError):
+            Utils.log_and_report(f"Unicode decode error in fixed file: {e}", self.operator, "ERROR")
+        elif isinstance(e, TypeError):
+            Utils.log_and_report(f"Type error (maybe fixed_str is None?): {e}", self.operator, "ERROR")
+        elif isinstance(e, ValueError):
+            Utils.log_and_report(f"Value error '{e}'", self.operator, "ERROR")
+        else:
+            Utils.log_and_report(f"Unexpected error: {e}", self.operator, "ERROR")
+        self._write_debug_files(fixed_str)
+        Utils.log_and_report(f"❌ Failed to fix and parse file {self.filepath}", self.operator, "ERROR")
+
 
     def _attempt_fix(self, path: str, error: Exception) -> str:
         snippet = JbeamFileHelper.extract_json_error_snippet(error, self.json_str)

@@ -24,3 +24,36 @@ TASKS:
 
 Load Quads https://documentation.beamng.com/modding/vehicle/sections/triangles/quads/ A quad with nodes n1, n2, n3, n4 will create 2 triangles with the nodes n1, n2, n3 and n3, n4, n1 respectively. Even though there is no technical disadvantage of using them, they make it somewhat harder to understand the Jbeam files
 Quads used by C:\Users\hkunz\Documents\BeamNG.drive\editable_vehicles\vehicles\blockwall\blockwall.jbeam    
+
+"delineator_base_large": {
+    "information":{
+        "authors":"BeamNG",
+        "name":"Large Base"
+
+    },
+    "slotType" : "delineator_base",
+    "slots": [
+        ["type", "default", "description"],
+        ["delineator_post","delineator_pole","Post", {"nodeOffset":{"x":0.0, "y":0.0, "z":-0.00},"coreSlot":true}],
+        ["delineator_anchors_large","","Anchors"],
+    ],
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        ["delineator_base_long", ["delineator_base"], [], {"pos":{"x":0.0, "y":0.0, "z":0.00}, "rot":{"x":0.00, "y":0.0, "z":0.0}, "scale":{"x":1.0, "y":1.0, "z":2.5}}],
+    ],
+
+"delineator_post_wide_chevrons": {
+    "information":{
+        "authors":"BeamNG",
+        "name":"Board Arrows"
+
+    },
+    "slotType" : "delineator_post",
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        ["delineator_wide_chevrons", ["delineator_post"], [], {"pos":{"x":0.0, "y":0.0, "z":0.08}, "rot":{"x":0.00, "y":0.0, "z":0.0}, "scale":{"x":1.0, "y":1.0, "z":1.0}}],
+    ],
+
+nodes missing in delineator_base_large that are inside delineator_post_wide_chevrons
+so check slot type delineator_post from delineator_post_wide_chevrons in slots of delineator_base_large
+if found, then add all elements to delineator_base_large

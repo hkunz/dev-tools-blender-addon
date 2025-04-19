@@ -25,12 +25,14 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
         maxlen=255,
     )  # type: ignore
 
+    force_reload: bpy.props.BoolProperty(name="Force Reload", default=False)  # type: ignore
+
     def execute(self, context):
         bpy.ops.object.select_all(action='DESELECT')
         self.filename = os.path.basename(self.filepath)
         load_item = JbeamLoadItem(self.filepath)
         loader = JbeamFileLoader(load_item, operator=self)
-        jbeam_json: JbeamJson = loader.load()
+        jbeam_json: JbeamJson = loader.load(self.force_reload)
 
         if not jbeam_json:
             return {'CANCELLED'}

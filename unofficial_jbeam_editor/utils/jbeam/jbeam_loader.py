@@ -22,11 +22,11 @@ class JbeamLoaderBase(ABC):
         self.is_jbeam = True
         self.json_str = ""
 
-    def load(self):
+    def load(self, force_reload=False):
         print(f"\n🔄 Loading 📄 {self.filepath}")
         cls = type(self)
 
-        if self.filepath in cls._cache:
+        if self.filepath in cls._cache and not force_reload:
             cached = cls._cache[self.filepath]
             if cached is None:
                 print(f"⚠️  Cached failure for {self.filepath}, skipping reattempt.")
@@ -108,6 +108,18 @@ class JbeamLoaderBase(ABC):
     def _load_from_string(self, text: str) -> JbeamJson:
         json_data = self.json_loads(json_cleanup(text))
         return self._validate_content(json_data)
+
+    @classmethod
+    def clear_cache(cls, filepath: str | None = None) -> None:
+        if filepath is None:
+            cls._cache.clear()
+            print("🧹 Cleared entire cache.")
+            return
+        removed = cls._cache.pop(filepath, None)
+        if removed is not None:
+            print(f"🧹 Cleared cache for: {filepath}")
+        else:
+            print(f"ℹ️ No cache entry found for: {filepath}")
 
     @abstractmethod
     def _validate_content(self, json_data: dict):

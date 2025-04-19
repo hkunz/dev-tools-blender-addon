@@ -1,5 +1,6 @@
 import bpy
 import os
+import bpy_types
 
 from bpy.types import Operator
 from bpy.props import StringProperty
@@ -28,11 +29,13 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportPcFileToNodeMeshes(Operator, Im
         maxlen=255,
     )  # type: ignore
 
+    force_reload: bpy.props.BoolProperty(name="Force Reload", default=False)  # type: ignore
+
     def execute(self, context):
         bpy.ops.object.select_all(action='DESELECT')
         self.filename = os.path.basename(self.filepath)
         loader = JbeamPcFileLoader(self.filepath, self)
-        data = loader.load()
+        data = loader.load(self.force_reload)
 
         if not data:
             return {'CANCELLED'}
@@ -46,6 +49,10 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportPcFileToNodeMeshes(Operator, Im
 
     def _load_jbeam_files(self):
         load_items: list[JbeamLoadItem] = self.parser.get_jbeam_load_items()
+        if self.force_reload:
+            for load_item in load_items:
+                JbeamFileLoader.clear_cache(load_item.file_path)
+
         parsers: list[JbeamParser] = []
         print("\n⏳🔄 Preparing to load Jbeam Load Items:\n" + "    - " + "\n    - ".join(str(item) for item in load_items))
         load_items
@@ -92,3 +99,7 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportPcFileToNodeMeshes(Operator, Im
         JbeamNodeMeshConfigurator.process_node_mesh_props(obj, parser, part_name)
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj
+    
+    def draw(self, context: bpy_types.Context) -> None:
+        self.options_panel = self.layout.box().column()
+        self.options_panel.prop(self, "force_reload")

@@ -33,9 +33,10 @@ class JbeamPcParser:
             self.pc.part_names = data.get("parts", {})
         except Exception as e:
             Utils.log_and_report(f"Failed to parse PC file {self.pc.filepath}: {e}", None, "ERROR")
-            return
+            return False
 
         print(f"Loaded part configurator: {self.pc} ")
+        return True
 
     def get_jbeam_load_items(self):
         load_items: list[JbeamLoadItem] = []

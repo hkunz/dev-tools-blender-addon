@@ -6,6 +6,7 @@ JbeamPartData = dict[JbeamPartSectionName, Any]
 JbeamJson = dict[JbeamPartName, JbeamPartData]
 
 JbeamSlotType = str
+JbeamPartID = str  # JbeamSlotType + ":" + JbeamPartName
 PcJbeamParts = dict[JbeamSlotType, JbeamPartName]
 
 class PcJson(TypedDict):
@@ -87,6 +88,14 @@ class JbeamPart:
         self.json_beams: list[Union[JbeamElementProps, JsonJbeamElement]] = []
         self.json_triangles: list[Union[JbeamElementProps, JsonJbeamElement]] = []
         self.json_quads: list[Union[JbeamElementProps, JsonJbeamElement]] = []
-    
+
+    @staticmethod
+    def generate_id(slot_type: JbeamSlotType, part_name: JbeamPartName) -> str:
+        return f"{slot_type}:{part_name}"
+
+    @property
+    def id(self) -> str:
+        return JbeamPart.generate_id(self.slot_type, self.part_name)
+
     def __repr__(self):
         return f"JbeamPart(part_name={self.part_name}, slot_type={self.slot_type}, refnodes={self.refnodes})"

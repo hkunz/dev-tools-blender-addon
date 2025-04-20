@@ -1,5 +1,6 @@
 import bpy
 import os
+
 from collections import defaultdict
 from unofficial_jbeam_editor.utils.jbeam.jbeam_parser import JbeamParser
 from unofficial_jbeam_editor.utils.jbeam.jbeam_loader import JbeamFileLoader
@@ -7,6 +8,16 @@ from unofficial_jbeam_editor.utils.jbeam.jbeam_models import JbeamLoadItem, Jbea
 from unofficial_jbeam_editor.utils.jbeam.jbeam_node_mesh_creator import JbeamNodeMeshCreator
 from unofficial_jbeam_editor.utils.jbeam.jbeam_node_mesh_configurator import JbeamNodeMeshConfigurator
 from unofficial_jbeam_editor.utils.utils import Utils
+
+class GroupedPart:
+    def __init__(self, part, group_id, level, parser):
+        self.id = part.id
+        self.group_id = group_id
+        self.level = level
+        self.parser = parser
+
+    def __repr__(self):
+        return f"GroupedPart(id={self.id}, group_id={self.group_id}, level={self.level}, parser={self.parser.parse_source})"
 
 class JbeamPartsLoader:
     def __init__(self, pc_parser, operator):
@@ -47,6 +58,8 @@ class JbeamPartsLoader:
         grouped_parts = []
         group_counter = 0
 
+        parsers_by_id = {parser.get_jbeam_part(part.id).id: parser for parser in parsers for part in parser.jbeam_parts.values()}
+
         def can_be_grouped_with(source, candidate):
             print(f"Evaluating if '{candidate.slot_type}:{candidate.id}' can fit into slots of '{source.slot_type}:{source.id}'")
             for slot in source.slots:
@@ -65,14 +78,14 @@ class JbeamPartsLoader:
                 continue
 
             print(f"\n🔹 Starting new group {group_counter} from root part: {jbeam_part.slot_type}:{jbeam_part.id}")
-            group = self._explore_and_group_parts(parsers, jbeam_part, visited_parts, group_counter, can_be_grouped_with)
+            group = self._explore_and_group_parts(parsers_by_id, jbeam_part, visited_parts, group_counter, can_be_grouped_with)
             grouped_parts.extend(group)
-            print(f"✅ Finalized group {group_counter} with {len(group)} part(s): {[p['id'] for p in group]}")
+            print(f"✅ Finalized group {group_counter} with {len(group)} part(s): {[p.id for p in group]}")
             group_counter += 1
 
         return grouped_parts
 
-    def _explore_and_group_parts(self, parsers, root_part, visited_parts, group_counter, can_be_grouped_with):
+    def _explore_and_group_parts(self, parsers_by_id, root_part, visited_parts, group_counter, can_be_grouped_with):
         group = []
         queue = [(root_part, 0)]  # Start with root part at level 0
 
@@ -82,17 +95,15 @@ class JbeamPartsLoader:
                 continue
 
             print(f"Exploring part: {current_part.slot_type}:{current_part.id} (Level {level})")
-            current_parser = next(p for p in parsers if p.get_jbeam_part(current_part.id) == current_part)
+            current_parser = parsers_by_id.get(current_part.id)
+            if not current_parser:
+                continue
 
-            group.append({
-                "id": current_part.id,
-                "group_id": group_counter,
-                "level": level,
-                "parser": current_parser
-            })
+            grouped_part = GroupedPart(current_part, group_counter, level, current_parser)
+            group.append(grouped_part)
             visited_parts.add(current_part.id)
 
-            for other_parser in parsers:
+            for other_parser in parsers_by_id.values():
                 for candidate in other_parser.jbeam_parts.values():
                     if candidate.id in visited_parts or candidate.id == current_part.id:
                         continue
@@ -105,15 +116,15 @@ class JbeamPartsLoader:
         print("\n=== GROUPED RESULTS ===")
         grouped_by_id = defaultdict(list)
         for part in grouped_parts:
-            grouped_by_id[part["group_id"]].append(part)
+            grouped_by_id[part.group_id].append(part)
 
-        for group_id in grouped_by_id:
-            grouped_by_id[group_id] = sorted(grouped_by_id[group_id], key=lambda p: p["level"], reverse=True)
+        for group_id, parts in grouped_by_id.items():
+            grouped_by_id[group_id] = sorted(parts, key=lambda p: p.level, reverse=True)
 
         for group_id, parts in grouped_by_id.items():
             for part in parts:
-                print(f"Part ID: {part['id']}, Group ID: {part['group_id']}, Level: {part['level']}, Parser: {part['parser'].parse_source}")
-                self._create_node_mesh(part['parser'], part['group_id'])
+                print(f"Part ID: {part.id}, Group ID: {part.group_id}, Level: {part.level}, Parser: {part.parser.parse_source}")
+                #self._create_node_mesh(part.parser, part.group_id)
 
     def _create_node_mesh(self, parser, group):
         load_item = parser.parse_source

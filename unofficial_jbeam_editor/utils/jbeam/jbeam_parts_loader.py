@@ -124,7 +124,7 @@ class JbeamPartsLoader:
         for group_id, parts in grouped_by_id.items():
             for part in parts:
                 print(f"Part ID: {part.id}, Group ID: {part.group_id}, Level: {part.level}, Parser: {part.parser.parse_source}")
-                #self._create_node_mesh(part.parser, part.group_id)
+                self._create_node_mesh(part.parser, part.group_id)
 
     def _create_node_mesh(self, parser, group):
         load_item = parser.parse_source
@@ -143,6 +143,8 @@ class JbeamPartsLoader:
             mesh_name = str(group)
             obj = jmc.create_object(mesh_name)
             self.mesh_creators[group] = jmc
+        else:
+            obj = jmc.obj
 
         if nodes_list:
             jmc.add_vertices(nodes_list)
@@ -155,6 +157,6 @@ class JbeamPartsLoader:
         if tris_list:
             jmc.add_faces(tris_list)
 
-        JbeamNodeMeshConfigurator.process_node_mesh_props(obj, parser, part_id)
+        #JbeamNodeMeshConfigurator.process_node_mesh_props(obj, parser, part_id) # FIXME: should work for multiple times called
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj

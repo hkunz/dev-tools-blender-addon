@@ -1,5 +1,4 @@
 import bpy
-
 from unofficial_jbeam_editor.utils.jbeam.jbeam_models import JBeamElement, Node, Beam, Triangle
 
 class JbeamNodeMeshCreator:
@@ -7,6 +6,11 @@ class JbeamNodeMeshCreator:
         self.vertex_indices: dict[str, int] = {}  # Map NodeID to vertex index
         self.mesh = None
         self.obj = None
+
+        # Internal storage for cumulative mesh data
+        self._vertices: list = []
+        self._edges: list[tuple[int, int]] = []
+        self._faces: list[tuple[int, int, int]] = []
 
     def create_object(self, mesh_name="NodeMesh"):
         """Create an empty mesh object."""
@@ -20,19 +24,24 @@ class JbeamNodeMeshCreator:
         if not self.mesh:
             raise RuntimeError("❌ Mesh object has not been created yet. Call 'create_object' first.")
 
-    def add_vertices(self, nodes_list: list[Node]):
-        """Add vertices to the existing mesh."""
-        self.check_mesh_created()
-        vertices = []
-        for i, node in enumerate(nodes_list):  # `i` will serve as the vertex index
-            #print(f"Processing NodeID: {node.id}, Position: {node.position}")
-            node.index = i
-            vertices.append(node.position)
-            self.vertex_indices[node.id] = i  # Map NodeID to its vertex index
-        # print(f"Processing Node ID list complete")
-        self.mesh.from_pydata(vertices, [], [])
+    def _rebuild_mesh(self):
+        """Rebuild the mesh from current internal state."""
+        self.mesh.clear_geometry()
+        self.mesh.from_pydata(self._vertices, self._edges, self._faces)
         self.mesh.update()
-        print(f"    - Added {len(vertices)} vertices to the mesh.")
+
+    def add_vertices(self, nodes_list: list[Node]):
+        """Append vertices to the existing mesh."""
+        self.check_mesh_created()
+        start_index = len(self._vertices)
+        for i, node in enumerate(nodes_list):
+            global_index = start_index + i
+            node.index = global_index
+            self.vertex_indices[node.id] = global_index
+            self._vertices.append(node.position)
+
+        self._rebuild_mesh()
+        print(f"    - Added {len(nodes_list)} vertices to the mesh (total: {len(self._vertices)}).")
 
     def _process_elements(self, element_list: list[JBeamElement], node_count: int, get_node_ids: callable, assign_index: callable) -> list[tuple[int, ...]]:
         """Generic handler for processing edges or faces."""
@@ -47,12 +56,12 @@ class JbeamNodeMeshCreator:
                 assign_index(element, -1)
                 continue
 
-            if all(nid in self.vertex_indices for nid in node_ids): # Check all node IDs exist
+            if all(nid in self.vertex_indices for nid in node_ids):
                 vert_indices = tuple(self.vertex_indices[nid] for nid in node_ids)
-                key = tuple(sorted(vert_indices)) if node_count == 2 else vert_indices  # For edges, sort the tuple to make order irrelevant
+                key = tuple(sorted(vert_indices)) if node_count == 2 else vert_indices
 
                 if key not in unique_map:
-                    unique_map[key] = len(unique_map)
+                    unique_map[key] = len(self._edges if node_count == 2 else self._faces)
                     result.append(vert_indices)
 
                 assign_index(element, unique_map[key])
@@ -68,29 +77,29 @@ class JbeamNodeMeshCreator:
         if not beam_list:
             return
 
-        edges = self._process_elements(
+        new_edges = self._process_elements(
             element_list=beam_list,
             node_count=2,
             get_node_ids=lambda b: (b.node_id1, b.node_id2),
             assign_index=lambda b, i: setattr(b, 'index', i)
         )
 
-        self.mesh.from_pydata([], edges, [])
-        self.mesh.update()
-        print(f"    - Added {len(edges)} edges to the mesh.")
+        self._edges.extend(new_edges)
+        self._rebuild_mesh()
+        print(f"    - Added {len(new_edges)} edges to the mesh (total: {len(self._edges)}).")
 
     def add_faces(self, tris_list: list[Triangle]) -> None:
         self.check_mesh_created()
         if not tris_list:
             return
 
-        faces = self._process_elements(
+        new_faces = self._process_elements(
             element_list=tris_list,
             node_count=3,
             get_node_ids=lambda t: (t.node_id1, t.node_id2, t.node_id3),
             assign_index=lambda t, i: setattr(t, 'index', i)
         )
 
-        self.mesh.from_pydata([], [], faces)
-        self.mesh.update()
-        print(f"    - Added {len(faces)} unique faces to the mesh.")
+        self._faces.extend(new_faces)
+        self._rebuild_mesh()
+        print(f"    - Added {len(new_faces)} faces to the mesh (total: {len(self._faces)}).")

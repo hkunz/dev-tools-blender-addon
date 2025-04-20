@@ -14,16 +14,6 @@ class PcJson(TypedDict):
     model: str
     parts: PcJbeamParts
 
-class JbeamLoadItem:
-    def __init__(self, file_path: str, part_name: str="", slot_type: str=""):
-        self.part_name = part_name
-        self.slot_type = slot_type
-        self.file_path = file_path
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(part_name={self.part_name}, slot_type={self.slot_type}, file_path= 📄 {self.file_path})"
-
-
 NodeID = str
 ElementID = str  # can be NodeID or beam id (i.e. [node_1|node_2]) or triangle id (i.e. [node_1|node_2|node_3])
 ScopeModifierName = str
@@ -90,12 +80,29 @@ class JbeamPart:
         self.json_quads: list[Union[JbeamElementProps, JsonJbeamElement]] = []
 
     @staticmethod
-    def generate_id(slot_type: JbeamSlotType, part_name: JbeamPartName) -> str:
+    def generate_id(slot_type: JbeamSlotType, part_name: JbeamPartName) -> JbeamPartID:
         return f"{slot_type}:{part_name}"
 
     @property
-    def id(self) -> str:
+    def id(self) -> JbeamPartID:
         return JbeamPart.generate_id(self.slot_type, self.part_name)
 
     def __repr__(self):
         return f"JbeamPart(part_name={self.part_name}, slot_type={self.slot_type}, refnodes={self.refnodes})"
+
+class JbeamLoadItem:
+    def __init__(self, file_path: str, part_name: str="", slot_type: str=""):
+        self.part_name = part_name
+        self.slot_type = slot_type
+        self.file_path = file_path
+
+    @property
+    def is_explicit_part(self) -> bool:
+        return bool(self.part_name)
+
+    @property
+    def part_id(self) -> JbeamPartID:
+        return JbeamPart.generate_id(self.slot_type, self.part_name)
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(part_name={self.part_name}, slot_type={self.slot_type}, file_path= 📄 {self.file_path})"

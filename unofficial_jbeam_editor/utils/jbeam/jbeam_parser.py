@@ -24,9 +24,10 @@ class JbeamParser:
                 if p.slot_type == "main":
                     self.jbeam_main_part = p
 
-            if load_item and load_item.part_name and (load_item.part_name != p.part_name or load_item.slot_type != p.slot_type):
-                #print(f" - Ignore irrelevant part {p.part_name} with slot type {p.slot_type}")
+            if load_item.is_explicit_part and load_item.part_id != p.id:
+                # print(f" - Ignore irrelevant part {p.part_name} with slot type {p.slot_type}")
                 continue
+
             if "refNodes" in part_data:
                 headers, values = part_data["refNodes"]
                 p.refnodes = {h[:-1]: v for h, v in zip(headers[:], values[:])}  # Trim last char from keys

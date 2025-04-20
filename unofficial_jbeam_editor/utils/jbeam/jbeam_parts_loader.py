@@ -43,8 +43,8 @@ class JbeamPartsLoader:
         for parser in parsers:
             load_item: JbeamLoadItem = parser.parse_source
             jbeam_parts: dict[JbeamPartID, JbeamPart] = parser.get_jbeam_parts()
-            for part_name, part in jbeam_parts.items():
-                if part_name == load_item.part_name and part.slot_type == load_item.slot_type:
+            for part_id, part in jbeam_parts.items():
+                if part_id == load_item.part_id:
                     for other_parser in parsers:
                         if parser == other_parser:
                             continue

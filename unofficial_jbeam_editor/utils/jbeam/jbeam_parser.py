@@ -24,7 +24,7 @@ class JbeamParser:
                 if p.slot_type == "main":
                     self.jbeam_main_part = p
 
-            if load_item.is_explicit_part and load_item.part_id != p.id:
+            if load_item.is_part_set and load_item.part_id != p.id:
                 # print(f" - Ignore irrelevant part {p.part_name} with slot type {p.slot_type}")
                 continue
 
@@ -247,6 +247,13 @@ class JbeamParser:
             if part.slot_type == slot_type:
                 return part
         print(f"Parser: No part with slot_type '{slot_type}' found")
+        return None
+
+    def find_part_with_slottable_slot_type(self, slot_type: JbeamSlotType) -> JbeamPart:
+        for part in self.jbeam_parts.values():
+            if slot_type in part.slots:
+                return part
+        print(f"JbeamParser: No part found with a slot accepting slot_type '{slot_type}'")
         return None
 
     def get_nodes(self, part_id: str = "") -> dict[NodeID, Node]:

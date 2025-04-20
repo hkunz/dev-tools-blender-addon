@@ -54,6 +54,14 @@ Quads used by C:\Users\hkunz\Documents\BeamNG.drive\editable_vehicles\vehicles\b
         ["delineator_wide_chevrons", ["delineator_post"], [], {"pos":{"x":0.0, "y":0.0, "z":0.08}, "rot":{"x":0.00, "y":0.0, "z":0.0}, "scale":{"x":1.0, "y":1.0, "z":1.0}}],
     ],
 
+"delineator_anchors_small": {
+    "information":{
+        "authors":"BeamNG",
+        "name":"Ground Anchors"
+
+    },
+    "slotType" : "delineator_anchors_small",
+
 nodes missing in delineator_base_large that are inside delineator_post_wide_chevrons
 so check slot type delineator_post from delineator_post_wide_chevrons in slots of delineator_base_large
 if found, then add all elements to delineator_base_large

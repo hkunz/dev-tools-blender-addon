@@ -97,7 +97,7 @@ class JbeamLoadItem:
         self.file_path = file_path
 
     @property
-    def is_explicit_part(self) -> bool:
+    def is_part_set(self) -> bool:
         return bool(self.part_name)
 
     @property

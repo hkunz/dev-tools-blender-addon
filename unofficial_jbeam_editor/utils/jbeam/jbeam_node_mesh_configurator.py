@@ -15,24 +15,23 @@ class JbeamNodeMeshConfigurator:
         bpy.ops.object.mode_set(mode='OBJECT')
 
     @staticmethod
-    def process_node_mesh_props(obj, parser=None, part_id=""):
-        j.set_jbeam_visuals(obj)
-        j.add_gn_jbeam_visualizer_modifier(obj)
+    def process_node_mesh_props(obj, parser=None, part_id="", init=True):
         if not parser:
             return
-        ref_nodes = parser.get_ref_nodes(part_id)
         nodes = parser.get_nodes(part_id)
         nodes_list = parser.get_nodes_list(part_id)
         if not nodes_list:
             return
-        JbeamPropsStorageManager.get_instance().register_object(obj)
-        beams_list = parser.get_beams_list(part_id)
-        tris_list = parser.get_triangles_list(part_id)
-        JbeamNodeMeshConfigurator.create_node_mesh_attributes(obj)
+        if init:
+            j.set_jbeam_visuals(obj)
+            j.add_gn_jbeam_visualizer_modifier(obj)
+            JbeamPropsStorageManager.get_instance().register_object(obj)
+            JbeamNodeMeshConfigurator.create_node_mesh_attributes(obj)
+        ref_nodes = parser.get_ref_nodes(part_id)
         JbeamNodeMeshConfigurator.assign_ref_nodes(obj, ref_nodes, nodes)
         JbeamNodeMeshConfigurator.store_node_props_in_vertex_attributes(obj, nodes_list)
-        JbeamNodeMeshConfigurator.store_beam_props_in_edge_attributes(obj, beams_list)
-        JbeamNodeMeshConfigurator.store_triangle_props_in_face_attributes(obj, tris_list)
+        JbeamNodeMeshConfigurator.store_beam_props_in_edge_attributes(obj, parser.get_beams_list(part_id))
+        JbeamNodeMeshConfigurator.store_triangle_props_in_face_attributes(obj, parser.get_triangles_list(part_id))
 
     @staticmethod
     def remove_custom_data_props(obj):

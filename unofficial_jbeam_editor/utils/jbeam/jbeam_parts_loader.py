@@ -4,15 +4,17 @@ import os
 from collections import defaultdict
 from unofficial_jbeam_editor.utils.jbeam.jbeam_parser import JbeamParser
 from unofficial_jbeam_editor.utils.jbeam.jbeam_loader import JbeamFileLoader
-from unofficial_jbeam_editor.utils.jbeam.jbeam_models import JbeamLoadItem, JbeamJson, JbeamPart
+from unofficial_jbeam_editor.utils.jbeam.jbeam_models import JbeamLoadItem, JbeamJson, JbeamPart, JbeamPartID
 from unofficial_jbeam_editor.utils.jbeam.jbeam_node_mesh_creator import JbeamNodeMeshCreator
 from unofficial_jbeam_editor.utils.jbeam.jbeam_node_mesh_configurator import JbeamNodeMeshConfigurator
 from unofficial_jbeam_editor.utils.utils import Utils
 
+PartGroupID = str
+
 class GroupedPart:
     def __init__(self, part, group_id, level, parser):
         self.id = part.id
-        self.group_id = group_id
+        self.group_id: PartGroupID = group_id
         self.level = level
         self.parser = parser
 
@@ -23,7 +25,7 @@ class JbeamPartsLoader:
     def __init__(self, pc_parser, operator):
         self.operator = operator
         self.pc_parser = pc_parser
-        self.mesh_creators = {}
+        self.mesh_creators: dict[PartGroupID, JbeamNodeMeshCreator] = {}
 
     def load(self, force_reload=False):
         load_items = self.pc_parser.get_jbeam_load_items()
@@ -53,22 +55,22 @@ class JbeamPartsLoader:
         self._process_grouped_parts(grouped_parts)
 
     def _group_parts(self, parsers):
-        print(f"\n🧊 Grouping Parts from selected Jbeam files")
-        visited_parts = set()
-        grouped_parts = []
-        group_counter = 0
+        # print(f"\n🧊 Grouping Parts from selected Jbeam files")
+        visited_parts: set[JbeamPartID] = set()
+        grouped_parts: list[GroupedPart] = []
+        group_counter: PartGroupID = 0
 
         parsers_by_id = {parser.get_jbeam_part(part.id).id: parser for parser in parsers for part in parser.jbeam_parts.values()}
 
         def can_be_grouped_with(source, candidate):
-            print(f"Evaluating if '{candidate.slot_type}:{candidate.id}' can fit into slots of '{source.slot_type}:{source.id}'")
+            # print(f"Evaluating if '{candidate.slot_type}:{candidate.id}' can fit into slots of '{source.slot_type}:{source.id}'")
             for slot in source.slots:
                 slot_type = slot[0] if isinstance(slot, (list, tuple)) else slot
-                print(f"Source slot accepts: '{slot_type}'")
+                # print(f"Source slot accepts: '{slot_type}'")
                 if candidate.slot_type == slot_type:
-                    print(f"✅ MATCH: Candidate slotType fits into source slotType")
+                    # print(f"✅ MATCH: Candidate slotType fits into source slotType")
                     return True
-            print(f"❌ NO MATCH found")
+            # print(f"❌ NO MATCH found")
             return False
 
         for parser in parsers:
@@ -77,16 +79,16 @@ class JbeamPartsLoader:
             if jbeam_part.id in visited_parts:
                 continue
 
-            print(f"\n🔹 Starting new group {group_counter} from root part: {jbeam_part.slot_type}:{jbeam_part.id}")
+            # print(f"\n🔹 Starting new group {group_counter} from root part: {jbeam_part.slot_type}:{jbeam_part.id}")
             group = self._explore_and_group_parts(parsers_by_id, jbeam_part, visited_parts, group_counter, can_be_grouped_with)
             grouped_parts.extend(group)
-            print(f"✅ Finalized group {group_counter} with {len(group)} part(s): {[p.id for p in group]}")
+            # print(f"Finalized group {group_counter} with {len(group)} part(s): {[p.id for p in group]}")
             group_counter += 1
 
         return grouped_parts
 
     def _explore_and_group_parts(self, parsers_by_id, root_part, visited_parts, group_counter, can_be_grouped_with):
-        group = []
+        group: list[GroupedPart] = []
         queue = [(root_part, 0)]  # Start with root part at level 0
 
         while queue:
@@ -94,7 +96,7 @@ class JbeamPartsLoader:
             if current_part.id in visited_parts:
                 continue
 
-            print(f"Exploring part: {current_part.slot_type}:{current_part.id} (Level {level})")
+            # print(f"Exploring part: {current_part.slot_type}:{current_part.id} (Level {level})")
             current_parser = parsers_by_id.get(current_part.id)
             if not current_parser:
                 continue
@@ -107,13 +109,11 @@ class JbeamPartsLoader:
                 for candidate in other_parser.jbeam_parts.values():
                     if candidate.id in visited_parts or candidate.id == current_part.id:
                         continue
-
                     if can_be_grouped_with(current_part, candidate):
                         queue.append((candidate, level + 1))
         return group
 
     def _process_grouped_parts(self, grouped_parts):
-        print("\n=== GROUPED RESULTS ===")
         grouped_by_id = defaultdict(list)
         for part in grouped_parts:
             grouped_by_id[part.group_id].append(part)
@@ -123,10 +123,10 @@ class JbeamPartsLoader:
 
         for group_id, parts in grouped_by_id.items():
             for part in parts:
-                print(f"Part ID: {part.id}, Group ID: {part.group_id}, Level: {part.level}, Parser: {part.parser.parse_source}")
-                self._create_node_mesh(part.parser, part.group_id)
+                # print(f"Part ID: {part.id}, Group ID: {part.group_id}, Level: {part.level}, Parser: {part.parser.parse_source}")
+                self._assemble_node_mesh(part.parser, part.group_id)
 
-    def _create_node_mesh(self, parser, group):
+    def _assemble_node_mesh(self, parser, group):
         load_item = parser.parse_source
         part_name = load_item.part_name
         slot_type = load_item.slot_type
@@ -137,8 +137,9 @@ class JbeamPartsLoader:
             Utils.log_and_report(f"No nodes list in part name '{part_id}'", self.operator, "INFO")
             return
 
-        jmc = self.mesh_creators.get(group)
-        if jmc is None:
+        jmc:JbeamNodeMeshCreator | None = self.mesh_creators.get(group)
+        init: bool = jmc is None
+        if init:
             jmc = JbeamNodeMeshCreator()
             mesh_name = str(group)
             obj = jmc.create_object(mesh_name)
@@ -157,6 +158,6 @@ class JbeamPartsLoader:
         if tris_list:
             jmc.add_faces(tris_list)
 
-        #JbeamNodeMeshConfigurator.process_node_mesh_props(obj, parser, part_id) # FIXME: should work for multiple times called
+        JbeamNodeMeshConfigurator.process_node_mesh_props(obj, parser, part_id, init)
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj

@@ -132,6 +132,13 @@ class JbeamParser:
         seen_structures = {}  # Track unique beams/triangles and their instance counts
         missing_node_warnings = []
 
+        # TODO # FIXME This is still a workaround which needs to be fixed: nodes are not found for the base part because they are in the child part but we maybe need the dummy nodes
+        def get_or_create_dummy_node(self, part, name):
+            if name not in part.nodes:
+                dummy = Node(instance=1, node_id=name, index=-1, position=(0,0,0))  # or some other sentinel index
+                part.nodes[name] = dummy
+            return part.nodes[name]
+
         for entry in json_data:
             if isinstance(entry, dict):
                 current_props.update(entry)
@@ -145,18 +152,18 @@ class JbeamParser:
                 inline_props = None
 
                 if structure_type == "beams" and len(entry) >= 2:
-                    nodes = [part.nodes.get(n) for n in entry[:2]]
+                    nodes = [part.nodes.get(n) or get_or_create_dummy_node(self, part, n) for n in entry[:2]]  # nodes = [part.nodes.get(n) for n in entry[:2]]
                     inline_props = entry[2] if len(entry) > 2 and isinstance(entry[2], dict) else {}
 
                 elif structure_type == "triangles" and len(entry) >= 3:
-                    nodes = [part.nodes.get(n) for n in entry[:3]]
+                    nodes = [part.nodes.get(n) or get_or_create_dummy_node(self, part, n) for n in entry[:3]]  # nodes = [part.nodes.get(n) for n in entry[:3]]
                     inline_props = entry[3] if len(entry) > 3 and isinstance(entry[3], dict) else {}
 
                 if any(n is None for n in nodes):
                     # Store which node names were missing
                     missing = [name for name, node in zip(entry, nodes) if node is None]
                     missing_node_warnings.append((entry[:len(nodes)], missing))
-                    continue
+                    #continue # FIXME nodes are not found for the base part because they are in the child part
 
                 index = get_index([n.index for n in nodes]) if lookup else -1
                 struct_id = tuple(sorted(entry[:len(nodes)]))

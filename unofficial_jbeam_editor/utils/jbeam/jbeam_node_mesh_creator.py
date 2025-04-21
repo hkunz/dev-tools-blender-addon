@@ -1,4 +1,6 @@
 import bpy
+import bmesh
+
 from unofficial_jbeam_editor.utils.jbeam.jbeam_models import JBeamElement, Node, Beam, Triangle
 
 class JbeamNodeMeshCreator:
@@ -24,27 +26,24 @@ class JbeamNodeMeshCreator:
         if not self.mesh:
             raise RuntimeError("❌ Mesh object has not been created yet. Call 'create_object' first.")
 
-    def _rebuild_mesh(self):
-        """Rebuild the mesh from current internal state."""
-        self.mesh.clear_geometry()
-        self.mesh.from_pydata(self._vertices, self._edges, self._faces)
-        self.mesh.update()
-
     def add_vertices(self, nodes_list: list[Node]):
-        """Append vertices to the existing mesh."""
         self.check_mesh_created()
-        start_index = len(self._vertices)
+
+        num_new = len(nodes_list)
+        start_index = len(self.mesh.vertices)
+
+        self.mesh.vertices.add(num_new)
+
         for i, node in enumerate(nodes_list):
             global_index = start_index + i
             node.index = global_index
             self.vertex_indices[node.id] = global_index
+            self.mesh.vertices[global_index].co = node.position
             self._vertices.append(node.position)
 
-        self._rebuild_mesh()
-        print(f"    - Added {len(nodes_list)} vertices to the mesh (total: {len(self._vertices)}).")
+        print(f"    - Added {num_new} vertices (total: {len(self.mesh.vertices)}).")
 
     def _process_elements(self, element_list: list[JBeamElement], node_count: int, get_node_ids: callable, assign_index: callable) -> list[tuple[int, ...]]:
-        """Generic handler for processing edges or faces."""
         result: list[tuple[int, ...]] = []
         unique_map: dict[tuple[int, ...], int] = {}
 
@@ -84,14 +83,24 @@ class JbeamNodeMeshCreator:
             assign_index=lambda b, i: setattr(b, 'index', i)
         )
 
-        self._edges.extend(new_edges)
-        self._rebuild_mesh()
-        print(f"    - Added {len(new_edges)} edges to the mesh (total: {len(self._edges)}).")
+        num_new = len(new_edges)
+        start_index = len(self.mesh.edges)
+
+        self.mesh.edges.add(num_new)
+        for i, edge in enumerate(new_edges):
+            self.mesh.edges[start_index + i].vertices = edge
+            self._edges.append(edge)
+
+        print(f"    - Added {num_new} edges (total: {len(self.mesh.edges)}).")
+
 
     def add_faces(self, tris_list: list[Triangle]) -> None:
         self.check_mesh_created()
         if not tris_list:
             return
+
+        bm = bmesh.new()
+        bm.from_mesh(self.mesh)
 
         new_faces = self._process_elements(
             element_list=tris_list,
@@ -100,6 +109,19 @@ class JbeamNodeMeshCreator:
             assign_index=lambda t, i: setattr(t, 'index', i)
         )
 
-        self._faces.extend(new_faces)
-        self._rebuild_mesh()
-        print(f"    - Added {len(new_faces)} faces to the mesh (total: {len(self._faces)}).")
+        verts = [v for v in bm.verts]
+
+        for face in new_faces:
+            try:
+                bm.verts.ensure_lookup_table()
+                bm.faces.new([verts[i] for i in face])
+                self._faces.append(face)
+            except ValueError:
+                # Face already exists, ignore
+                continue
+
+        bm.to_mesh(self.mesh)
+        bm.free()
+
+        print(f"    - Added {len(new_faces)} faces (total: {len(self.mesh.polygons)}).")
+

@@ -15,6 +15,8 @@ GN not working in Blender 4.4
 C:\Users\hkunz\Documents\BeamNG.drive\editable_vehicles\vehicles\cargotrailer\cargotrailer_woodplanks_short.jbeam > Claims to have missing node but actually is a limitation in addon, since the missing nodes are in another base jbeam file
 C:\Users\hkunz\Documents\BeamNG.drive\editable_vehicles\vehicles\log_trailer\log_trailer_taillights.jbeam
 Currently there is no support for this syntax of inline scope modifier: ["BACKl1","BACKl5", {"highlight":{"radius":0.2, "col":"#00ff00ff" }}], like that in "vehicles\large_crusher\large_crusher_boxes.jbeam"
+There are 6 refup nodes in delineator.jbeam. is that a bug?
+Warn duplicate beams in delineator.jbeam ["p13r", "b2"],
 
 Export Bugs:
 When exporting jbeam without any scope modifiers, the beams and triangles dont get exported

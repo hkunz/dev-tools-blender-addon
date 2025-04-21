@@ -149,6 +149,7 @@ class JbeamPartsLoader:
 
         if nodes_list:
             jmc.add_vertices(nodes_list)
+
         parser.parse_data_for_jbeam_object_conversion(obj, part_id, False)
 
         beams_list = parser.get_beams_list(part_id)

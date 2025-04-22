@@ -38,20 +38,43 @@ class JbeamPcParser:
         print(f"Loaded part configurator: {self.pc} ")
         return True
 
-    def get_jbeam_load_items(self):
-        load_items: list[JbeamLoadItem] = []
+    def get_jbeam_load_items(self, search_subdirs=True, search_common=True):
         d = self.directory
         print(f"🔎 Search .jbeam files in directory 📁  {d} for jbeam part names {self.pc.part_names}")
+
         part_name_pattern = re.compile(r'^\s*"([^"]+)"\s*:\s*')
         slot_type_pattern = re.compile(r'"slotType"\s*:\s*"([^"]+)"')
         target_parts = set((v, k) for k, v in self.pc.part_names.items())  # (part_name, slot_type)
 
-        for filename in os.listdir(d):
-            if not filename.endswith('.jbeam'):
+        search_dirs = [d]
+        if search_common:
+            common_dir = os.path.join(os.path.dirname(d), "common")
+            if os.path.isdir(common_dir):
+                search_dirs.append(common_dir)
+
+        if search_subdirs:
+            file_iter = (
+                os.path.join(root, f)
+                for directory in search_dirs
+                for root, _, files in os.walk(directory)
+                for f in files if f.endswith('.jbeam')
+            )
+        else:
+            file_iter = (
+                os.path.join(directory, f)
+                for directory in search_dirs
+                for f in os.listdir(directory)
+                if f.endswith('.jbeam') and os.path.isfile(os.path.join(directory, f))
+            )
+
+        load_items: list[JbeamLoadItem] = []
+    
+        for file_path in file_iter:
+            if not file_path.endswith('.jbeam'):
                 continue
 
-            file_path = os.path.join(d, filename)
             print(f"🔎 Opening and reading file 📄 {file_path} ...")
+
             with open(file_path, 'r', encoding='utf-8') as f:
                 depth = 0
                 curr_part_name = None

@@ -1,6 +1,7 @@
 import bpy
 import bmesh
 
+from unofficial_jbeam_editor.utils.jbeam.jbeam_utils import JbeamUtils as j
 from unofficial_jbeam_editor.utils.jbeam.jbeam_models import JBeamElement, Node, Beam, Triangle
 
 class JbeamNodeMeshCreator:
@@ -66,7 +67,7 @@ class JbeamNodeMeshCreator:
                 assign_index(element, unique_map[key])
             else:
                 missing = [nid for nid in node_ids if nid not in self.vertex_indices]
-                print(f"⚠️  Warning: Missing vertex indices for {missing}")
+                print(f"⚠️  Warning: Cannot construct element '{j.format_node_ids(*node_ids)}' — missing node(s): {missing}")
                 assign_index(element, -1)
 
         return result

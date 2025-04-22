@@ -124,33 +124,57 @@ class JbeamPartsLoader:
         for group_id, parts in grouped_by_id.items():
             for part in parts:
                 # print(f"Part ID: {part.id}, Group ID: {part.group_id}, Level: {part.level}, Parser: {part.parser.parse_source}")
-                self._assemble_node_mesh(part.parser, part.group_id)
+                self._assemble_node_mesh_nodes(part.parser, part.group_id)
+        
+        for group_id, parts in grouped_by_id.items():
+            for part in parts:
+                self._assemble_node_mesh_beams_and_tris(part.parser, part.group_id)
+            jmc, init = self._get_jbeam_mesh_creator(group_id)
+            if jmc:
+                Utils.log_and_report(f"✅ Created jbeam node mesh '{jmc.obj.name}'", self.operator, "INFO")
+            else:
+                Utils.log_and_report(f"❌ Failed to create jbeam node mesh", self.operator, "ERROR")
 
-    def _assemble_node_mesh(self, parser, group):
+    def _get_jbeam_mesh_creator(self, group:PartGroupID) -> tuple[JbeamNodeMeshCreator, bool]:
+        jmc:JbeamNodeMeshCreator | None = self.mesh_creators.get(group)
+        init: bool = jmc is None
+        if not init:
+            return jmc, init
+
+        jmc = JbeamNodeMeshCreator()
+        mesh_name = str(group)
+        obj = jmc.create_object(mesh_name)
+        self.mesh_creators[group] = jmc
+        return jmc, init
+
+    def _assemble_node_mesh_nodes(self, parser, group):
         load_item = parser.parse_source
-        part_name = load_item.part_name
-        slot_type = load_item.slot_type
-        part_id = JbeamPart.generate_id(slot_type, part_name)
-        print(f"🧰 {group}: '{part_id}' > assembling part structure ...")
+        part_id = JbeamPart.generate_id(load_item.slot_type, load_item.part_name)
+        print(f"🧰 {group}: '{part_id}' > assembling part structure > Nodes ...")
         nodes_list = parser.get_nodes_list(part_id)
         if not nodes_list:
             Utils.log_and_report(f"No nodes list in part name '{part_id}'", self.operator, "INFO")
             return
 
-        jmc:JbeamNodeMeshCreator | None = self.mesh_creators.get(group)
-        init: bool = jmc is None
-        if init:
-            jmc = JbeamNodeMeshCreator()
-            mesh_name = str(group)
-            obj = jmc.create_object(mesh_name)
-            self.mesh_creators[group] = jmc
-        else:
-            obj = jmc.obj
+        jmc, init = self._get_jbeam_mesh_creator(group)
+        obj = jmc.obj
 
         if nodes_list:
             jmc.add_vertices(nodes_list)
 
         parser.parse_data_for_jbeam_object_conversion(obj, part_id, False)
+
+        JbeamNodeMeshConfigurator.process_node_mesh_props_for_nodes(obj, parser, part_id, init)
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+    
+    def _assemble_node_mesh_beams_and_tris(self, parser, group):
+        load_item = parser.parse_source
+        part_id = JbeamPart.generate_id(load_item.slot_type, load_item.part_name)
+        print(f"🧰 {group}: '{part_id}' > assembling part structure > Beams and Triangles ...")
+
+        jmc, init = self._get_jbeam_mesh_creator(group)
+        obj = jmc.obj
 
         beams_list = parser.get_beams_list(part_id)
         tris_list = parser.get_triangles_list(part_id)
@@ -159,6 +183,5 @@ class JbeamPartsLoader:
         if tris_list:
             jmc.add_faces(tris_list)
 
-        JbeamNodeMeshConfigurator.process_node_mesh_props(obj, parser, part_id, init)
-        obj.select_set(True)
-        bpy.context.view_layer.objects.active = obj
+        JbeamNodeMeshConfigurator.process_node_mesh_props_for_beams_and_tris(obj, parser, part_id)
+

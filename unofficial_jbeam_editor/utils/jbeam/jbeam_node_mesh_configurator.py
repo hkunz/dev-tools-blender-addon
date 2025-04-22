@@ -16,6 +16,10 @@ class JbeamNodeMeshConfigurator:
 
     @staticmethod
     def process_node_mesh_props(obj, parser=None, part_id="", init=True):
+        JbeamNodeMeshConfigurator.process_node_mesh_props_for_nodes(obj, parser, part_id, init)
+        JbeamNodeMeshConfigurator.process_node_mesh_props_for_beams_and_tris(obj, parser, part_id)
+
+    def process_node_mesh_props_for_nodes(obj, parser, part_id, init):
         if not parser:
             return
         nodes = parser.get_nodes(part_id)
@@ -30,6 +34,10 @@ class JbeamNodeMeshConfigurator:
         ref_nodes = parser.get_ref_nodes(part_id)
         JbeamNodeMeshConfigurator.assign_ref_nodes(obj, ref_nodes, nodes)
         JbeamNodeMeshConfigurator.store_node_props_in_vertex_attributes(obj, nodes_list)
+
+    def process_node_mesh_props_for_beams_and_tris(obj, parser=None, part_id=""):
+        if not parser:
+            return
         JbeamNodeMeshConfigurator.store_beam_props_in_edge_attributes(obj, parser.get_beams_list(part_id))
         JbeamNodeMeshConfigurator.store_triangle_props_in_face_attributes(obj, parser.get_triangles_list(part_id))
 
@@ -90,6 +98,6 @@ class JbeamNodeMeshConfigurator:
     def store_props_in_attributes(obj, parsed_data, data_type, element_type, set_props_function):
         for item in parsed_data:
             if item.index < 0 or item.index is None:
-                print(f"❌ Error: Structure missing: No {element_type} found for {data_type[:-1]} {item.id}")
+                #print(f"❌ Error: Structure missing: No {element_type} found for {data_type[:-1]} {item.id}")
                 continue
             set_props_function(obj, item.index, item.props, item.instance)

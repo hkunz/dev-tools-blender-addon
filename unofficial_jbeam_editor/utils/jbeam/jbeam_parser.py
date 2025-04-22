@@ -163,7 +163,7 @@ class JbeamParser:
                     # Store which node names were missing
                     missing = [name for name, node in zip(entry, nodes) if node is None]
                     missing_node_warnings.append((entry[:len(nodes)], missing))
-                    #continue # FIXME nodes are not found for the base part because they are in the child part
+                    continue # FIXME nodes are not found for the base part because they are in the child part
 
                 index = get_index([n.index for n in nodes]) if lookup else -1
                 struct_id = tuple(sorted(entry[:len(nodes)]))

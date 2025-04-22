@@ -14,6 +14,7 @@ class JbeamNodeMeshCreator:
         self._vertices: list = []
         self._edges: list[tuple[int, int]] = []
         self._faces: list[tuple[int, int, int]] = []
+        self._missing_element_warn_count = 0
 
     def create_object(self, mesh_name="NodeMesh"):
         """Create an empty mesh object."""
@@ -66,8 +67,10 @@ class JbeamNodeMeshCreator:
 
                 assign_index(element, unique_map[key])
             else:
+                self._missing_element_warn_count += 1
                 missing = [nid for nid in node_ids if nid not in self.vertex_indices]
-                print(f"⚠️  Warning: Cannot construct element '{j.format_node_ids(*node_ids)}' — missing node(s): {missing}")
+                if self._missing_element_warn_count <= 3:
+                    print(f"⚠️  Warning: Cannot construct element '{j.format_node_ids(*node_ids)}' — missing node(s): {missing}")
                 assign_index(element, -1)
 
         return result
@@ -76,7 +79,7 @@ class JbeamNodeMeshCreator:
         self.check_mesh_created()
         if not beam_list:
             return
-
+        self.reset_warning_counter()
         new_edges = self._process_elements(
             element_list=beam_list,
             node_count=2,
@@ -91,7 +94,7 @@ class JbeamNodeMeshCreator:
         for i, edge in enumerate(new_edges):
             self.mesh.edges[start_index + i].vertices = edge
             self._edges.append(edge)
-
+        self.print_ommited_warnings()
         print(f"    - Added {num_new} edges (total: {len(self.mesh.edges)}).")
 
 
@@ -99,7 +102,7 @@ class JbeamNodeMeshCreator:
         self.check_mesh_created()
         if not tris_list:
             return
-
+        self.reset_warning_counter()
         bm = bmesh.new()
         bm.from_mesh(self.mesh)
 
@@ -123,6 +126,12 @@ class JbeamNodeMeshCreator:
 
         bm.to_mesh(self.mesh)
         bm.free()
-
+        self.print_ommited_warnings()
         print(f"    - Added {len(new_faces)} faces (total: {len(self.mesh.polygons)}).")
 
+    def reset_warning_counter(self):
+        self._missing_element_warn_count = 0
+
+    def print_ommited_warnings(self):
+        if self._missing_element_warn_count > 3:
+            print(f"⚠️  Warning: More missing warnings omitted... ({self._missing_element_warn_count - 3} more)")

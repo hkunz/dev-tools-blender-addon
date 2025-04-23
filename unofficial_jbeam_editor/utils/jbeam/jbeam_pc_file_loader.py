@@ -1,15 +1,21 @@
 import json
 
+from pathlib import Path
+
 from unofficial_jbeam_editor.ui.addon_preferences import MyAddonPreferences as a
 from unofficial_jbeam_editor.utils.jbeam.jbeam_loader import JbeamLoaderBase
 from unofficial_jbeam_editor.utils.jbeam.jbeam_models import PcJson
 
 
 class JbeamPcFileLoader(JbeamLoaderBase):
+    def __init__(self, filepath: str, operator=None):
+        super().__init__(filepath, operator)
+        self.model_file_path = Path()
+
     def _load_main(self, filepath: str) -> PcJson:
         self.is_jbeam = False
         with open(filepath, "r", encoding="utf-8") as f:
-            raw_json: dict = json.load(f)
+            raw_json: PcJson = json.load(f)
         self.json_str = json.dumps(raw_json)
         return raw_json
 
@@ -19,6 +25,10 @@ class JbeamPcFileLoader(JbeamLoaderBase):
         # Case 1: fully valid .pc structure
         if required_keys.issubset(json_data):
             if not isinstance(json_data["parts"], dict) or not json_data["parts"]:
+                model = json_data["model"]
+                self.model_file_path = Path(self.directory) / f"{model}.jbeam"
+                if self.model_file_path.exists():
+                    return json_data
                 raise ValueError("❌ Invalid .pc file: 'parts' must be a non-empty object.")
             return json_data
 

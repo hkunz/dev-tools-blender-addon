@@ -32,6 +32,11 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportPcFileToNodeMeshes(Operator, Im
 
         loader = JbeamPcFileLoader(self.filepath, self)
         data = loader.load(self.force_reload)
+        
+        if loader.model_file_path:
+            print(f"Attempting to load the .jbeam file referenced by 'model': 📄 {loader.model_file_path}")
+            bpy.ops.devtools_jbeam_editor.beamng_import_jbeam_file_to_node_mesh('EXEC_DEFAULT', filepath=str(loader.model_file_path), force_reload=self.force_reload)
+            return {'FINISHED'}
 
         if not data:
             return {'CANCELLED'}

@@ -1,4 +1,3 @@
-import json
 import os
 import re
 
@@ -32,7 +31,7 @@ class JbeamPcParser:
             self.pc.model = data.get("model")
             self.pc.part_names = data.get("parts", {})
         except Exception as e:
-            Utils.log_and_report(f"Failed to parse PC file {self.pc.filepath}: {e}", None, "ERROR")
+            Utils.log_and_report(f"Failed to parse PC file 📄 {self.pc.filepath}: {e}", None, "ERROR")
             return False
 
         print(f"Loaded part configurator: {self.pc} ")
@@ -40,6 +39,10 @@ class JbeamPcParser:
 
     def get_jbeam_load_items(self, search_subdirs=True, search_common=True):
         d = self.directory
+        if not self.pc.part_names:
+            print(f"⚠️  No part names defined in 📄 {self.pc.filepath}")
+            return None
+
         print(f"🔎 Search .jbeam files in directory 📁  {d} for jbeam part names {self.pc.part_names}")
 
         part_name_pattern = re.compile(r'^\s*"([^"]+)"\s*:\s*')

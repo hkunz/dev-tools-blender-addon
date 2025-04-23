@@ -10,7 +10,7 @@ from unofficial_jbeam_editor.utils.jbeam.jbeam_models import PcJson
 class JbeamPcFileLoader(JbeamLoaderBase):
     def __init__(self, filepath: str, operator=None):
         super().__init__(filepath, operator)
-        self.model_file_path = Path()
+        self.model_file_path: Path | None = None
 
     def _load_main(self, filepath: str) -> PcJson:
         self.is_jbeam = False

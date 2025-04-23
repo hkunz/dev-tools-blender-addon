@@ -1,5 +1,6 @@
 import bpy
 import bmesh
+import logging
 
 from unofficial_jbeam_editor.utils.jbeam.jbeam_utils import JbeamRefnodeUtils as jr
 
@@ -35,7 +36,7 @@ class OBJECT_OT_BeamngJbeamSetRefnodeOperator(bpy.types.Operator):
                 vertex_index = selected_verts[0].index
                 indices = jr.find_nodes_with_refnode_id(obj, refnode_id)
                 for idx in indices:
-                    print(f"Found match at index={idx}, overwriting with RefNode.NONE")
+                    logging.debug(f"Found match at index={idx}, overwriting with RefNode.NONE")
                     jr.set_refnode_id(obj, idx, jr.RefNode.NONE.value)
                 jr.set_refnode_id(obj, vertex_index, refnode_id)
                 self.report({'INFO'}, f"Set Node as Ref Node {enum.name}({refnode_id})")
@@ -47,7 +48,7 @@ class OBJECT_OT_BeamngJbeamSetRefnodeOperator(bpy.types.Operator):
                     value = jr.get_refnode_id(obj, v.index)
                     if value == refnode_id:
                         continue
-                    print(f"Reset Node({v.index}) with Ref Node value {enum.name}({refnode_id})")
+                    logging.debug(f"Reset Node({v.index}) with Ref Node value {enum.name}({refnode_id})")
                     jr.set_refnode_id(obj, v.index, refnode_id)
                 return {'FINISHED'}
 

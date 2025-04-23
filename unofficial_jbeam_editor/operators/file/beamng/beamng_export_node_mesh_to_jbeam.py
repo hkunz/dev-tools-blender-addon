@@ -3,6 +3,8 @@ import bpy_types
 import os
 import io
 import json
+import logging
+
 from pprint import pprint
 
 from unofficial_jbeam_editor.utils.object_utils import ObjectUtils as o
@@ -181,7 +183,7 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
                     existing_data_str = f.read()
                 except json.JSONDecodeError:
                     self.report({'ERROR'}, f"Error parsing {filepath}")
-                    print(f"Error parsing {filepath}:, maybe check for missing commas or other json-type formatting in jbeam")
+                    logging.debug(f"Error parsing {filepath}:, maybe check for missing commas or other json-type formatting in jbeam")
                     return False
 
         if is_manual_data:
@@ -203,7 +205,7 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(json_output)
         else:
-            print(f"Replace nodes, beams, triangles, refNodes, etc in {filepath}")
+            logging.debug(f"Replace nodes, beams, triangles, refNodes, etc in {filepath}")
             refnodes_str = ',\n    '.join(str(item).replace("'", '"') for item in ref_nodes_data)
             nodes_str = format_list(nodes, '["id", "posX", "posY", "posZ"],', False)
             beams_str = format_list(beams, '["id1:","id2:"],', False)

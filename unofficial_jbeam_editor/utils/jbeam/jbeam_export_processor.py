@@ -109,4 +109,4 @@ json_data = """
 """
 #processor = JbeamExportProcessor(json_data)
 #result = processor.remove_node_contents("nodes")
-#print("Processed JSON:\n", result)
+#logging.debug("Processed JSON:\n", result)

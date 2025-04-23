@@ -1,4 +1,5 @@
 import json
+import logging
 
 from pathlib import Path
 
@@ -47,7 +48,7 @@ class JbeamPcFileLoader(JbeamLoaderBase):
                 missing_keys.append("model")
 
             if missing_keys:
-                print(f"⚠️  Warning: .pc file was missing {missing_keys}; defaults have been inserted.")
+                logging.debug(f"⚠️  Warning: .pc file was missing {missing_keys}; defaults have been inserted.")
             return json_data
 
         # Case 3: legacy-style wrapped structure
@@ -69,7 +70,7 @@ class JbeamPcFileLoader(JbeamLoaderBase):
                     missing_keys.append("model")
 
                 if missing_keys:
-                    print(f"⚠️  Legacy .pc file under '{main_key}' was missing {missing_keys}; defaults have been inserted.")
+                    logging.debug(f"⚠️  Legacy .pc file under '{main_key}' was missing {missing_keys}; defaults have been inserted.")
                 return inner
             else:
                 raise ValueError(f"❌ Invalid .pc file: 'parts' under '{main_key}' must be a non-empty object.")

@@ -1,4 +1,5 @@
 import bpy
+import logging
 
 from typing import Callable, Any, Tuple
 
@@ -22,7 +23,7 @@ class Utils:
 
     @staticmethod
     def log_and_raise(msg: str, exc_type=Exception, cause: Exception = None):
-        print(msg)
+        logging.debug(msg)
         if cause:
             raise exc_type(msg) from cause
         else:
@@ -31,7 +32,7 @@ class Utils:
     @staticmethod
     def log_and_report(msg: str, operator=None, level='INFO'):
         level = level.upper()
-        print(f"{level}:", msg)
+        logging.debug("%s:%s", level, msg)
         if operator:
             if level not in {'INFO', 'WARNING', 'ERROR'}:
                 level = 'INFO'
@@ -67,7 +68,7 @@ class Utils:
         elif enum=="TWO_K": return "2048"
         elif enum=="FOUR_K": return "4098"
         elif enum=="EIGHT_K": return "8192"
-        print(f"Warning enum {enum} undefined! Using 2048 as fallback")
+        logging.debug(f"Warning enum {enum} undefined! Using 2048 as fallback")
         return "2048"
     
     @staticmethod

@@ -1,4 +1,5 @@
 import bpy
+import logging
 
 from unofficial_jbeam_editor.utils.utils import Utils
 
@@ -20,12 +21,12 @@ class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
                 self.report({'ERROR'}, "Please select a UV map you want as a reference to bake on.")
                 return False
             else:
-                print(f"{obj.name}: Removing existing 'bake' UV map...")
+                logging.debug(f"{obj.name}: Removing existing 'bake' UV map...")
                 uvs.remove(uvs[bake_uv])
 
         bake_uv_map = uvs.new(name=bake_uv)
         uvs.active = bake_uv_map
-        print(f"{obj.name}: UV map '{bake_uv_map.name}' created, ready and selected")
+        logging.debug(f"{obj.name}: UV map '{bake_uv_map.name}' created, ready and selected")
         return True
 
 
@@ -33,7 +34,7 @@ class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
         bake_image = bpy.data.images.get(bake_image_name)
         if bake_image:
             bpy.data.images.remove(bake_image)
-            print(f"Deleted existing image: {bake_image_name}")
+            logging.debug(f"Deleted existing image: {bake_image_name}")
             bake_image = None
 
     def create_bake_texture_and_image(self, bake_texture_name, bake_image_name, width, height):
@@ -41,14 +42,14 @@ class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
 
         if not bake_image:
             bake_image = bpy.data.images.new(name=bake_image_name, width=width, height=height)
-            print(f"Created new image: {bake_image_name}")
+            logging.debug(f"Created new image: {bake_image_name}")
 
         if bake_texture_name in bpy.data.textures:
             bake_texture = bpy.data.textures[bake_texture_name]
-            print(f"Reusing existing texture: {bake_texture_name}")
+            logging.debug(f"Reusing existing texture: {bake_texture_name}")
         else:
             bake_texture = bpy.data.textures.new(name=bake_texture_name, type='IMAGE')
-            print(f"Created new texture: {bake_texture_name}")
+            logging.debug(f"Created new texture: {bake_texture_name}")
 
         bake_texture.image = bake_image
         return bake_image
@@ -67,7 +68,7 @@ class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
         if empty_slots:
             self.report({'WARNING'}, f"There is at least one empty material slot in object '{obj.name}'")
         else:
-            print(f"{obj.name}: {len(obj.data.materials)} material(s) assigned and all slots are filled.")
+            logging.debug(f"{obj.name}: {len(obj.data.materials)} material(s) assigned and all slots are filled.")
         return not empty_slots
 
     def add_bake_image_texture_node_to_materials_and_select(self, obj, bake_texture_node_name, bake_image):
@@ -89,9 +90,9 @@ class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
                 texture_node.name = bake_texture_node_name
                 texture_node.location = (1000, 500)
                 existing_node = texture_node
-                print(f"{obj.name}: Applied 'BakeTexture' to the material: {material.name}")
+                logging.debug(f"{obj.name}: Applied 'BakeTexture' to the material: {material.name}")
             else:
-                print(f"{obj.name}: 'BakeTexture' node already exists in material: {material.name}. Ignore.")
+                logging.debug(f"{obj.name}: 'BakeTexture' node already exists in material: {material.name}. Ignore.")
 
             existing_node.select = True
             existing_node.image = bake_image
@@ -119,7 +120,7 @@ class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
 
         properties = context.scene.my_property_group_pointer
         bake_resolution = int(Utils.get_bake_dimension(properties.bake_image_resolution))
-        print(f"Selected Bake Resolution: {bake_resolution}")
+        logging.debug(f"Selected Bake Resolution: {bake_resolution}")
 
         bake_uv = "bake"
         bake_image = "BakeImage"
@@ -145,7 +146,7 @@ class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
                 self.pack_uv_islands()
             self.set_bake_settings()
 
-        print("Packed UV Islands. Check results in UV Editor.\n \
+        logging.debug("Packed UV Islands. Check results in UV Editor.\n \
 * Make island size adjustments if needed then repeat UV > Pack Islands.\n \
 * Configure baking properties in Render Properties > Bake\n \
 * Click 'Generate Bake Object' to bake and duplicate object (that will get setup with bake material)")

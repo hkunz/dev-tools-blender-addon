@@ -1,5 +1,6 @@
 import os
 import re
+import logging
 
 from unofficial_jbeam_editor.ui.addon_preferences import MyAddonPreferences as a
 from unofficial_jbeam_editor.utils.utils import Utils
@@ -34,16 +35,16 @@ class JbeamPcParser:
             Utils.log_and_report(f"Failed to parse PC file 📄 {self.pc.filepath}: {e}", None, "ERROR")
             return False
 
-        print(f"Loaded part configurator: {self.pc} ")
+        logging.debug(f"Loaded part configurator: {self.pc} ")
         return True
 
     def get_jbeam_load_items(self, search_subdirs=True, search_common=True):
         d = self.directory
         if not self.pc.part_names:
-            print(f"⚠️  No part names defined in 📄 {self.pc.filepath}")
+            logging.debug(f"⚠️  No part names defined in 📄 {self.pc.filepath}")
             return None
 
-        print(f"🔎 Search .jbeam files in directory 📁  {d} for jbeam part names {self.pc.part_names}")
+        logging.debug(f"🔎 Search .jbeam files in directory 📁  {d} for jbeam part names {self.pc.part_names}")
 
         part_name_pattern = re.compile(r'^\s*"([^"]+)"\s*:\s*')
         slot_type_pattern = re.compile(r'"slotType"\s*:\s*"([^"]+)"')
@@ -76,7 +77,7 @@ class JbeamPcParser:
             if not file_path.endswith('.jbeam'):
                 continue
 
-            print(f"🔎 Opening and reading file 📄 {file_path} ...")
+            logging.debug(f"🔎 Opening and reading file 📄 {file_path} ...")
 
             with open(file_path, 'r', encoding='utf-8') as f:
                 depth = 0
@@ -99,7 +100,7 @@ class JbeamPcParser:
 
                     found_slot_type = slot_match.group(1)
                     if (curr_part_name, found_slot_type) in target_parts:
-                        print(f"===> Part Match 🎯 on line {i+1}: '{curr_part_name}' matches slotType '{found_slot_type}'")
+                        logging.debug(f"===> Part Match 🎯 on line {i+1}: '{curr_part_name}' matches slotType '{found_slot_type}'")
                         load_items.append(JbeamLoadItem(file_path, curr_part_name, found_slot_type))
                         curr_part_name = None  # Reset after match
 

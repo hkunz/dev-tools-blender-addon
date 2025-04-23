@@ -1,5 +1,6 @@
 import bpy
 import bmesh
+import logging
 
 from unofficial_jbeam_editor.utils.object_utils import ObjectUtils
 
@@ -61,7 +62,7 @@ class OBJECT_OT_ArmatureAssignClosestVertexToBoneTails(bpy.types.Operator):
         for constraint in pose_bone.constraints:
             if constraint.type == 'DAMPED_TRACK':
                 pose_bone.constraints.remove(constraint)
-                print(f"Removed existing Damped Track constraint from bone '{pose_bone.name}'")
+                logging.debug(f"Removed existing Damped Track constraint from bone '{pose_bone.name}'")
 
         vertex_group = pose_bone.name
         constraint = pose_bone.constraints.new(type='DAMPED_TRACK')
@@ -69,7 +70,7 @@ class OBJECT_OT_ArmatureAssignClosestVertexToBoneTails(bpy.types.Operator):
         constraint.target = target_obj
         constraint.subtarget = vertex_group
         constraint.track_axis = 'TRACK_Y'  # Options: 'TRACK_X', 'TRACK_Y', 'TRACK_Z', etc.
-        print(f"Damped Track constraint added to bone '{pose_bone.name}'")
+        logging.debug(f"Damped Track constraint added to bone '{pose_bone.name}'")
 
 
     def execute(self, context):
@@ -96,7 +97,7 @@ class OBJECT_OT_ArmatureAssignClosestVertexToBoneTails(bpy.types.Operator):
 
         for bone in armature.edit_bones:
             closest_vertex = self.find_closest_vertex_to_bone(mesh_obj, bone.tail)
-            print(f"{bone.name} > closest vertex is {closest_vertex}")
+            logging.debug(f"{bone.name} > closest vertex is {closest_vertex}")
             self.create_vertex_group(mesh_obj, closest_vertex, bone.name)
 
         bpy.ops.object.mode_set(mode='POSE')

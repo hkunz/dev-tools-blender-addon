@@ -3,6 +3,7 @@ import json
 import difflib
 import unittest
 import pprint
+import logging
 
 from unofficial_jbeam_editor.utils.jbeam.jbeam_helper import PreJbeamStructureHelper, RedundancyReducerJbeamGenerator
 from unofficial_jbeam_editor.utils.jbeam.jbeam_utils import JbeamUtils as j
@@ -91,9 +92,9 @@ class JbeamTestObject:
 class TestJBeamHelper(unittest.TestCase):
     
     def setUp(self):
-        print()
-        print(f"===> Start Test {self} ==================================")
-        print()
+        logging.debug()
+        logging.debug(f"===> Start Test {self} ==================================")
+        logging.debug()
         test_obj = JbeamTestObject() # bpy.context.object
 
         self.obj = test_obj.get_obj()
@@ -102,10 +103,10 @@ class TestJBeamHelper(unittest.TestCase):
 
         jbeam = PreJbeamStructureHelper(self.obj, domain="vertex")
         data_actual = jbeam.structure_data()
-        print()
-        print("🔸 Actual Output:\n")
+        logging.debug()
+        logging.debug("🔸 Actual Output:\n")
         for key, value in data_actual.items():
-            print(f"{key}: {value}")
+            logging.debug(f"{key}: {value}")
 
         data_expected = {
             5: {"group": ["group_bouncer_base", "group_bouncer_spring"], "collision": "false", "fixed": "false", "frictionCoef": 1.2, "nodeMaterial": "|NM_RUBBER", "nodeWeight": 1.3, "selfCollision": "true"},
@@ -130,11 +131,11 @@ class TestJBeamHelper(unittest.TestCase):
             18: {"group": [], "collision": "false", "fixed": "true", "frictionCoef": 1.2, "nodeMaterial": "|NM_PLASTIC", "nodeWeight": 10, "selfCollision": "true"},
         }
 
-        print()
-        print("🔹 Expected Output:\n")
+        logging.debug()
+        logging.debug("🔹 Expected Output:\n")
         for key, value in data_expected.items():
-            print(f"{key}: {value}")
-        print()
+            logging.debug(f"{key}: {value}")
+        logging.debug()
 
         actual_str = json.dumps(data_actual, indent=4, sort_keys=False).splitlines()
         expected_str = json.dumps(data_expected, indent=4, sort_keys=False).splitlines()
@@ -143,15 +144,15 @@ class TestJBeamHelper(unittest.TestCase):
         diff_list = list(diff)
         
         if diff_list:
-            print("❌ TEST FAILED: test_pre_jbeam_structure\n")
-            print("🔍 Differences:")
-            print("\n".join(diff_list))
-            print()
+            logging.debug("❌ TEST FAILED: test_pre_jbeam_structure\n")
+            logging.debug("🔍 Differences:")
+            logging.debug("\n".join(diff_list))
+            logging.debug()
 
         self.assertEqual(data_expected, data_actual, "Data does not match expected structure")
         self.assertFalse(diff_list, "Data does not match expected structure or order")
         
-        print("✅ TEST PASSED: test_pre_jbeam_structure")
+        logging.debug("✅ TEST PASSED: test_pre_jbeam_structure")
 
     def test_jbeam_structure(self):
     
@@ -230,13 +231,13 @@ class TestJBeamHelper(unittest.TestCase):
         ]
 
         pp = pprint.PrettyPrinter(indent=4)
-        print()
-        print("🔸 Actual Output:\n")
-        pp.pprint(data_actual)
-        print()
-        print("🔹 Expected Output:\n")
-        pp.pprint(data_expected)
-        print()
+        logging.debug()
+        logging.debug("🔸 Actual Output:\n")
+        pp.plogging.debug(data_actual)
+        logging.debug()
+        logging.debug("🔹 Expected Output:\n")
+        pp.plogging.debug(data_expected)
+        logging.debug()
 
         expected_lines = [str(item) for item in data_expected]
         actual_lines = [str(item) for item in data_actual]
@@ -244,15 +245,15 @@ class TestJBeamHelper(unittest.TestCase):
         diff_list = list(diff)
 
         if diff_list:
-            print("❌ TEST FAILED: test_jbeam_structure\n")
-            print("🔍 Differences:")
-            print("\n".join(diff_list))
-            print()
+            logging.debug("❌ TEST FAILED: test_jbeam_structure\n")
+            logging.debug("🔍 Differences:")
+            logging.debug("\n".join(diff_list))
+            logging.debug()
 
         self.assertEqual(data_expected, data_actual, "Data does not match expected jbeam nodes list")
         self.assertFalse(list(diff), "Data does not match expected JBeam nodes list")
 
-        print("✅ TEST PASSED: test_jbeam_structure")
+        logging.debug("✅ TEST PASSED: test_jbeam_structure")
 
     def tearDown(self):
         bpy.data.objects.remove(self.obj)

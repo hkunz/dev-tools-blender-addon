@@ -1,5 +1,6 @@
 import bpy
 import json
+import logging
 
 from unofficial_jbeam_editor.utils.jbeam.jbeam_utils import JbeamUtils as j, JbeamPropsStorage, JbeamPropsStorageManager
 
@@ -40,7 +41,7 @@ class OBJECT_OT_PrintJBeamPropsBase(bpy.types.Operator):
                 continue
 
             info = f"ℹ️  Object '{obj.name}' ({self.attr_name})"
-            print(f"{info}:")
+            logging.debug(f"{info}:")
 
             for i, element in enumerate(selected_elements):
                 index = element.index
@@ -53,15 +54,15 @@ class OBJECT_OT_PrintJBeamPropsBase(bpy.types.Operator):
                         for instance_key, instance_props in props.items():
                             # Convert properties to a single-line JSON string
                             props_str = json.dumps(instance_props, separators=(",", ":"))
-                            print(f"{self.emoji}{id_str}({index}): {key} [{instance_key}] => {props_str}")
+                            logging.debug(f"{self.emoji}{id_str}({index}): {key} [{instance_key}] => {props_str}")
                     else:
-                        print(f"{self.emoji}{id_str}({index}): {key} => No properties found")
+                        logging.debug(f"{self.emoji}{id_str}({index}): {key} => No properties found")
                 else:
-                    print(f"{self.emoji}{id_str}({index}): No key, no attribute value (no scope modifiers assigned)")
+                    logging.debug(f"{self.emoji}{id_str}({index}): No key, no attribute value (no scope modifiers assigned)")
 
         if len(context.selected_objects) > 0:
             self.report({'INFO'}, "Node Mesh Attributes have been printed. Check the console for detailed output.")
-        print("==============================================\n")
+        logging.debug("==============================================\n")
         restore_mode()
         return {'FINISHED'}
 

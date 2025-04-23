@@ -4,6 +4,7 @@ import traceback
 import bpy_types
 import bmesh
 import os
+import logging
 
 from math import radians
 from mathutils import Euler, Matrix
@@ -65,7 +66,7 @@ class ObjectUtils:
 
     @staticmethod
     def import_obj(filepath: str) -> bool:
-        print("\nImport:")
+        logging.debug("\nImport:")
         success: bool = False
         try:
             bpy.ops.wm.obj_import(filepath=filepath)
@@ -80,7 +81,7 @@ class ObjectUtils:
 
     @staticmethod
     def export_obj(filepath: str) -> None:
-        print("\nExport:")
+        logging.debug("\nExport:")
         try:
             bpy.ops.wm.obj_export(
                 filepath=filepath,
@@ -231,16 +232,16 @@ class ObjectUtils:
         for obj in objects:
             obj_origin = obj.matrix_world.translation
             if all(abs(coord) < tolerance for coord in obj_origin):
-                print(f"{obj.name} has its origin at the world origin.")
+                logging.debug(f"{obj.name} has its origin at the world origin.")
             else:
-                print(f"{obj.name} does not have its origin at the world origin. Origin is at {obj_origin}.")
+                logging.debug(f"{obj.name} does not have its origin at the world origin. Origin is at {obj_origin}.")
                 success = False
         return success
 
     @staticmethod
     def get_vertex_position_by_index(obj, bm, index):
         if obj.mode != 'EDIT':  
-            print("Must be in Edit Mode!")
+            logging.debug("Must be in Edit Mode!")
             return (0, 0, 0)
         if index < 0 or index >= len(bm.verts):
             return (0, 0, 0)
@@ -298,16 +299,16 @@ class ObjectUtils:
         
         curr_blend = os.path.basename(bpy.data.filepath)
         if os.path.basename(blend_path) == curr_blend:
-            print(f"Skipping {blend_path} (same file is being edited).")
+            logging.debug(f"Skipping {blend_path} (same file is being edited).")
             return None
 
         existing_node_tree = bpy.data.node_groups.get(group_node_name)
         if existing_node_tree:
-            print(f"Node tree '{existing_node_tree.name}' already exists. Skipping import.")
+            logging.debug(f"Node tree '{existing_node_tree.name}' already exists. Skipping import.")
             return existing_node_tree
 
         if not os.path.exists(blend_path):
-            print(f"Blend file not found: {blend_path}")
+            logging.debug(f"Blend file not found: {blend_path}")
             return None
 
         if link:
@@ -329,10 +330,10 @@ class ObjectUtils:
         if ng:
             ng.use_fake_user = True  # Prevent deletion on exit
             #ng[group_node_name] = group_node_name  # Store an attribute for tracking # This is already stored in the original blend file
-            print(f"Verifying {group_node_name}={ng[group_node_name]}")
-            print(f"{'Linked' if link else 'Appended'} node tree: {ng.name}")
+            logging.debug(f"Verifying {group_node_name}={ng[group_node_name]}")
+            logging.debug(f"{'Linked' if link else 'Appended'} node tree: {ng.name}")
         else:
-            print(f"❌ Error: Node tree '{group_node_name}' not found after {'linking' if link else 'appending'}.")
+            logging.debug(f"❌ Error: Node tree '{group_node_name}' not found after {'linking' if link else 'appending'}.")
 
         return ng
 
@@ -349,7 +350,7 @@ class ObjectUtils:
     @staticmethod # deprecated: use generic attributes instead of vertex groups which are semi-deprecated
     def assign_vertices_to_group_in_edit_mode(obj, vg_name, vertex_indices, weight=1.0):
         if obj.mode != 'EDIT':
-            print("Warning: you must be in Edit Mode")
+            logging.debug("Warning: you must be in Edit Mode")
             bpy.ops.object.mode_set(mode='EDIT')
 
         bm = bmesh.from_edit_mesh(obj.data)
@@ -416,16 +417,16 @@ class ObjectUtils:
                     # Enable attribute mode
                     mod[socket_id + "_use_attribute"] = True
                     mod[socket_id + "_attribute_name"] = attribute_name
-                    #print(f"Socket '{socket_name}' set to use attribute '{attribute_name}'.")
+                    #logging.debug(f"Socket '{socket_name}' set to use attribute '{attribute_name}'.")
                 else:
                     # Use single value mode
                     mod[socket_id + "_use_attribute"] = False
                     mod[socket_id] = value
-                    #print(f"Socket '{socket_name}' set to single value: {value}.")
+                    #logging.debug(f"Socket '{socket_name}' set to single value: {value}.")
 
                 return True
 
-        print(f"Socket '{socket_name}' not found.")
+        logging.debug(f"Socket '{socket_name}' not found.")
         return False
 
     @staticmethod
@@ -438,14 +439,14 @@ class ObjectUtils:
                 use_attribute = mod.get(socket_id + "_use_attribute", False)
                 if use_attribute:
                     attribute_name = mod.get(socket_id + "_attribute_name", None)
-                    #print(f"Socket '{socket_name}' is using attribute '{attribute_name}'.")
+                    #logging.debug(f"Socket '{socket_name}' is using attribute '{attribute_name}'.")
                     return {"mode": "attribute", "attribute_name": attribute_name}
                 else:
                     value = mod.get(socket_id, None)
-                    #print(f"Socket '{socket_name}' is using single value: {value}.")
+                    #logging.debug(f"Socket '{socket_name}' is using single value: {value}.")
                     return {"mode": "single_value", "value": value}
 
-        #print(f"Socket '{socket_name}' not found.")
+        #logging.debug(f"Socket '{socket_name}' not found.")
         return None
 
     @staticmethod
@@ -454,6 +455,6 @@ class ObjectUtils:
             # Only process sockets (ignore panels, categories, etc.)
             if isinstance(item, bpy.types.NodeTreeInterfaceSocket):
                 if item.in_out == 'INPUT':  # Only input sockets
-                    #print(f"Input: {item.name}, Socket Type: {item.socket_type}")
+                    #logging.debug(f"Input: {item.name}, Socket Type: {item.socket_type}")
                     if item.name == input_name:
                         item.hide_in_modifier = hide

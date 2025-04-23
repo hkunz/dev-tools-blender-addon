@@ -1,6 +1,5 @@
 import bpy
-import bpy_types
-import bmesh
+import logging
 
 from typing import List, Tuple
 from bpy.app.handlers import persistent
@@ -60,7 +59,7 @@ def on_depsgraph_update(scene, depsgraph=None):
     properties: MyPropertyGroup1 = context.scene.my_property_group_pointer # type: ignore
     check_object_selection_change(context, properties, obj)
 
-def get_bake_image_resolutions(self: bpy.types.Scene, context: bpy_types.Context) -> List[Tuple[str, str, str]]:
+def get_bake_image_resolutions(self: bpy.types.Scene, context: bpy.types.Context) -> List[Tuple[str, str, str]]:
     dimensions: List[Tuple[str, str, str]] = [
         ("ONE_K", "1024 x 1024", "1k Ideal for small textures or low-resolution objects."),
         ("TWO_K", "2048 x 2048", "2k Standard resolution for most objects and characters."),
@@ -308,7 +307,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
                 o.button_name = button_name
 
             #selected = [item.name for item in settings if item.name]
-            #print(f"Selected: {', '.join(selected) if selected else 'None'}")
+            #logging.debug(f"Selected: {', '.join(selected) if selected else 'None'}")
 
         def draw_bottom_options(add, save):
             box.operator(add, text="Add Scope Modifier", icon="RNA_ADD")

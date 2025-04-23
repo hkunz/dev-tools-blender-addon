@@ -1,6 +1,6 @@
 import bpy
 import os
-import bpy_types
+import logging
 
 from bpy.types import Operator
 from bpy.props import StringProperty
@@ -34,7 +34,7 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportPcFileToNodeMeshes(Operator, Im
         data = loader.load(self.force_reload)
         
         if loader.model_file_path:
-            print(f"Attempting to load the .jbeam file referenced by 'model': 📄 {loader.model_file_path}")
+            logging.debug(f"Attempting to load the .jbeam file referenced by 'model': 📄 {loader.model_file_path}")
             bpy.ops.devtools_jbeam_editor.beamng_import_jbeam_file_to_node_mesh('EXEC_DEFAULT', filepath=str(loader.model_file_path), force_reload=self.force_reload)
             return {'FINISHED'}
 
@@ -54,6 +54,6 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportPcFileToNodeMeshes(Operator, Im
 
         return {'FINISHED'}
 
-    def draw(self, context: bpy_types.Context) -> None:
+    def draw(self, context: bpy.types.Context) -> None:
         self.options_panel = self.layout.box().column()
         self.options_panel.prop(self, "force_reload")

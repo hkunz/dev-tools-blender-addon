@@ -1,5 +1,6 @@
 import bpy
 import os
+import logging
 
 from bpy.types import Operator
 from bpy.props import StringProperty
@@ -45,13 +46,13 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
         return {'FINISHED'}
 
     def create_node_meshes(self):
-        print(f"\n🧊 Creating Node Meshes from jbeam part names in: 📄 {self.filepath}")
+        logging.debug(f"\n🧊 Creating Node Meshes from jbeam part names in: 📄 {self.filepath}")
         jbeam_parts: dict[JbeamPartID, JbeamPart] = self.parser.get_jbeam_parts()
         for part_id, part in jbeam_parts.items():
             self.create_node_mesh(part_id)
 
     def create_node_mesh(self, part_id):
-        print(f"🧰 {self.filename}: '{part_id}' > assembling part structure ...")
+        logging.debug(f"🧰 {self.filename}: '{part_id}' > assembling part structure ...")
         nodes_list = self.parser.get_nodes_list(part_id)
         if not nodes_list:
             Utils.log_and_report(f"No nodes list in part '{part_id}'", self, "INFO")

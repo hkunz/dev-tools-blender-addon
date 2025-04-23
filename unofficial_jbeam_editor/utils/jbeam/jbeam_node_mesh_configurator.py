@@ -1,5 +1,6 @@
 import bpy
 import json
+import logging
 
 from unofficial_jbeam_editor.utils.jbeam.jbeam_utils import JbeamUtils as j, JbeamRefnodeUtils as jr
 from unofficial_jbeam_editor.utils.jbeam.jbeam_props_storage import JbeamPropsStorageManager
@@ -54,14 +55,14 @@ class JbeamNodeMeshConfigurator:
             node = nodes.get(node_id)
             ref_label = jr.get_refnode_from_label(refnode_name)
             if node is None:
-                print(f"⚠️  Unable to assign refnode '{ref_label}' to Node ID '{node_id}': node might be missing or belong to a base JBeam part.")
+                logging.debug(f"⚠️  Unable to assign refnode '{ref_label}' to Node ID '{node_id}': node might be missing or belong to a base JBeam part.")
                 continue
             idx = node.index
             if idx < 0:
-                print(f"❌ Error: No vertex index assigned to '{node.id}'")
+                logging.debug(f"❌ Error: No vertex index assigned to '{node.id}'")
                 continue
             jr.set_refnode_id(obj, idx, ref_label.value)
-            print(f"🎯 Assigned Node '{node.id}' with index {idx} as ref node '{refnode_name}({ref_label.value})'.")
+            logging.debug(f"🎯 Assigned Node '{node.id}' with index {idx} as ref node '{refnode_name}({ref_label.value})'.")
 
     @staticmethod
     def create_node_mesh_attributes(obj):
@@ -72,7 +73,7 @@ class JbeamNodeMeshConfigurator:
     def store_node_props_in_vertex_attributes(obj, nodes):
         for node in nodes:
             if node.index < 0:
-                print(f"❌ Error: Invalid vertex index for node '{node.id}'")
+                logging.debug(f"❌ Error: Invalid vertex index for node '{node.id}'")
                 continue
 
             idx = node.index
@@ -98,6 +99,6 @@ class JbeamNodeMeshConfigurator:
     def store_props_in_attributes(obj, parsed_data, data_type, element_type, set_props_function):
         for item in parsed_data:
             if item.index < 0 or item.index is None:
-                #print(f"❌ Error: Structure missing: No {element_type} found for {data_type[:-1]} {item.id}")
+                #logging.debug(f"❌ Error: Structure missing: No {element_type} found for {data_type[:-1]} {item.id}")
                 continue
             set_props_function(obj, item.index, item.props, item.instance)

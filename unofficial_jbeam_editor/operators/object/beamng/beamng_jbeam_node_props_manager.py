@@ -1,6 +1,7 @@
 import bpy
 import bmesh
 import json
+import logging
 
 from unofficial_jbeam_editor.utils.jbeam.jbeam_utils import JbeamUtils as j, JbeamRefnodeUtils as jr
 from unofficial_jbeam_editor.utils.ui_utils import UiUtils
@@ -11,7 +12,7 @@ def update_element_index(self, context):
     struct = context.scene.beamng_jbeam_active_structure
     struct.update_in_progress = True
 
-    print(f"Element Index updated: {self.index} {struct.index}")
+    logging.debug(f"Element Index updated: {self.index} {struct.index}")
 
     struct_name = struct.name
     index = struct.index
@@ -587,7 +588,7 @@ class OBJECT_OT_BeamngSelectByPropertyBase(bpy.types.Operator):
             self.report({'WARNING'}, f"Property '{self.prop_name}' not found in UI")
             return {'CANCELLED'}
 
-        print(f"\n[DEBUG] Searching for elements with {self.prop_name} = {selected_prop_value_orig}")
+        logging.debug(f"\n[DEBUG] Searching for elements with {self.prop_name} = {selected_prop_value_orig}")
 
         # Deselect all elements first
         for elem in self.get_elements(bm):
@@ -610,7 +611,7 @@ class OBJECT_OT_BeamngSelectByPropertyBase(bpy.types.Operator):
 
         bmesh.update_edit_mesh(obj.data)
 
-        print(f"Total Matched Elements: {matched_count}")
+        logging.debug(f"Total Matched Elements: {matched_count}")
         self.report({'INFO'}, f"Selected {matched_count} elements with {self.prop_name} = {selected_prop_value_orig}")
         return {'FINISHED'}
 

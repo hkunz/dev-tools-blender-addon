@@ -1,5 +1,6 @@
 import json
 import os
+import logging
 
 from abc import ABC, abstractmethod
 
@@ -23,15 +24,15 @@ class JbeamLoaderBase(ABC):
         self.json_str = ""
 
     def load(self, force_reload=False):
-        print(f"\n🔄 Loading 📄 {self.filepath}")
+        logging.debug(f"\n🔄 Loading 📄 {self.filepath}")
         cls = type(self)
 
         if self.filepath in cls._cache and not force_reload:
             cached = cls._cache[self.filepath]
             if cached is None:
-                print(f"⚠️  Cached failure for {self.filepath}, skipping reattempt.")
+                logging.debug(f"⚠️  Cached failure for {self.filepath}, skipping reattempt.")
                 return None
-            print(f"✅ Loaded from cache: {self.filepath}")
+            logging.debug(f"✅ Loaded from cache: {self.filepath}")
             return cached
 
         if not os.path.exists(self.filepath):
@@ -52,7 +53,7 @@ class JbeamLoaderBase(ABC):
                 result = self._validate_content(data)
                 cls._cache[self.filepath] = result
                 self._write_debug_files(fixed_str)
-                print(f"✅ Loaded data after fixing malformed content from 📄 {self.filepath}")
+                logging.debug(f"✅ Loaded data after fixing malformed content from 📄 {self.filepath}")
                 return result
             except Exception as e2:
                 self._handle_fix_errors(e2, fixed_str)
@@ -76,7 +77,7 @@ class JbeamLoaderBase(ABC):
 
     def _attempt_fix(self, path: str, error: Exception) -> str:
         snippet = JbeamFileHelper.extract_json_error_snippet(error, self.json_str)
-        print(f"Fix attempt due to: {error}. Snippet: {snippet}")
+        logging.debug(f"Fix attempt due to: {error}. Snippet: {snippet}")
         with open(path, "r", encoding="utf-8") as f:
             raw = f.read()
         fixed = JbeamFileHelper.attempt_fix_jbeam_commas(raw, self.is_jbeam)
@@ -113,13 +114,13 @@ class JbeamLoaderBase(ABC):
     def clear_cache(cls, filepath: str | None = None) -> None:
         if filepath is None:
             cls._cache.clear()
-            print("🧹 Cleared entire cache.")
+            logging.debug("🧹 Cleared entire cache.")
             return
         removed = cls._cache.pop(filepath, None)
         if removed is not None:
-            print(f"🧹 Cleared cache for: {filepath}")
+            logging.debug(f"🧹 Cleared cache for: {filepath}")
         else:
-            print(f"ℹ️ No cache entry found for: {filepath}")
+            logging.debug(f"ℹ️ No cache entry found for: {filepath}")
 
     @abstractmethod
     def _validate_content(self, json_data: dict):

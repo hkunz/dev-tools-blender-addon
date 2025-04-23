@@ -2,6 +2,7 @@ import os
 import re
 import tempfile
 import shutil
+import logging
 
 from unofficial_jbeam_editor.utils.utils import Utils
 from unofficial_jbeam_editor.utils.string_utils import StringUtils
@@ -21,7 +22,7 @@ class TempFileManager:
         if hasattr(self, '_initialized'):
             return
         self._initialized = True
-        print("Initialized", self)
+        logging.debug("Initialized %s", self)
 
     def init(self) -> None:
         pass
@@ -34,28 +35,28 @@ class TempFileManager:
         random_suffix = "" #StringUtils.randomize_string(5)
         TempFileManager.TEMP_PARENT_DIRECTORY: str = os.path.join(appdata_local_temp_dir, f"j-editor-{Utils.get_addon_version()}-b{Utils.get_blender_version()}-tmp{random_suffix}") # j1.0.8-bv4.0.1-tmpEGjov
         self.create_directory(TempFileManager.TEMP_PARENT_DIRECTORY)
-        print(f"🗂️  Created temporary parent directory: 🗂️  {TempFileManager.TEMP_PARENT_DIRECTORY}")
+        logging.debug(f"🗂️  Created temporary parent directory: 🗂️  {TempFileManager.TEMP_PARENT_DIRECTORY}")
 
     def create_temp_dir(self) -> str:
         if TempFileManager.TEMP_PARENT_DIRECTORY and not os.path.exists(TempFileManager.TEMP_PARENT_DIRECTORY):
-            print(f"The directory {TempFileManager.TEMP_PARENT_DIRECTORY} was manually deleted or deleted by an external application")
+            logging.debug(f"The directory {TempFileManager.TEMP_PARENT_DIRECTORY} was manually deleted or deleted by an external application")
             TempFileManager.TEMP_PARENT_DIRECTORY = None
         if not TempFileManager.TEMP_PARENT_DIRECTORY:
             self.create_temp_parent_dir()
         dir: str = TempFileManager.TEMP_PARENT_DIRECTORY # tempfile.mkdtemp(prefix="", dir=TempFileManager.TEMP_PARENT_DIRECTORY) # creates a temp directory in os.environ['TEMP']/TEMP_PARENT_DIRECTORY/
-        #print("Created temp directory:", dir)
+        #logging.debug("Created temp directory: %s", dir)
         return dir
 
     def delete_temp_dir(self, directory: str, ignore_errors: bool=True) -> None:
-        print("Removing temp directory...", directory)
+        logging.debug("Removing temp directory... %s", directory)
         shutil.rmtree(directory, ignore_errors)
 
     def remove_temp_parent_dir(self) -> None:
         if not TempFileManager.TEMP_PARENT_DIRECTORY:
-            print("No temporary parent directory to cleanup")
+            logging.debug("No temporary parent directory to cleanup")
             return
         self.delete_temp_dir(TempFileManager.TEMP_PARENT_DIRECTORY)
-        print(f"Removed temporary parent directory: {TempFileManager.TEMP_PARENT_DIRECTORY}")
+        logging.debug(f"Removed temporary parent directory: {TempFileManager.TEMP_PARENT_DIRECTORY}")
     
     def clear_all_temp_directories(self, blender_version: str='\d+\.\d+\.\d+', addon_version: str='\d+\.\d+\.\d+') -> None:
         appdata_local_temp_dir: str = tempfile.gettempdir() # C:/Users/<user>/AppData/Local/Temp/

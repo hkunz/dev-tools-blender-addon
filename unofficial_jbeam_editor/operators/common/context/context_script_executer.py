@@ -1,4 +1,5 @@
 import bpy
+import logging
 
 from typing import List, Callable
 from bpy.types import (
@@ -27,7 +28,7 @@ class ContextScriptExecuter(ABC):
 
     def report_execute_error(self, message: str) -> None:
         self.error_message = f"Error processing script {self.__class__.__name__}. {message}"
-        print(self.error_message)
+        logging.debug(self.error_message)
 
     def execute_script(self) -> bool:
         window: Window = bpy.context.window

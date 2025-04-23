@@ -1,5 +1,6 @@
 import bpy
 import os
+import logging
 import bpy.utils.previews
 
 from unofficial_jbeam_editor.utils.file_utils import FileUtils
@@ -28,7 +29,7 @@ class IconsManager:
             return
         self.icons_dict = None
         self._initialized = True
-        print("Initialized", self)
+        logging.debug("Initialized %s", self)
 
     def init(self) -> None:
         if self.icons_dict:
@@ -49,7 +50,7 @@ class IconsManager:
         # https://blender.stackexchange.com/questions/32335/how-to-implement-custom-icons-for-my-script-addon
         self.icons_dict.load(icon_name, icon_path, 'IMAGE')
         icon_value = self.icons_dict[icon_name].icon_id
-        print(f"Registered icon {icon_value}: \"{icon_name}\"")
+        logging.debug(f"Registered icon {icon_value}: \"{icon_name}\"")
         return icon_value
 
     def get_icon_id(self, icon_name):
@@ -59,7 +60,7 @@ class IconsManager:
     def cleanup(self) -> None:
         bpy.utils.previews.remove(self.icons_dict)
         self.icons_dict = None
-        print("Icon cleanup complete")
+        logging.debug("Icon cleanup complete")
 
 # sample usage
 # layout.label(text=item.name, icon=ICON_LIST[1])

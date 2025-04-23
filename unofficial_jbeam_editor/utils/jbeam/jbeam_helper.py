@@ -1,6 +1,8 @@
 import ast
 import json
 import re
+import logging
+
 from collections import defaultdict, OrderedDict
 
 from unofficial_jbeam_editor.utils.number_utils import NumberUtils
@@ -226,7 +228,7 @@ class JbeamFileHelper:
 
     @staticmethod
     def attempt_fix_jbeam_commas(content: str, is_jbeam=True) -> str:
-        print("🩹 Fixing syntax errors in content...")
+        logging.debug("🩹 Fixing syntax errors in content...")
         lines = JbeamFileHelper.remove_block_and_line_comments(content)
         fixed_lines = []
         total_fixes = 0
@@ -286,7 +288,7 @@ class JbeamFileHelper:
             fixed_lines.append(s)
 
         if total_fixes > 0:
-            print(f"🆗 Total fixes made: {total_fixes}")
+            logging.debug(f"🆗 Total fixes made: {total_fixes}")
         return '\n'.join(fixed_lines)
 
 
@@ -300,13 +302,13 @@ class JbeamFileHelper:
             try:
                 char_position = int(char_position)  # Convert char_position to an integer
             except ValueError:
-                print("❌ Failed to extract valid character position.")
+                logging.debug("❌ Failed to extract valid character position.")
                 return
 
             snippet_start = max(0, char_position - 40)  # 40 characters before the error
             snippet_end = min(len(raw_content), char_position + 40)  # 40 characters after
             error_text = raw_content[snippet_start:snippet_end]
-            print(f"Error position: {char_position}")
+            logging.debug(f"Error position: {char_position}")
             return error_text
         return
     

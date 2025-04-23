@@ -1,5 +1,6 @@
 import bpy
 import bmesh
+import logging
 
 from unofficial_jbeam_editor.utils.jbeam.jbeam_utils import JbeamUtils as j
 from unofficial_jbeam_editor.utils.jbeam.jbeam_models import JBeamElement, Node, Beam, Triangle
@@ -21,7 +22,7 @@ class JbeamNodeMeshCreator:
         self.mesh = bpy.data.meshes.new(mesh_name)
         self.obj = bpy.data.objects.new(mesh_name, self.mesh)
         bpy.context.collection.objects.link(self.obj)
-        print(f"🧊 [JbeamNodeMeshCreator] Created container Node Mesh object '{mesh_name}'.")
+        logging.debug(f"🧊 [JbeamNodeMeshCreator] Created container Node Mesh object '{mesh_name}'.")
         return self.obj
 
     def check_mesh_created(self):
@@ -43,7 +44,7 @@ class JbeamNodeMeshCreator:
             self.mesh.vertices[global_index].co = node.position
             self._vertices.append(node.position)
 
-        print(f"    - Added {num_new} vertices (total: {len(self.mesh.vertices)}).")
+        logging.debug(f"    - Added {num_new} vertices (total: {len(self.mesh.vertices)}).")
 
     def _process_elements(self, element_list: list[JBeamElement], node_count: int, get_node_ids: callable, assign_index: callable) -> list[tuple[int, ...]]:
         result: list[tuple[int, ...]] = []
@@ -53,7 +54,7 @@ class JbeamNodeMeshCreator:
             node_ids = get_node_ids(element)
 
             if len(node_ids) != node_count:
-                print(f"⚠️  Warning: Expected {node_count} node IDs, got {len(node_ids)}")
+                logging.debug(f"⚠️  Warning: Expected {node_count} node IDs, got {len(node_ids)}")
                 assign_index(element, -1)
                 continue
 
@@ -70,7 +71,7 @@ class JbeamNodeMeshCreator:
                 self._missing_element_warn_count += 1
                 missing = [nid for nid in node_ids if nid not in self.vertex_indices]
                 if self._missing_element_warn_count <= 3:
-                    print(f"⚠️  Warning: Cannot construct element '{j.format_node_ids(*node_ids)}' — missing node(s): {missing}")
+                    logging.debug(f"⚠️  Warning: Cannot construct element '{j.format_node_ids(*node_ids)}' — missing node(s): {missing}")
                 assign_index(element, -1)
 
         return result
@@ -95,7 +96,7 @@ class JbeamNodeMeshCreator:
             self.mesh.edges[start_index + i].vertices = edge
             self._edges.append(edge)
         self.print_ommited_warnings()
-        print(f"    - Added {num_new} edges (total: {len(self.mesh.edges)}).")
+        logging.debug(f"    - Added {num_new} edges (total: {len(self.mesh.edges)}).")
 
 
     def add_faces(self, tris_list: list[Triangle]) -> None:
@@ -127,11 +128,11 @@ class JbeamNodeMeshCreator:
         bm.to_mesh(self.mesh)
         bm.free()
         self.print_ommited_warnings()
-        print(f"    - Added {len(new_faces)} faces (total: {len(self.mesh.polygons)}).")
+        logging.debug(f"    - Added {len(new_faces)} faces (total: {len(self.mesh.polygons)}).")
 
     def reset_warning_counter(self):
         self._missing_element_warn_count = 0
 
     def print_ommited_warnings(self):
         if self._missing_element_warn_count > 3:
-            print(f"⚠️  Warning: More missing warnings omitted... ({self._missing_element_warn_count - 3} more)")
+            logging.debug(f"⚠️  Warning: More missing warnings omitted... ({self._missing_element_warn_count - 3} more)")

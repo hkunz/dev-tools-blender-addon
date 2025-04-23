@@ -1,4 +1,5 @@
 import bpy
+import logging
 
 class OBJECT_OT_BakeGenerateObject(bpy.types.Operator):
     """Bake then Duplicate object, clean up materials and UV maps, and create a new material with BakeImage"""
@@ -12,7 +13,7 @@ class OBJECT_OT_BakeGenerateObject(bpy.types.Operator):
         duplicated_obj.animation_data_clear()
         bpy.context.collection.objects.link(duplicated_obj)
         
-        print(f"Duplicated object: {duplicated_obj.name}")
+        logging.debug(f"Duplicated object: {duplicated_obj.name}")
 
         bpy.ops.object.select_all(action='DESELECT')
         bpy.context.view_layer.objects.active = duplicated_obj
@@ -20,26 +21,26 @@ class OBJECT_OT_BakeGenerateObject(bpy.types.Operator):
 
         duplicated_obj.data.materials.clear()
         duplicated_obj.data.materials.append(mat)
-        print(f"{duplicated_obj.name}: Removed all materials and added new material {mat.name}")
+        logging.debug(f"{duplicated_obj.name}: Removed all materials and added new material {mat.name}")
 
         return duplicated_obj
 
     def clear_old_uv_maps(self, duplicated_obj):
         uv_layers = duplicated_obj.data.uv_layers
-        print("Removing all UV maps except 'bake'...")
+        logging.debug("Removing all UV maps except 'bake'...")
         uv_to_remove = [uv_layer.name for uv_layer in uv_layers if uv_layer.name != "bake"]
 
         for uv_name in uv_to_remove:
-            print(f"Removing UV map: {uv_name}")
+            logging.debug(f"Removing UV map: {uv_name}")
             uv_layers.remove(uv_layers[uv_name])
 
         bake_uv_layer = uv_layers.get("bake")
 
         if bake_uv_layer:
-            print(f"Renaming UV map 'bake' to 'UVMap'")
+            logging.debug(f"Renaming UV map 'bake' to 'UVMap'")
             bake_uv_layer.name = "UVMap"
         else:
-            print("Warning: 'bake' UV map not found, no renaming done.")
+            logging.debug("Warning: 'bake' UV map not found, no renaming done.")
 
 
     def create_new_material(self):
@@ -50,7 +51,7 @@ class OBJECT_OT_BakeGenerateObject(bpy.types.Operator):
         texture_node.image = bpy.data.images.get("BakeImage")
         texture_node.location = (-350, 300)
         
-        print(f"Assigned image texture 'BakeImage' to material.")
+        logging.debug(f"Assigned image texture 'BakeImage' to material.")
 
         bsdf_node = new_material.node_tree.nodes.get("Principled BSDF")
         if bsdf_node:
@@ -84,7 +85,7 @@ class OBJECT_OT_BakeGenerateObject(bpy.types.Operator):
                 self.report({'WARNING'}, f"{obj.name}: Missing 'bake' UV map. Click 'Prepare Bake'")
                 return {'CANCELLED'}
 
-        print(f"{obj.name}: Found 'bake' UV map. Start baking object/s {[obj.name for obj in context.selected_objects]}")
+        logging.debug(f"{obj.name}: Found 'bake' UV map. Start baking object/s {[obj.name for obj in context.selected_objects]}")
         bpy.ops.object.bake(type='DIFFUSE')
 
         mat = self.create_new_material()

@@ -1,6 +1,6 @@
 import bpy
 import re
-
+import logging
 
 class OBJECT_OT_BeamngClearChildrenStart01Empty(bpy.types.Operator):
     """Operator to clear children from an empty object based on naming pattern"""
@@ -102,15 +102,15 @@ class OBJECT_OT_BeamngParentToStart01Empty(bpy.types.Operator):
         collection_name = collection.name
         found_assets = self.find_objects_matching_collection_name(collection_name)
 
-        print(f"Collection \"{collection_name}\" => Mesh objects matching '{collection_name}_a#':")
+        logging.debug(f"Collection \"{collection_name}\" => Mesh objects matching '{collection_name}_a#':")
         for ob in found_assets:
-            print(f"\tObject: {ob.name}")
+            logging.debug(f"\tObject: {ob.name}")
             self.parent_to_empty(ob, empty_obj)
 
         colmesh = self.get_collision_mesh(collection)
         if colmesh:
             colmesh = self.duplicate_with_linked_mesh_and_rename(colmesh, "Colmesh-1")
             self.parent_to_empty(colmesh, empty_obj)
-            print(f"Collision Object: {colmesh.name}")
+            logging.debug(f"Collision Object: {colmesh.name}")
 
         return {'FINISHED'}

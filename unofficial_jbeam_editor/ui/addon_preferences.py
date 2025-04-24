@@ -1,5 +1,4 @@
 import bpy
-import bpy_types
 import logging
 
 from bpy.types import UILayout
@@ -15,7 +14,7 @@ def on_addon_preferences_change(update_ui=True) -> None:
     if update_ui:
         UiUtils.force_update_ui(bpy.context)
 
-def on_property_update(self, _: bpy_types.Context, sample_type: str) -> None:
+def on_property_update(self, _: bpy.types.Context, sample_type: str) -> None:
     logging.debug(f"on_property_update: {self}::{sample_type}")
     on_addon_preferences_change()
 
@@ -96,7 +95,7 @@ class MyAddonPreferences(bpy.types.AddonPreferences):
         for prop_name in self.CHECKBOXES:
             self.set_checkbox(prop_name, False)
 
-    def draw(self, _: bpy_types.Context) -> None:
+    def draw(self, _: bpy.types.Context) -> None:
         layout: UILayout = self.layout
         #options_box: UILayout = layout.box()
         #box: UILayout = options_box.box()

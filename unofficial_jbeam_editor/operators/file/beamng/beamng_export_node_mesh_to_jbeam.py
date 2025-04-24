@@ -1,5 +1,4 @@
 import bpy
-import bpy_types
 import os
 import io
 import json
@@ -251,8 +250,8 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
         return ref_nodes
 
     @classmethod
-    def poll(cls, context: bpy_types.Context) -> bool:
-        obj: bpy_types.Object = context.active_object
+    def poll(cls, context: bpy.types.Context) -> bool:
+        obj: bpy.types.Object = context.active_object
 
         if not obj or not j.is_node_mesh(obj) or len(context.selected_objects) > 1:
             return False

@@ -1,6 +1,5 @@
 import bpy
 import time
-import bpy_types
 import os
 
 from bpy_extras.io_utils import ExportHelper
@@ -45,13 +44,13 @@ class OperatorFileExporter(bpy.types.Operator, ExportHelper):
         default=False,
     ) # type: ignore
 
-    def draw(self, context: bpy_types.Context) -> None:
+    def draw(self, context: bpy.types.Context) -> None:
         self.options_panel = self.layout.box().column()
         self.options_panel.prop(self, "my_float_prop")
         self.options_panel.prop(self, "my_string_prop")
         self.options_panel.prop(self, "my_bool_prop")
 
-    def execute(self, context: bpy_types.Context) -> set[str]:
+    def execute(self, context: bpy.types.Context) -> set[str]:
         duration: int = time.time()
         self.create_popup(f"Execute", time.time() - duration)
         return {'FINISHED'}
@@ -63,11 +62,11 @@ class OperatorFileExporter(bpy.types.Operator, ExportHelper):
         create_generic_popup(message=f"{header}|Directory: {os.path.dirname(self.filepath)}|Size: {size}|Duration: {sduration}|Check the Info Editor for more information.")
 
     @classmethod
-    def poll(cls, context: bpy_types.Context) -> bool:
-        active_object: bpy_types.Object = context.active_object
+    def poll(cls, context: bpy.types.Context) -> bool:
+        active_object: bpy.types.Object = context.active_object
         if not active_object:
             return False
-        selected_objects: List[bpy_types.Object] = context.selected_objects
+        selected_objects: List[bpy.types.Object] = context.selected_objects
         if context.mode != 'OBJECT' or not selected_objects or active_object not in selected_objects:
             return False
         for obj in selected_objects:
@@ -75,10 +74,10 @@ class OperatorFileExporter(bpy.types.Operator, ExportHelper):
                 return False
         return True
 
-    def invoke(self, context: bpy_types.Context, event: bpy.types.Event) -> set[str]:
+    def invoke(self, context: bpy.types.Context, event: bpy.types.Event) -> set[str]:
         self.options_panel = None
         if False:
             return {'PASS_THROUGH'}
-        wm: bpy_types.WindowManager = context.window_manager
+        wm: bpy.types.WindowManager = context.window_manager
         wm.fileselect_add(self)
         return {'RUNNING_MODAL'}

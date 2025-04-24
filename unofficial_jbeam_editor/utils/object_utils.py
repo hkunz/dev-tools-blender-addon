@@ -1,7 +1,6 @@
 import bpy
 import sys
 import traceback
-import bpy_types
 import bmesh
 import os
 import logging
@@ -38,7 +37,7 @@ class ObjectUtils:
 
     @staticmethod
     def auto_merge_vertices(object: bpy.types.Object) -> None:
-        C: bpy_types.Context = bpy.context
+        C: bpy.types.Context = bpy.context
         C.view_layer.objects.active = object
         s: bpy.types.ToolSettings = C.scene.tool_settings
         merge: bool = s.use_mesh_automerge
@@ -60,7 +59,7 @@ class ObjectUtils:
         if object:
             object.data.validate()
         else:
-            m: bpy_types.Mesh = None
+            m: bpy.types.Mesh = None
             for m in bpy.data.meshes:
                 m.validate()
 
@@ -176,7 +175,7 @@ class ObjectUtils:
 
     @staticmethod
     def duplicate_objects(objects: List[bpy.types.Object]) -> None:
-        C: bpy_types.Context = bpy.context
+        C: bpy.types.Context = bpy.context
         duplicates: List[bpy.types.Object] = []
         active_obj: bpy.types.Object = C.view_layer.objects.active
         for ob in objects:

@@ -1,5 +1,4 @@
 import bpy
-import bpy_types
 
 class ModalTimerOperator(bpy.types.Operator):
     bl_idname = "wm.modal_timer_operator"
@@ -7,7 +6,7 @@ class ModalTimerOperator(bpy.types.Operator):
 
     _timer: bpy.types.Timer = None
 
-    def modal(self, context: bpy_types.Context, _event: bpy.types.Event) -> set[str]:
+    def modal(self, context: bpy.types.Context, _event: bpy.types.Event) -> set[str]:
         [a.tag_redraw() for a in context.screen.areas]
         if self._timer.time_duration > 3:
             context.window_manager.progress = 1

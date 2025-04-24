@@ -1,5 +1,5 @@
 import bpy
-import bpy_types
+
 from typing import List
 
 class OperatorGenericPopup(bpy.types.Operator):
@@ -13,13 +13,13 @@ class OperatorGenericPopup(bpy.types.Operator):
     width: int = 0
 
     @classmethod
-    def poll(cls, context: bpy_types.Context) -> bool:
+    def poll(cls, context: bpy.types.Context) -> bool:
         return True
 
-    def invoke(self, context: bpy_types.Context, _: bpy.types.Event) -> set[str]:
+    def invoke(self, context: bpy.types.Context, _: bpy.types.Event) -> set[str]:
         return context.window_manager.invoke_props_dialog(self, width=self.width) if self.width else context.window_manager.invoke_props_dialog(self)
 
-    def draw(self, _: bpy_types.Context) -> None:
+    def draw(self, _: bpy.types.Context) -> None:
         layout: bpy.types.UILayout = self.layout
         col: bpy.types.UILayout = layout.box().column()
         list: List = self.message.split('|')
@@ -31,7 +31,7 @@ class OperatorGenericPopup(bpy.types.Operator):
             else:
                 col.label(text=m)
 
-    def execute(self, _: bpy_types.Context) -> set[str]:
+    def execute(self, _: bpy.types.Context) -> set[str]:
         if self.exec_message:
             self.report({'INFO'}, self.exec_message)
         return {'FINISHED'}

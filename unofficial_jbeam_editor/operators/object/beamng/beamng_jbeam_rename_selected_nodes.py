@@ -2,6 +2,7 @@ import bpy
 import bmesh
 import re
 
+from unofficial_jbeam_editor.utils.utils import Utils
 from unofficial_jbeam_editor.utils.jbeam.jbeam_utils import JbeamUtils as j
 
 class OBJECT_OT_BeamngJbeamRenameSelectedNodes(bpy.types.Operator):
@@ -13,25 +14,25 @@ class OBJECT_OT_BeamngJbeamRenameSelectedNodes(bpy.types.Operator):
     def execute(self, context):
         obj = context.object
         if obj is None or obj.type != 'MESH':
-            self.report({'WARNING'}, "No valid mesh object selected")
+            Utils.log_and_report("No valid mesh object selected", self, 'WARNING')
             return {'CANCELLED'}
 
         mesh = obj.data
         active_id = context.scene.beamng_jbeam_active_structure.id.strip()
 
         if not active_id:
-            self.report({'WARNING'}, "Active Node ID is empty")
+            Utils.log_and_report("Active Node ID is empty", self, 'WARNING')
             return {'CANCELLED'}
 
         if obj.mode != 'EDIT':
-            self.report({'WARNING'}, "Switch to Edit Mode to assign IDs")
+            Utils.log_and_report("Switch to Edit Mode to assign IDs", self, 'WARNING')
             return {'CANCELLED'}
 
         bm = bmesh.from_edit_mesh(mesh)
         selected_verts = [v for v in bm.verts if v.select]
 
         if not selected_verts:
-            self.report({'WARNING'}, "No vertices selected")
+            Utils.log_and_report("No vertices selected", self, 'WARNING')
             return {'CANCELLED'}
 
         if len(selected_verts) == 1:
@@ -52,5 +53,5 @@ class OBJECT_OT_BeamngJbeamRenameSelectedNodes(bpy.types.Operator):
 
         bmesh.update_edit_mesh(mesh)
         verts_msg = "Nodes" if len(selected_verts) > 1 else "Node"
-        self.report({'INFO'}, f"Assigned ID to {len(selected_verts)} selected {verts_msg}")
+        Utils.log_and_report(f"Assigned ID to {len(selected_verts)} selected {verts_msg}", self, 'INFO')
         return {'FINISHED'}

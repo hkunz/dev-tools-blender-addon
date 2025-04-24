@@ -1,6 +1,8 @@
 import bpy
 import logging
 
+from unofficial_jbeam_editor.utils.utils import Utils
+
 class OBJECT_OT_BakeGenerateObject(bpy.types.Operator):
     """Bake then Duplicate object, clean up materials and UV maps, and create a new material with BakeImage"""
     bl_idname = "object.devtools_bake_generate_object"
@@ -73,16 +75,16 @@ class OBJECT_OT_BakeGenerateObject(bpy.types.Operator):
         obj = context.active_object
 
         if obj not in context.selected_objects:
-            self.report({'WARNING'}, "Please select one active object")
+            Utils.log_and_report("Please select one active object", self, 'WARNING')
             return {'CANCELLED'}
 
         for obj in context.selected_objects:
             if obj.type != 'MESH':
-                self.report({'WARNING'}, f"{obj.name}: All selected objects must be of type 'MESH'")
+                Utils.log_and_report(f"{obj.name}: All selected objects must be of type 'MESH'", self, 'WARNING')
                 return {'CANCELLED'}
 
             if "bake" not in obj.data.uv_layers:
-                self.report({'WARNING'}, f"{obj.name}: Missing 'bake' UV map. Click 'Prepare Bake'")
+                Utils.log_and_report(f"{obj.name}: Missing 'bake' UV map. Click 'Prepare Bake'", self, 'WARNING')
                 return {'CANCELLED'}
 
         logging.debug(f"{obj.name}: Found 'bake' UV map. Start baking object/s {[obj.name for obj in context.selected_objects]}")
@@ -102,7 +104,7 @@ class OBJECT_OT_BakeGenerateObject(bpy.types.Operator):
         self.report({'INFO'}, "Duplicated object's shader setup ready with Image Texture containing baked image\n \
 * Don't forget to save baked image in UV Editor under Image > Save Image\n \
 * Rename your material and the baked image to something more meaningful")
-        self.report({'INFO'}, "Baked Object(s) Ready")
+        Utils.log_and_report("Baked Object(s) Ready", self, 'INFO')
 
         return {'FINISHED'}
 

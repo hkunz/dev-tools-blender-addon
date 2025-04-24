@@ -1,7 +1,7 @@
 import bpy
 import bmesh
-import re
 
+from unofficial_jbeam_editor.utils.utils import Utils
 from unofficial_jbeam_editor.utils.object_utils import ObjectUtils as o
 from unofficial_jbeam_editor.utils.jbeam.jbeam_utils import JbeamUtils as j, JbeamRefnodeUtils as jr
 
@@ -41,7 +41,7 @@ class OBJECT_OT_BeamngJbeamSelectRefNode(bpy.types.Operator):
         refnode_id = jr.RefNode[self.refnode_enum].value
         indices = jr.find_nodes_with_refnode_id(obj, refnode_id)
         if not indices:
-            self.report({'INFO'}, f"No nodes found with '{self.refnode_enum}' (ID: {refnode_id})")
+            Utils.log_and_report(f"No nodes found with '{self.refnode_enum}' (ID: {refnode_id})", self, 'INFO')
             return {'FINISHED'}
 
         element = None
@@ -52,5 +52,5 @@ class OBJECT_OT_BeamngJbeamSelectRefNode(bpy.types.Operator):
         if element:
             bm.select_history.add(element)
             bmesh.update_edit_mesh(obj.data)
-            self.report({'INFO'}, f"Selected {len(indices)} Node(s)")
+            Utils.log_and_report(f"Selected {len(indices)} Node(s)", self, 'INFO')
         return {'FINISHED'}

@@ -13,12 +13,12 @@ class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
     def create_bake_uv_and_select(self, obj, bake_uv):
         uvs = obj.data.uv_layers
         if not uvs:
-            self.report({'WARNING'}, f"No UV Maps to bake in object '{obj.name}'")
+            Utils.log_and_report(f"No UV Maps to bake in object '{obj.name}'", self, 'WARNING')
             return False
 
         if bake_uv in uvs:
             if uvs.active.name == bake_uv:
-                self.report({'ERROR'}, "Please select a UV map you want as a reference to bake on.")
+                Utils.log_and_report("Please select a UV map you want as a reference to bake on.", self, 'ERROR')
                 return False
             else:
                 logging.debug(f"{obj.name}: Removing existing 'bake' UV map...")
@@ -57,7 +57,7 @@ class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
     def check_materials(self, obj):
         empty_slots = False
         if len(obj.data.materials) == 0:
-            self.report({'WARNING'}, f"No materials assigned to object '{obj.name}'")
+            Utils.log_and_report(f"No materials assigned to object '{obj.name}'", self, 'WARNING')
             return False
         
         for slot in obj.material_slots:
@@ -66,7 +66,7 @@ class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
                 break
 
         if empty_slots:
-            self.report({'WARNING'}, f"There is at least one empty material slot in object '{obj.name}'")
+            Utils.log_and_report(f"There is at least one empty material slot in object '{obj.name}'", self, 'WARNING')
         else:
             logging.debug(f"{obj.name}: {len(obj.data.materials)} material(s) assigned and all slots are filled.")
         return not empty_slots
@@ -115,7 +115,7 @@ class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
         obj = context.active_object
 
         if obj not in context.selected_objects:
-            self.report({'WARNING'}, "No active mesh object selected")
+            Utils.log_and_report("No active mesh object selected", self, 'WARNING')
             return {'CANCELLED'}
 
         properties = context.scene.my_property_group_pointer
@@ -130,7 +130,7 @@ class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
 
         for obj in context.selected_objects:
             if obj.type != 'MESH':
-                self.report({'WARNING'}, f"{obj.name}: All selected objects must be of type 'MESH'")
+                Utils.log_and_report(f"{obj.name}: All selected objects must be of type 'MESH'", self, 'WARNING')
                 return {'CANCELLED'}
             if not self.check_materials(obj):
                 return {'CANCELLED'}
@@ -150,7 +150,7 @@ class OBJECT_OT_BakePrepareObject(bpy.types.Operator):
 * Make island size adjustments if needed then repeat UV > Pack Islands.\n \
 * Configure baking properties in Render Properties > Bake\n \
 * Click 'Generate Bake Object' to bake and duplicate object (that will get setup with bake material)")
-        self.report({'INFO'}, f"Objects ready to bake: {[obj.name for obj in context.selected_objects]}")
+        Utils.log_and_report(f"Objects ready to bake: {[obj.name for obj in context.selected_objects]}", self, 'INFO')
 
         return {'FINISHED'}
 

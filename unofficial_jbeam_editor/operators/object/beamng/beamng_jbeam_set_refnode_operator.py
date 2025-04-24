@@ -2,6 +2,7 @@ import bpy
 import bmesh
 import logging
 
+from unofficial_jbeam_editor.utils.utils import Utils
 from unofficial_jbeam_editor.utils.jbeam.jbeam_utils import JbeamRefnodeUtils as jr
 
 class OBJECT_OT_BeamngJbeamSetRefnodeOperator(bpy.types.Operator):
@@ -25,7 +26,7 @@ class OBJECT_OT_BeamngJbeamSetRefnodeOperator(bpy.types.Operator):
 
         if obj and obj.type == 'MESH':
             if obj.mode != 'EDIT':
-                self.report({'ERROR'}, "Please enter Edit Mode")
+                Utils.log_and_report("Please enter Edit Mode", self, 'ERROR')
                 return {'CANCELLED'}
 
             bm = bmesh.from_edit_mesh(obj.data)
@@ -39,11 +40,11 @@ class OBJECT_OT_BeamngJbeamSetRefnodeOperator(bpy.types.Operator):
                     logging.debug(f"Found match at index={idx}, overwriting with RefNode.NONE")
                     jr.set_refnode_id(obj, idx, jr.RefNode.NONE.value)
                 jr.set_refnode_id(obj, vertex_index, refnode_id)
-                self.report({'INFO'}, f"Set Node as Ref Node {enum.name}({refnode_id})")
+                Utils.log_and_report(f"Set Node as Ref Node {enum.name}({refnode_id})", self, 'INFO')
                 bmesh.update_edit_mesh(obj.data)
                 return {'FINISHED'}
             if len(selected_verts) >= 1 and refnode_id == jr.RefNode.NONE.value:
-                self.report({'INFO'}, f"Reset Selected Nodes with Ref Node value {enum.name}({refnode_id})")
+                Utils.log_and_report(f"Reset Selected Nodes with Ref Node value {enum.name}({refnode_id})", self, 'INFO')
                 for v in bm.verts:
                     value = jr.get_refnode_id(obj, v.index)
                     if value == refnode_id:
@@ -52,8 +53,8 @@ class OBJECT_OT_BeamngJbeamSetRefnodeOperator(bpy.types.Operator):
                     jr.set_refnode_id(obj, v.index, refnode_id)
                 return {'FINISHED'}
 
-            self.report({'WARNING'}, "Please select exactly one Node")
+            Utils.log_and_report("Please select exactly one Node", self, 'WARNING')
             return {'CANCELLED'}
         else:
-            self.report({'ERROR'}, "Active object is not a mesh")
+            Utils.log_and_report("Active object is not a mesh", self, 'ERROR')
             return {'CANCELLED'}

@@ -2,6 +2,7 @@ import bpy
 import bmesh
 import logging
 
+from unofficial_jbeam_editor.utils.utils import Utils
 from unofficial_jbeam_editor.utils.object_utils import ObjectUtils
 
 # Run operator OBJECT_OT_ArmatureCreateBonesFromEdgeSelection
@@ -75,21 +76,21 @@ class OBJECT_OT_ArmatureAssignClosestVertexToBoneTails(bpy.types.Operator):
 
     def execute(self, context):
         if len(context.selected_objects) != 2:
-            self.report({'WARNING'}, "Selected one Armature and one Mesh object")
+            Utils.log_and_report("Selected one Armature and one Mesh object", self, 'WARNING')
             return {'CANCELLED'}
 
         armature_obj = context.view_layer.objects.active
         if armature_obj.type != 'ARMATURE':
-            self.report({'WARNING'}, "Active object must be an Armature.")
+            Utils.log_and_report("Active object must be an Armature.", self, 'WARNING')
             return {'CANCELLED'}
 
         mesh_obj = next((obj for obj in context.selected_objects if obj != armature_obj and obj.type == 'MESH'), None)
         if not mesh_obj:
-            self.report({'WARNING'}, "The second selected object must be a mesh.")
+            Utils.log_and_report("The second selected object must be a mesh.", self, 'WARNING')
             return {'CANCELLED'}
 
         if not ObjectUtils.check_origin_at_world_origin(context.selected_objects):
-            self.report({'WARNING'}, "Objects must have origin at World Origin")
+            Utils.log_and_report("Objects must have origin at World Origin", self, 'WARNING')
             return {'CANCELLED'}
 
         bpy.ops.object.mode_set(mode='EDIT')

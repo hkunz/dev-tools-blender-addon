@@ -2,8 +2,8 @@ import bpy
 import json
 import logging
 
+from unofficial_jbeam_editor.utils.utils import Utils
 from unofficial_jbeam_editor.utils.jbeam.jbeam_utils import JbeamUtils as j, JbeamPropsStorage, JbeamPropsStorageManager
-
 
 class OBJECT_OT_PrintJBeamPropsBase(bpy.types.Operator):
     """Base class for printing JBeam properties"""
@@ -28,7 +28,7 @@ class OBJECT_OT_PrintJBeamPropsBase(bpy.types.Operator):
         for obj in context.selected_objects:
             storage_inst: JbeamPropsStorage = props_manager.get_props_storage(obj)
             if not j.is_node_mesh(obj):
-                self.report({'WARNING'}, f"⚠️  Object '{obj.name}' ({self.attr_name}): Object is not a Node Mesh")
+                Utils.log_and_report(f"⚠️  Object '{obj.name}' ({self.attr_name}): Object is not a Node Mesh", self, 'WARNING')
                 continue
 
             mesh = obj.data
@@ -37,7 +37,7 @@ class OBJECT_OT_PrintJBeamPropsBase(bpy.types.Operator):
             selected_elements = [element for element in elements if element.select]
 
             if not selected_elements:
-                self.report({'WARNING'}, f"⚠️  Object '{obj.name}' ({self.attr_name}): No selected {self.domain}")
+                Utils.log_and_report(f"⚠️  Object '{obj.name}' ({self.attr_name}): No selected {self.domain}", self, 'WARNING')
                 continue
 
             info = f"ℹ️  Object '{obj.name}' ({self.attr_name})"
@@ -61,7 +61,7 @@ class OBJECT_OT_PrintJBeamPropsBase(bpy.types.Operator):
                     logging.info(f"{self.emoji}{id_str}({index}): No key, no attribute value (no scope modifiers assigned)")
 
         if len(context.selected_objects) > 0:
-            self.report({'INFO'}, "Node Mesh Attributes have been printed. Check the console for detailed output.")
+            Utils.log_and_report("Node Mesh Attributes have been printed. Check the console for detailed output.", self, 'INFO')
         logging.info("==============================================\n")
         restore_mode()
         return {'FINISHED'}

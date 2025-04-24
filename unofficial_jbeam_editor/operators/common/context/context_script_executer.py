@@ -10,6 +10,8 @@ from bpy.types import (
 )
 
 from abc import ABC, abstractmethod
+
+from unofficial_jbeam_editor.utils.utils import Utils
 from unofficial_jbeam_editor.operators.common.context.context_executer_override import ContextExecuterOverride
 
 class ContextScriptExecuter(ABC):

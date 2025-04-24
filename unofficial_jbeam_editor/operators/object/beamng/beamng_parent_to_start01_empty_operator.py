@@ -2,6 +2,8 @@ import bpy
 import re
 import logging
 
+from unofficial_jbeam_editor.utils.utils import Utils
+
 class OBJECT_OT_BeamngClearChildrenStart01Empty(bpy.types.Operator):
     """Operator to clear children from an empty object based on naming pattern"""
     bl_idname = "object.devtools_beamng_clear_children_for_empty"
@@ -11,7 +13,7 @@ class OBJECT_OT_BeamngClearChildrenStart01Empty(bpy.types.Operator):
     def execute(self, context):
         empty_obj = bpy.data.objects.get("start01")
         if not empty_obj:
-            self.report({'WARNING'}, f"Empty 'start01' missing")
+            Utils.log_and_report(f"Empty 'start01' missing", self, 'WARNING')
             return {'CANCELLED'}
         prefix = "Colmesh-"
         pattern = re.compile(f"^{re.escape(prefix)}\\d+$")
@@ -42,7 +44,7 @@ class OBJECT_OT_BeamngParentToStart01Empty(bpy.types.Operator):
                     found_objects.append(obj)
         
         if not found_objects:
-            self.report({'WARNING'}, f"Missing object/s with naming convention \"{collection_name}_a#\" (example: \"{collection_name}_a1000\")")
+            Utils.log_and_report(f"Missing object/s with naming convention \"{collection_name}_a#\" (example: \"{collection_name}_a1000\")", self, 'WARNING')
         
         return found_objects
 
@@ -52,7 +54,7 @@ class OBJECT_OT_BeamngParentToStart01Empty(bpy.types.Operator):
             if obj.type == 'MESH' and obj.name.startswith("Colmesh-1."):
                 return obj
         
-        self.report({'WARNING'}, "No collision mesh with the prefix 'Colmesh-1.' found.")
+        Utils.log_and_report("No collision mesh with the prefix 'Colmesh-1.' found.", self, 'WARNING')
         return None
 
     def duplicate_with_linked_mesh_and_rename(self, ob, new_name):
@@ -64,7 +66,7 @@ class OBJECT_OT_BeamngParentToStart01Empty(bpy.types.Operator):
         if export_collection:
             export_collection.objects.link(dup)
         else:
-            self.report({'WARNING'}, "Export collection 'beamng_export' not found.")
+            Utils.log_and_report("Export collection 'beamng_export' not found.", self, 'WARNING')
         return dup
 
     def clear_children(self, empty_obj):
@@ -89,14 +91,14 @@ class OBJECT_OT_BeamngParentToStart01Empty(bpy.types.Operator):
     def execute(self, context):
         empty_obj = bpy.data.objects.get("start01")
         if not empty_obj:
-            self.report({'WARNING'}, "Empty object 'start01' not found.")
+            Utils.log_and_report("Empty object 'start01' not found.", self, 'WARNING')
             return {'CANCELLED'}
 
         bpy.ops.object.devtools_beamng_clear_children_for_empty()
 
         collection = bpy.context.collection
         if not collection:
-            self.report({'WARNING'}, "No collection is selected! Please select a collection first.")
+            Utils.log_and_report("No collection is selected! Please select a collection first.", self, 'WARNING')
             return {'CANCELLED'}
 
         collection_name = collection.name

@@ -1,6 +1,8 @@
 import bpy
 import random
 
+from unofficial_jbeam_editor.utils.utils import Utils
+
 class OBJECT_OT_ArmatureCreateBonesRandomVertices(bpy.types.Operator):
     """Create bones pointing to random vertices of the selected mesh object"""
     bl_idname = "object.devtools_armature_create_bones_random_vertices"
@@ -31,14 +33,14 @@ class OBJECT_OT_ArmatureCreateBonesRandomVertices(bpy.types.Operator):
         mesh_object = context.object
 
         if not mesh_object or mesh_object.type != 'MESH':
-            self.report({'ERROR'}, "A valid mesh object must be selected.")
+            Utils.log_and_report("A valid mesh object must be selected.", self, 'ERROR')
             return {'CANCELLED'}
 
         mesh = mesh_object.data
         mesh_vertices = [v.co for v in mesh.vertices]
 
         if self.num_bones > len(mesh_vertices):
-            self.report({'WARNING'}, f"Number of bones exceeds the number of vertices. Reducing bone count to {len(mesh_vertices)}.")
+            Utils.log_and_report(f"Number of bones exceeds the number of vertices. Reducing bone count to {len(mesh_vertices)}.", self, 'WARNING')
             self.num_bones = len(mesh_vertices)
 
         random.seed(self.seed)
@@ -68,7 +70,7 @@ class OBJECT_OT_ArmatureCreateBonesRandomVertices(bpy.types.Operator):
         context.view_layer.objects.active = armature
         bpy.ops.object.parent_set(type='ARMATURE_NAME')
 
-        self.report({'INFO'}, f"Created armature '{self.armature_name}' with {self.num_bones} bones pointing to random vertices.")
+        Utils.log_and_report(f"Created armature '{self.armature_name}' with {self.num_bones} bones pointing to random vertices.", self, 'INFO')
         return {'FINISHED'}
 
     @classmethod

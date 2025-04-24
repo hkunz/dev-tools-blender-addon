@@ -4,6 +4,7 @@ import json
 from pprint import pprint
 from bpy.types import Operator
 
+from unofficial_jbeam_editor.utils.utils import Utils
 from unofficial_jbeam_editor.utils.jbeam.jbeam_utils import JbeamUtils as j
 from unofficial_jbeam_editor.utils.jbeam.jbeam_node_mesh_configurator import JbeamNodeMeshConfigurator
 from unofficial_jbeam_editor.utils.jbeam.jbeam_props_storage import JbeamPropsStorageManager
@@ -20,7 +21,7 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
         obj = context.object
 
         if not obj:
-            self.report({'WARNING'}, "No mesh object selected!")
+            Utils.log_and_report("No mesh object selected!", self, 'WARNING')
             return {'CANCELLED'}
 
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -28,17 +29,17 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
             bpy.ops.object.convert(target='MESH')
         elif j.is_node_mesh(obj):
             j.add_gn_jbeam_visualizer_modifier(obj)
-            self.report({'INFO'}, "Object is already a Node Mesh")
+            Utils.log_and_report("Object is already a Node Mesh", self, 'INFO')
             return {'CANCELLED'}
         elif obj.type != 'MESH':
-            self.report({'WARNING'}, f"{repr(obj)} is not a mesh or curve object!")
+            Utils.log_and_report(f"{repr(obj)} is not a mesh or curve object!", self, 'WARNING')
             return {'CANCELLED'}
 
         jbeam_path = obj.data.get('jbeam_file_path', None)
         is_jbeam_part = bool(jbeam_path)  # flag to check if the jbeam part object is an import from the original jbeam editor from BeamNG team
 
         if not jbeam_path:
-            self.report({'WARNING'}, "Object is not a JBeam part or missing JBeam file path! Proceeding with regular conversion..")
+            Utils.log_and_report("Object is not a JBeam part or missing JBeam file path! Proceeding with regular conversion..", self, 'WARNING')
 
         JbeamNodeMeshConfigurator.remove_custom_data_props(obj)
         JbeamNodeMeshConfigurator.remove_double_vertices(obj)
@@ -52,7 +53,7 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj
 
-        self.report({'INFO'}, f"Converted {obj.name} to Node Mesh!")
+        Utils.log_and_report(f"Converted {obj.name} to Node Mesh!", self, 'INFO')
         return {'FINISHED'}
 
     def setup_jbeam_blender_mesh(self, obj):
@@ -66,7 +67,7 @@ class OBJECT_OT_BeamngConvertJbeamToNodeMesh(Operator):
             self.parser.load_jbeam(jbeam_path)
             self.parser.parse_data_for_jbeam_object_conversion(obj)
         except Exception as e:
-            self.report({'ERROR'}, f"Failed to read file: {e}")
+            Utils.log_and_report(f"Failed to read file: {e}", self, 'ERROR')
             return {'CANCELLED'}
 
         JbeamNodeMeshConfigurator.process_node_mesh_props(obj, self.parser)

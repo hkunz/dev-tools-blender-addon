@@ -29,10 +29,10 @@ class DEVTOOLS_OT_logging_level(bpy.types.Operator):
         level_name = self.logging_level
         if level_name == 'OFF':
             logger.setLevel(logging.FATAL + 1)
-            self.report({'INFO'}, "Logging disabled")
+            Utils.log_and_report("Logging disabled", self, 'INFO')
         else:
             logger.setLevel(getattr(logging, level_name))
-            self.report({'INFO'}, f"Logging level set to {level_name}")
+            Utils.log_and_report(f"Logging level set to {level_name}", self, 'INFO')
         
         print(f"[Logger] Current level: {logging.getLevelName(logger.level)}")
         return {'FINISHED'}

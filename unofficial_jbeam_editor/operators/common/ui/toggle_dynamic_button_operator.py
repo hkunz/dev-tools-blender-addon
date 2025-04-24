@@ -1,5 +1,7 @@
 import bpy
 
+from unofficial_jbeam_editor.utils.utils import Utils
+
 class ButtonItem(bpy.types.PropertyGroup):
     BUTTON_NAME = "# Instance"
     name: bpy.props.StringProperty(name="Button Name", default="")  # type: ignore
@@ -97,7 +99,7 @@ class ManageDynamicButtonsOperator(bpy.types.Operator):
             # Get indices of highlighted buttons
             highlighted_indices = [i for i, item in enumerate(settings) if item.name]
             if len(highlighted_indices) >= len(settings):
-                self.report({'WARNING'}, "You cannot delete all, one has to remain!")
+                Utils.log_and_report("You cannot delete all, one has to remain!", self, 'WARNING')
                 return {'CANCELLED'}
 
             if highlighted_indices:
@@ -113,5 +115,5 @@ class ManageDynamicButtonsOperator(bpy.types.Operator):
                 instance_selection = [i + 1 for i in highlighted_indices]
                 self.handler.on_instance_button_change_remove(context.scene, instance_selection)
             else:
-                self.report({'WARNING'}, "No buttons are highlighted to remove!")
+                Utils.log_and_report("No buttons are highlighted to remove!", self, 'WARNING')
         return {'FINISHED'}

@@ -2,6 +2,7 @@ import bpy
 import bmesh
 from collections import defaultdict, deque
 
+from unofficial_jbeam_editor.utils.utils import Utils
 from unofficial_jbeam_editor.utils.object_utils import ObjectUtils
 
 # Make sure Mesh and Armature both have their Origins at World Origin
@@ -21,7 +22,7 @@ class OBJECT_OT_ArmatureCreateBonesFromEdgeSelection(bpy.types.Operator):
         obj = context.object
 
         if obj.mode != 'EDIT' or obj.type != 'MESH':
-            self.report({'ERROR'}, "Object must be a mesh in edit mode.")
+            Utils.log_and_report("Object must be a mesh in edit mode.", self, 'ERROR')
             return {'CANCELLED'}
 
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -52,7 +53,7 @@ class OBJECT_OT_ArmatureCreateBonesFromEdgeSelection(bpy.types.Operator):
         bm = bmesh.from_edit_mesh(obj.data)
         selected_verts = [v for v in bm.verts if v.select]
         if not ObjectUtils.get_selected_edges(obj):
-            self.report({'WARNING'}, "No selected edges detected")
+            Utils.log_and_report("No selected edges detected", self, 'WARNING')
             return []
 
         visited = set()

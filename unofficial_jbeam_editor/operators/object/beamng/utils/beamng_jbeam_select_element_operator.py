@@ -1,6 +1,8 @@
 import bpy
 import bmesh
 import re
+
+from unofficial_jbeam_editor.utils.utils import Utils
 from unofficial_jbeam_editor.utils.object_utils import ObjectUtils as o
 from unofficial_jbeam_editor.utils.jbeam.jbeam_utils import JbeamUtils as j
 
@@ -43,7 +45,7 @@ class OBJECT_OT_BeamngJbeamSelectSpecificElement(bpy.types.Operator):
                 return [self.element_index]
             indices = getter_func()
             if not indices:
-                self.report({'WARNING'}, f"{element_type} '{nodes_str}' not found")
+                Utils.log_and_report(f"{element_type} '{nodes_str}' not found", self, 'WARNING')
             return indices
 
         def parse_node_ids(node_string):
@@ -69,7 +71,7 @@ class OBJECT_OT_BeamngJbeamSelectSpecificElement(bpy.types.Operator):
             element_type = "Beam"
             node_ids = parse_node_ids(self.element_id)
             if len(node_ids) != 2:
-                self.report({'WARNING'}, f"{element_type} '{self.element_id}' not found")
+                Utils.log_and_report(f"{element_type} '{self.element_id}' not found", self, 'WARNING')
                 return {'CANCELLED'}
             nodes_str = j.get_beam_id(obj, self.element_index) if search_by_index and 0 <= self.element_index < len(bm.edges) else j.format_node_ids(*node_ids)
             indices = get_element_indices(lambda: j.get_beam_indices(obj, *node_ids, bm), element_type, nodes_str)
@@ -80,7 +82,7 @@ class OBJECT_OT_BeamngJbeamSelectSpecificElement(bpy.types.Operator):
             element_type = "Face"
             node_ids = parse_node_ids(self.element_id)
             if len(node_ids) < 3:
-                self.report({'WARNING'}, f"{element_type} '{self.element_id}' not found")
+                Utils.log_and_report(f"{element_type} '{self.element_id}' not found", self, 'WARNING')
                 return {'CANCELLED'}
             nodes_str = j.get_triangle_id(obj, self.element_index) if search_by_index and 0 <= self.element_index < len(bm.faces) else j.format_node_ids(*node_ids)
             indices = get_element_indices(lambda: j.get_face_indices(obj, *node_ids, bm=bm), element_type, nodes_str)
@@ -90,7 +92,7 @@ class OBJECT_OT_BeamngJbeamSelectSpecificElement(bpy.types.Operator):
             for element in elements:
                 element.select = True
                 bm.select_history.add(element)
-            self.report({'INFO'}, f"Selected {len(elements)} {element_type} elements")
+            Utils.log_and_report(f"Selected {len(elements)} {element_type} elements", self, 'INFO')
             bmesh.update_edit_mesh(obj.data)
 
         return {'FINISHED'}

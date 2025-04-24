@@ -33,7 +33,7 @@ class OperatorGenericPopup(bpy.types.Operator):
 
     def execute(self, _: bpy.types.Context) -> set[str]:
         if self.exec_message:
-            self.report({'INFO'}, self.exec_message)
+            Utils.log_and_report(self.exec_message, self, 'INFO')
         return {'FINISHED'}
 
 def register() -> None:
@@ -61,5 +61,5 @@ class WEB_OT_SampleExecuteOperator(OperatorGenericPopup):
     #    return self.execute(context)
 
     def execute(self, context):
-        self.report({'INFO'}, f"Execute some stuff once OK is pressed. Click away if you want to cancel")
+        Utils.log_and_report(f"Execute some stuff once OK is pressed. Click away if you want to cancel", self, 'INFO')
         return {'FINISHED'}

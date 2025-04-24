@@ -4,7 +4,7 @@ import json
 import logging
 
 from unofficial_jbeam_editor.utils.jbeam.jbeam_utils import JbeamUtils as j, JbeamRefnodeUtils as jr
-from unofficial_jbeam_editor.utils.ui_utils import UiUtils
+from unofficial_jbeam_editor.utils.utils import Utils
 
 def update_element_index(self, context):
     # FIXME this function gets called 3 times preventing IntProperty change, workaround delay also useless
@@ -132,7 +132,7 @@ class OBJECT_OT_BeamngLoadJbeamPropsBase(bpy.types.Operator):
     def execute(self, context):
         obj = context.object
         if not obj or obj.type != 'MESH':
-            self.report({'WARNING'}, "No valid mesh object selected")
+            Utils.log_and_report("No valid mesh object selected", self, 'WARNING')
             return {'CANCELLED'}
 
         try:
@@ -140,20 +140,20 @@ class OBJECT_OT_BeamngLoadJbeamPropsBase(bpy.types.Operator):
             if not instance_list:
                 instance_list = [1]
         except json.JSONDecodeError:
-            self.report({'ERROR'}, "Invalid format for instances")
+            Utils.log_and_report("Invalid format for instances", self, 'ERROR')
             return {'CANCELLED'}
 
         bm = bmesh.from_edit_mesh(obj.data)
         layers = getattr(bm, self.domain).layers.string
         if self.layer_name not in layers:
-            self.report({'WARNING'}, f"Layer '{self.layer_name}' not found in domain '{self.domain}'")
+            Utils.log_and_report(f"Layer '{self.layer_name}' not found in domain '{self.domain}'", self, 'WARNING')
             return {'CANCELLED'}
 
         layer = layers[self.layer_name]
         selected_elements = [e for e in getattr(bm, self.domain) if e.select]
 
         if not layer:
-            self.report({'WARNING'}, "No layer found")
+            Utils.log_and_report("No layer found", self, 'WARNING')
 
         if not selected_elements:
             return {'CANCELLED'}
@@ -212,13 +212,13 @@ class OBJECT_OT_BeamngSaveJbeamProp(bpy.types.Operator):
     def execute(self, context):
         obj = context.object
         if not obj or obj.type != 'MESH':
-            self.report({'WARNING'}, "No valid mesh object selected")
+            Utils.log_and_report("No valid mesh object selected", self, 'WARNING')
             return {'CANCELLED'}
 
         bm = bmesh.from_edit_mesh(obj.data)
         domain, attr_name, get_props, set_props = self.get_domain_data()
         if not domain:
-            self.report({'ERROR'}, f"Unknown property type: {self.prop_type}")
+            Utils.log_and_report(f"Unknown property type: {self.prop_type}", self, 'ERROR')
             return {'CANCELLED'}
 
         layers = getattr(bm, domain).layers
@@ -227,22 +227,22 @@ class OBJECT_OT_BeamngSaveJbeamProp(bpy.types.Operator):
         prop_collection = context.scene.beamng_jbeam_active_structure.prop_items
 
         if not elements:
-            self.report({'WARNING'}, "No selected elements")
+            Utils.log_and_report("No selected elements", self, 'WARNING')
             return {'CANCELLED'}
         if not layer:
-            self.report({'WARNING'}, "No property data found")
+            Utils.log_and_report("No property data found", self, 'WARNING')
             return {'CANCELLED'}
 
         # Reserved keyword check
         for reserved in j.RESERVED_KEYWORDS:
             if any(prop.name.lower() == reserved.lower() for prop in prop_collection):
-                self.report({'WARNING'}, f"Keyword '{reserved}' is reserved.")
+                Utils.log_and_report(f"Keyword '{reserved}' is reserved.", self, 'WARNING')
                 return {'CANCELLED'}
 
         # Find the property to apply
         prop_to_save = next((prop for prop in prop_collection if prop.name == self.prop_name), None)
         if not prop_to_save:
-            self.report({'WARNING'}, f"Property '{self.prop_name}' not found in scene properties")
+            Utils.log_and_report(f"Property '{self.prop_name}' not found in scene properties", self, 'WARNING')
             return {'CANCELLED'}
 
         # Apply property to selected elements
@@ -254,7 +254,7 @@ class OBJECT_OT_BeamngSaveJbeamProp(bpy.types.Operator):
                 set_props(obj, element.index, props, instance)
 
         bmesh.update_edit_mesh(obj.data)
-        self.report({'INFO'}, f"Saved property: {self.prop_name}")
+        Utils.log_and_report(f"Saved property: {self.prop_name}", self, 'INFO')
         return {'FINISHED'}
 
     @staticmethod
@@ -354,7 +354,7 @@ class OBJECT_OT_BeamngSaveAllJbeamProps(bpy.types.Operator):
 
     def execute(self, context):
         msg, status = self.save_jbeam_props(context)
-        self.report({'INFO' if status == 'FINISHED' else 'WARNING'}, msg)
+        Utils.log_and_report(msg, self, 'INFO' if status == 'FINISHED' else 'WARNING')
         return {status}
 
 class OBJECT_OT_BeamngSaveAllJbeamNodeProps(OBJECT_OT_BeamngSaveAllJbeamProps):
@@ -471,7 +471,7 @@ class OBJECT_OT_BeamngRemoveJbeamProp(bpy.types.Operator):
         obj = context.object
 
         if not obj or obj.type != 'MESH':
-            self.report({'WARNING'}, "No valid mesh object selected")
+            Utils.log_and_report("No valid mesh object selected", self, 'WARNING')
             return {'CANCELLED'}
 
         bm = bmesh.from_edit_mesh(obj.data)
@@ -482,11 +482,11 @@ class OBJECT_OT_BeamngRemoveJbeamProp(bpy.types.Operator):
         ui_list = scene.beamng_jbeam_active_structure.prop_items
 
         if layer is None:
-            self.report({'WARNING'}, "No property data found")
+            Utils.log_and_report("No property data found", self, 'WARNING')
             return {'CANCELLED'}
 
         if not selected_elements:
-            self.report({'WARNING'}, f"No selection on domain '{self.domain}' found")
+            Utils.log_and_report(f"No selection on domain '{self.domain}' found", self, 'WARNING')
             return {'CANCELLED'}
 
         removed_from_ui = False
@@ -515,11 +515,11 @@ class OBJECT_OT_BeamngRemoveJbeamProp(bpy.types.Operator):
             bmesh.update_edit_mesh(obj.data)  # Commit changes to mesh
 
         if removed_from_ui and removed_from_mesh:
-            self.report({'INFO'}, f"Removed property '{self.prop_name}' from UI and saved")
+            Utils.log_and_report(f"Removed property '{self.prop_name}' from UI and saved", self, 'INFO')
         elif removed_from_ui:
-            self.report({'INFO'}, f"Removed property '{self.prop_name}' from UI (unsaved)")
+            Utils.log_and_report(f"Removed property '{self.prop_name}' from UI (unsaved)", self, 'INFO')
         else:
-            self.report({'WARNING'}, f"Property '{self.prop_name}' not found")
+            Utils.log_and_report(f"Property '{self.prop_name}' not found", self, 'WARNING')
 
         return {'FINISHED' if removed_from_ui else 'CANCELLED'}
 
@@ -569,7 +569,7 @@ class OBJECT_OT_BeamngSelectByPropertyBase(bpy.types.Operator):
     def execute(self, context):
         obj = context.object
         if not obj or obj.type != 'MESH':
-            self.report({'WARNING'}, "No valid mesh object selected")
+            Utils.log_and_report("No valid mesh object selected", self, 'WARNING')
             return {'CANCELLED'}
 
         bm = bmesh.from_edit_mesh(obj.data)
@@ -585,7 +585,7 @@ class OBJECT_OT_BeamngSelectByPropertyBase(bpy.types.Operator):
                 break
 
         if selected_prop_value is None:
-            self.report({'WARNING'}, f"Property '{self.prop_name}' not found in UI")
+            Utils.log_and_report(f"Property '{self.prop_name}' not found in UI", self, 'WARNING')
             return {'CANCELLED'}
 
         logging.debug(f"\n[DEBUG] Searching for elements with {self.prop_name} = {selected_prop_value_orig}")
@@ -612,7 +612,7 @@ class OBJECT_OT_BeamngSelectByPropertyBase(bpy.types.Operator):
         bmesh.update_edit_mesh(obj.data)
 
         logging.debug(f"Total Matched Elements: {matched_count}")
-        self.report({'INFO'}, f"Selected {matched_count} elements with {self.prop_name} = {selected_prop_value_orig}")
+        Utils.log_and_report(f"Selected {matched_count} elements with {self.prop_name} = {selected_prop_value_orig}", self, 'INFO')
         return {'FINISHED'}
 
 class OBJECT_OT_BeamngSelectJbeamNodesByProperty(OBJECT_OT_BeamngSelectByPropertyBase):

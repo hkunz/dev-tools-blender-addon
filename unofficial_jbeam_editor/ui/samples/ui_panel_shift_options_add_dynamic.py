@@ -1,5 +1,7 @@
 import bpy
 
+from unofficial_jbeam_editor.utils.utils import Utils
+
 class ButtonItem(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Button Name", default="")  # type: ignore
 
@@ -67,7 +69,7 @@ class ManageDynamicButtonsOperator(bpy.types.Operator):
                     # Otherwise, highlight the previous button
                     settings[len(settings) - 1].name = f"Button {len(settings)}"
             else:
-                self.report({'WARNING'}, "No buttons are highlighted to remove!")
+                Utils.log_and_report("No buttons are highlighted to remove!", self, 'WARNING')
 
         return {'FINISHED'}
 

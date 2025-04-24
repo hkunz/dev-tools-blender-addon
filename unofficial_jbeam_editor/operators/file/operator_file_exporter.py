@@ -7,6 +7,7 @@ from mathutils import Vector
 from typing import List
 from abc import ABC, abstractmethod
 
+from unofficial_jbeam_editor.utils.utils import Utils
 from unofficial_jbeam_editor.translation.translations import get_translation
 from unofficial_jbeam_editor.operators.common.operator_generic_popup import create_generic_popup
 from unofficial_jbeam_editor.utils.file_utils import FileUtils
@@ -58,7 +59,7 @@ class OperatorFileExporter(bpy.types.Operator, ExportHelper):
     def create_popup(self, header, duration):
         size = FileUtils.get_file_size(self.filepath)
         sduration = TimeUtils.format_duration(duration)
-        self.report({'INFO'}, f"{get_translation('addon_name')} {self.filepath} ({size}) in {sduration}")
+        Utils.log_and_report(f"{get_translation('addon_name')} {self.filepath} ({size}) in {sduration}", self, 'INFO')
         create_generic_popup(message=f"{header}|Directory: {os.path.dirname(self.filepath)}|Size: {size}|Duration: {sduration}|Check the Info Editor for more information.")
 
     @classmethod

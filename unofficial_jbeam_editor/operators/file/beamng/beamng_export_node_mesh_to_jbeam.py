@@ -53,17 +53,17 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
 
         obj = context.object
         if not context.active_object or not context.selected_objects:
-            self.report({'WARNING'}, "No objects selected!")
+            Utils.log_and_report("No objects selected!", self, 'WARNING')
             restore_mode()
             return {'CANCELLED'}
 
         if not j.is_node_mesh(obj):
-            self.report({'WARNING'}, f"{repr(obj)} is not a Node Mesh")
+            Utils.log_and_report(f"{repr(obj)} is not a Node Mesh", self, 'WARNING')
             restore_mode()
             return {'CANCELLED'}
 
         if o.has_ngons(obj):
-            self.report({'ERROR'}, "Jbeam does not support quads and N-gons. Triangulate these faces with Ctrl+T")
+            Utils.log_and_report("Jbeam does not support quads and N-gons. Triangulate these faces with Ctrl+T", self, 'ERROR')
             restore_mode()
             return {'CANCELLED'}
 
@@ -71,7 +71,7 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
         '''
         is_valid, message = j.check_vertex_groups(obj)
         if not is_valid:
-            self.report({'WARNING'}, message)
+            Utils.log_and_report(message, self, 'WARNING')
             restore_mode()
             return {'CANCELLED'}
         '''
@@ -81,17 +81,17 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
             items = jr.find_nodes_with_refnode_id(obj, refnode)
             if len(items) > 1:
                 enum = jr.get_refnode_name(refnode)
-                self.report({'WARNING'}, f"Multiple nodes assigned with {enum}. Only 1 Node can be labeled as {enum}")
+                Utils.log_and_report(f"Multiple nodes assigned with {enum}. Only 1 Node can be labeled as {enum}", self, 'WARNING')
                 return {'CANCELLED'}
 
         # Check unique node names
         is_valid, message = self.check_unique_node_names(obj)
         if not is_valid:
-            self.report({'WARNING'}, message)
+            Utils.log_and_report(message, self, 'WARNING')
             restore_mode()
             return {'CANCELLED'}
 
-        self.report({'INFO'}, message)
+        Utils.log_and_report(message, self, 'INFO')
         context.window_manager.fileselect_add(self)
         #context.window_manager.operators[-1].bl_label = "Save JBeam File"
         restore_mode()
@@ -137,7 +137,7 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
     def export_jbeam_format(self, filepath):
         obj = bpy.context.active_object
         if obj is None or obj.type != "MESH":
-            self.report({'ERROR'}, "No valid mesh object selected!")
+            Utils.log_and_report("No valid mesh object selected!", self, 'ERROR')
             return False
 
         mesh = obj.data
@@ -181,7 +181,7 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
                     f.seek(0)
                     existing_data_str = f.read()
                 except json.JSONDecodeError:
-                    self.report({'ERROR'}, f"Error parsing {filepath}")
+                    Utils.log_and_report(f"Error parsing {filepath}", self, 'ERROR')
                     logging.debug(f"Error parsing {filepath}:, maybe check for missing commas or other json-type formatting in jbeam")
                     return False
 
@@ -221,7 +221,7 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(existing_data_str)
 
-        self.report({'INFO'}, f"{obj.name}: JBeam exported to {filepath}")
+        Utils.log_and_report(f"{obj.name}: JBeam exported to {filepath}", self, 'INFO')
 
         return True
 

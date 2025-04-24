@@ -1,6 +1,8 @@
 import bpy
 import logging
 
+from unofficial_jbeam_editor.utils.utils import Utils
+
 logger = logging.getLogger()
 
 LOG_LEVELS = [

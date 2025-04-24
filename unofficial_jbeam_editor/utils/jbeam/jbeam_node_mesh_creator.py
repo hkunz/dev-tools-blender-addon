@@ -49,6 +49,7 @@ class JbeamNodeMeshCreator:
     def _process_elements(self, element_list: list[JBeamElement], node_count: int, get_node_ids: callable, assign_index: callable) -> list[tuple[int, ...]]:
         result: list[tuple[int, ...]] = []
         unique_map: dict[tuple[int, ...], int] = {}
+        base_index = len(self._edges if node_count == 2 else self._faces)
 
         for element in element_list:
             node_ids = get_node_ids(element)
@@ -63,7 +64,7 @@ class JbeamNodeMeshCreator:
                 key = tuple(sorted(vert_indices)) if node_count == 2 else vert_indices
 
                 if key not in unique_map:
-                    unique_map[key] = len(self._edges if node_count == 2 else self._faces)
+                    unique_map[key] = base_index + len(result)
                     result.append(vert_indices)
 
                 assign_index(element, unique_map[key])

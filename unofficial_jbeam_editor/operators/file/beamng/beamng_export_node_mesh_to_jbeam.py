@@ -6,6 +6,7 @@ import logging
 
 from pprint import pprint
 
+from unofficial_jbeam_editor.utils.utils import Utils
 from unofficial_jbeam_editor.utils.object_utils import ObjectUtils as o
 from unofficial_jbeam_editor.utils.json_cleanup import json_cleanup
 from unofficial_jbeam_editor.utils.jbeam.jbeam_helper import PreJbeamStructureHelper, RedundancyReducerJbeamGenerator

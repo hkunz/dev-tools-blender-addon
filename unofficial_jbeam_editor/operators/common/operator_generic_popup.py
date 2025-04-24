@@ -1,6 +1,7 @@
 import bpy
 
 from typing import List
+from unofficial_jbeam_editor.utils.utils import Utils
 
 class OperatorGenericPopup(bpy.types.Operator):
     bl_idname = "wm.dev_tools_generic_popup"

@@ -8,8 +8,9 @@ class AnsiFilter(logging.Filter):
         record.msg = self.ansi_escape.sub('', str(record.msg))
         return True
 
-def configure_logging():
+def configure_logging(enable=True):
     logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG if enable else logging.CRITICAL)
     
     if logger.hasHandlers():
         return

@@ -51,6 +51,7 @@ from unofficial_jbeam_editor.utils.jbeam.jbeam_props_storage import JbeamPropsSt
 from unofficial_jbeam_editor.utils.jbeam.jbeam_selection_tracker import JbeamSelectionTracker
 from unofficial_jbeam_editor.translation.translations import register as register_translations, unregister as unregister_translations
 from unofficial_jbeam_editor.ui.sidebar_menu import register as register_devtools_panel, unregister as unregister_devtools_panel
+from unofficial_jbeam_editor.operators.debug.operator_set_log_level import DEVTOOLS_OT_logging_level
 from unofficial_jbeam_editor.operators.common.operator_generic_popup import register as register_generic_popup, unregister as unregister_generic_popup
 from unofficial_jbeam_editor.operators.file.beamng.beamng_export_node_mesh_to_jbeam import DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam
 from unofficial_jbeam_editor.operators.file.beamng.beamng_import_jbeam_as_node_mesh import DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh
@@ -74,6 +75,7 @@ from unofficial_jbeam_editor.operators.object.beamng.utils.beamng_jbeam_select_e
 from unofficial_jbeam_editor.operators.object.beamng.utils.beamng_jbeam_select_ref_element_operator import OBJECT_OT_BeamngJbeamSelectRefNode
 
 DEVTOOLS_CLASSES = [
+    DEVTOOLS_OT_logging_level,
     OBJECT_OT_ArmatureCreateBonesRandomVertices,
     OBJECT_OT_ArmatureAssignClosestVertexToBoneTails,
     OBJECT_OT_ArmatureCreateBonesFromEdgeSelection,

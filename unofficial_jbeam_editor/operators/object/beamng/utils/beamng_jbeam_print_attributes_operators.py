@@ -41,7 +41,7 @@ class OBJECT_OT_PrintJBeamPropsBase(bpy.types.Operator):
                 continue
 
             info = f"ℹ️  Object '{obj.name}' ({self.attr_name})"
-            logging.debug(f"{info}:")
+            logging.info(f"{info}:")
 
             for i, element in enumerate(selected_elements):
                 index = element.index
@@ -54,15 +54,15 @@ class OBJECT_OT_PrintJBeamPropsBase(bpy.types.Operator):
                         for instance_key, instance_props in props.items():
                             # Convert properties to a single-line JSON string
                             props_str = json.dumps(instance_props, separators=(",", ":"))
-                            logging.debug(f"{self.emoji}{id_str}({index}): {key} [{instance_key}] => {props_str}")
+                            logging.info(f"{self.emoji}{id_str}({index}): {key} [{instance_key}] => {props_str}")
                     else:
-                        logging.debug(f"{self.emoji}{id_str}({index}): {key} => No properties found")
+                        logging.info(f"{self.emoji}{id_str}({index}): {key} => No properties found")
                 else:
-                    logging.debug(f"{self.emoji}{id_str}({index}): No key, no attribute value (no scope modifiers assigned)")
+                    logging.info(f"{self.emoji}{id_str}({index}): No key, no attribute value (no scope modifiers assigned)")
 
         if len(context.selected_objects) > 0:
             self.report({'INFO'}, "Node Mesh Attributes have been printed. Check the console for detailed output.")
-        logging.debug("==============================================\n")
+        logging.info("==============================================\n")
         restore_mode()
         return {'FINISHED'}
 

@@ -32,10 +32,17 @@ class Utils:
     @staticmethod
     def log_and_report(msg: str, operator=None, level='INFO'):
         level = level.upper()
-        logging.debug("%s:%s", level, msg)
-        if operator:
-            if level not in {'INFO', 'WARNING', 'ERROR'}:
-                level = 'INFO'
+        log_func = {
+            'DEBUG': logging.debug,
+            'INFO': logging.info,
+            'WARNING': logging.warning,
+            'ERROR': logging.error,
+            'CRITICAL': logging.critical
+        }.get(level, logging.info)  # fallback to logging.info
+
+        log_func(msg)  # logs to console or file
+
+        if operator and level in {'INFO', 'WARNING', 'ERROR'}:
             operator.report({level}, msg)
 
     @staticmethod

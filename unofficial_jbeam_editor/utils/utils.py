@@ -22,8 +22,11 @@ class Utils:
         return ('v' if prependv else '') + separator.join(map(str, bl_info['version']))
 
     @staticmethod
-    def log_and_raise(msg: str, exc_type=Exception, cause: Exception = None):
-        logging.debug(msg)
+    def log_and_raise(msg: str, exc_type=Exception, cause: Exception = None, level: str = 'ERROR'):
+        level = level.upper()
+        log_func = getattr(logging, level.lower(), logging.error)
+        log_func(msg)
+        
         if cause:
             raise exc_type(msg) from cause
         else:

@@ -37,6 +37,8 @@ class JbeamPartsLoader:
         self._create_node_meshes(parsers)
 
     def _load_and_parse_files(self, load_items):
+        if not load_items:
+            return
         logging.debug(f"\n⏳🔄 Preparing to load Jbeam Load Items:\n    - " + "\n    - ".join(str(item) for item in load_items))
         parsers = []
         for load_item in load_items:

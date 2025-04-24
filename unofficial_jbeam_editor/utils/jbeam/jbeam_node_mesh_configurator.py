@@ -17,14 +17,14 @@ class JbeamNodeMeshConfigurator:
 
     @staticmethod
     def process_node_mesh_props(obj, parser=None, part_id="", init=True):
-        if init:
-            j.set_jbeam_visuals(obj)
-            j.add_gn_jbeam_visualizer_modifier(obj)
         JbeamNodeMeshConfigurator.process_node_mesh_props_for_nodes(obj, parser, part_id, init)
         JbeamNodeMeshConfigurator.process_node_mesh_props_for_beams_and_tris(obj, parser, part_id)
 
     @staticmethod
     def process_node_mesh_props_for_nodes(obj, parser, part_id, init):
+        if init:
+            j.set_jbeam_visuals(obj)
+            j.add_gn_jbeam_visualizer_modifier(obj)
         if not parser:
             return
         nodes = parser.get_nodes(part_id)

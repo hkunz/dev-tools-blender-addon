@@ -20,18 +20,20 @@ class JbeamParser:
         for part_name, part_data in jbeam_json.items():
             p = JbeamPart()
             p.part_name = part_name
+
             if "slotType" in part_data:
                 p.slot_type = part_data.get("slotType")
                 if p.slot_type == "main":
                     self.jbeam_main_part = p
 
+            if "refNodes" in part_data:
+                headers, values = part_data["refNodes"]
+                p.refnodes = {h[:-1]: v for h, v in zip(headers[:], values[:])}  # Trim last char from keys
+
             if load_item.is_part_set and load_item.part_id != p.id:
                 # logging.debug(f" - Ignore irrelevant part {p.part_name} with slot type {p.slot_type}")
                 continue
 
-            if "refNodes" in part_data:
-                headers, values = part_data["refNodes"]
-                p.refnodes = {h[:-1]: v for h, v in zip(headers[:], values[:])}  # Trim last char from keys
             if "slots" in part_data:
                 slot_rows = part_data["slots"]
                 if isinstance(slot_rows, list) and len(slot_rows) > 1:
@@ -254,7 +256,9 @@ class JbeamParser:
         for part in self.jbeam_parts.values():
             if part.slot_type == slot_type:
                 return part
-        logging.debug(f"Parser: No part with slot_type '{slot_type}' found")
+        if self.jbeam_main_part:
+            return self.jbeam_main_part
+        # logging.debug(f"Parser: No part with slot_type '{slot_type}' found")
         return None
 
     def find_part_with_slottable_slot_type(self, slot_type: JbeamSlotType) -> JbeamPart:
@@ -287,7 +291,7 @@ class JbeamParser:
         part = self._get_jbeam_part_main()
         if part and part.refnodes:
             return part.refnodes
-        logging.debug(f"[JBeam Parser] No refnodes found for part `{part_id}` or main part: '{part.part_name if part else 'None'}'")
+        # logging.debug(f"[JBeam Parser] No refnodes found for part `{part_id}` or main part: '{part.part_name if part else 'None'}'")
         return {}
 
     @property

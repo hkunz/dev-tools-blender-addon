@@ -19,6 +19,8 @@ class JbeamNodeMeshConfigurator:
     def process_node_mesh_props(obj, parser=None, part_id="", init=True):
         JbeamNodeMeshConfigurator.process_node_mesh_props_for_nodes(obj, parser, part_id, init)
         JbeamNodeMeshConfigurator.process_node_mesh_props_for_beams_and_tris(obj, parser, part_id)
+        if parser:
+            JbeamNodeMeshConfigurator.assign_ref_nodes(obj, parser.get_ref_nodes(part_id), parser.get_nodes(part_id))
 
     @staticmethod
     def process_node_mesh_props_for_nodes(obj, parser, part_id, init):
@@ -27,17 +29,15 @@ class JbeamNodeMeshConfigurator:
             j.add_gn_jbeam_visualizer_modifier(obj)
         if not parser:
             return
-        nodes = parser.get_nodes(part_id)
         nodes_list = parser.get_nodes_list(part_id)
         if not nodes_list:
             return
         if init:
             JbeamPropsStorageManager.get_instance().register_object(obj)
             JbeamNodeMeshConfigurator.create_node_mesh_attributes(obj)
-        ref_nodes = parser.get_ref_nodes(part_id)
-        JbeamNodeMeshConfigurator.assign_ref_nodes(obj, ref_nodes, nodes)
         JbeamNodeMeshConfigurator.store_node_props_in_vertex_attributes(obj, nodes_list)
 
+    @staticmethod
     def process_node_mesh_props_for_beams_and_tris(obj, parser=None, part_id=""):
         if not parser:
             return

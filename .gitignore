@@ -1,6 +1,7 @@
 *.blend[0-9]*
 *.zip
 *.rar
+vehicles
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

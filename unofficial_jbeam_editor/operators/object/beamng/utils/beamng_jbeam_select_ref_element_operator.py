@@ -21,19 +21,20 @@ class OBJECT_OT_BeamngJbeamSelectRefNode(bpy.types.Operator):
         return f"Select the Nodes assigned with ref node '{properties.refnode_enum}' (ID: {jr.RefNode[properties.refnode_enum].value})"
 
     def execute(self, context):
-
         obj = context.object
         bpy.ops.object.mode_set(mode='OBJECT')
-        bpy.ops.object.mode_set(mode='EDIT')
-        bm = bmesh.from_edit_mesh(obj.data)
 
         # Deselect all elements
-        for v in bm.verts:
+        mesh = obj.data
+        for v in mesh.vertices:
             v.select = False
-        for e in bm.edges:
+        for e in mesh.edges:
             e.select = False
-        for f in bm.faces:
+        for f in mesh.polygons:
             f.select = False
+
+        bpy.ops.object.mode_set(mode='EDIT')
+        bm = bmesh.from_edit_mesh(obj.data)
 
         if not o.is_vertex_selection_mode():
             return {'CANCELLED'}

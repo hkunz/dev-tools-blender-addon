@@ -4,7 +4,7 @@ import logging
 from collections import defaultdict
 from unofficial_jbeam_editor.utils.jbeam.jbeam_parser import JbeamParser
 from unofficial_jbeam_editor.utils.jbeam.jbeam_loader import JbeamFileLoader
-from unofficial_jbeam_editor.utils.jbeam.jbeam_models import JbeamLoadItem, JbeamJson, JbeamPart, JbeamPartID
+from unofficial_jbeam_editor.utils.jbeam.jbeam_models import NodeID, Node, JbeamLoadItem, JbeamJson, JbeamPart, JbeamPartID
 from unofficial_jbeam_editor.utils.jbeam.jbeam_node_mesh_creator import JbeamNodeMeshCreator
 from unofficial_jbeam_editor.utils.jbeam.jbeam_node_mesh_configurator import JbeamNodeMeshConfigurator
 from unofficial_jbeam_editor.utils.utils import Utils
@@ -128,14 +128,20 @@ class JbeamPartsLoader:
                 # logging.debug(f"Part ID: {part.id}, Group ID: {part.group_id}, Level: {part.level}, Parser: {part.parser.parse_source}")
                 self._assemble_node_mesh_nodes(part.parser, part.group_id)
         
+        nodes: dict[NodeID, Node] = {}
+        refnodes: dict[str, str] = {}
         for group_id, parts in grouped_by_id.items():
             for part in parts:
+                nodes.update(part.parser.get_nodes(part.id))
+                refnodes.update(part.parser.get_ref_nodes(part.id))
                 self._assemble_node_mesh_beams_and_tris(part.parser, part.group_id)
             jmc, init = self._get_jbeam_mesh_creator(group_id)
             if jmc:
                 Utils.log_and_report(f"✅ Created jbeam node mesh '{jmc.obj.name}'", self.operator, "INFO")
             else:
                 Utils.log_and_report(f"❌ Failed to create jbeam node mesh", self.operator, "ERROR")
+
+        JbeamNodeMeshConfigurator.assign_ref_nodes(jmc.obj, refnodes, nodes)
 
     def _get_jbeam_mesh_creator(self, group:PartGroupID) -> tuple[JbeamNodeMeshCreator, bool]:
         jmc:JbeamNodeMeshCreator | None = self.mesh_creators.get(group)

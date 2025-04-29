@@ -77,7 +77,7 @@ class JbeamPcParser:
             if not file_path.endswith('.jbeam'):
                 continue
 
-            logging.debug(f"🔎 Opening and reading file 📄 {file_path} ...")
+            # logging.debug(f"🔎 Opening and reading file 📄 {file_path} ...")
 
             with open(file_path, 'r', encoding='utf-8') as f:
                 depth = 0
@@ -100,7 +100,7 @@ class JbeamPcParser:
 
                     found_slot_type = slot_match.group(1)
                     if (curr_part_name, found_slot_type) in target_parts:
-                        logging.debug(f"===> Part Match 🎯 on line {i+1}: '{curr_part_name}' matches slotType '{found_slot_type}'")
+                        logging.info(f"===> Part Match 🎯 on line {i+1}: '{curr_part_name}' matches slotType '{found_slot_type}' in 📄 {file_path}")
                         load_items.append(JbeamLoadItem(file_path, curr_part_name, found_slot_type))
                         curr_part_name = None  # Reset after match
 

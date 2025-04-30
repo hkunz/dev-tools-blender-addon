@@ -18,6 +18,34 @@
             ["oval_led_glass_aux1", ["cargotrailer_backwall"],[],{"pos":{"x": 0.0, "y":2.285, "z":2.3}, "rot":{"x":0, "y":0, "z":180}, "scale":{"x":1, "y":1, "z":1}}],,
             ["oval_led_glass_aux1", ["cargotrailer_backwall"],[],{"pos":{"x": -0.45, "y":2.285, "z":2.3}, "rot":{"x":0, "y":0, "z":180}, "scale":{"x":1, "y":1, "z":1}}],
         ]
+        "analogOdometer": {
+            "configuration": {
+                "materialName": "@covet_gauges_odo",
+                "htmlPath": "local://local/vehicles/common/analogOdo.html",
+                "displayWidth":512,
+                "displayHeight":32,
+                "odometerDigits":7,
+                "odometerHasDecimalSeparator":true,
+                "tripHasDecimalSeparator":true,
+                "unit":"imperial",
+                "floatStyle":{"color":"black"},
+                "bodyStyle":{
+                    "background": "url('/vehicles/common/odometer_analog_b.cef_color.png')",
+                    "font-family": "OpenSans",
+                    "font-size": "28px",
+                    "color": "white",
+                    "letter-spacing": "15.5px",
+                    "margin": "-4.5px 10.5px",
+                    "transform": "scaleX(1.26)",
+                    "transform-origin": "left",
+                },
+                "tripDivStyle":{
+                    "margin-left": "-3px",
+                    "position": "fixed",
+                    "letter-spacing": "32px"
+                }
+            },
+        },
         "retractPinRR":{
             "couplerNodes":[
               //["cid1"    "cid2" "CouplingStrength" "CouplingRadius"    "CouplingLockRadius","CouplingSpeed","couplingStartRadius","breakGroup"], // stuff like missing comma between strings ["cid2" "CouplingStrength", cannot be fixed with regex, coz it will cause other stuff like "testprop": "" to insert commas "testprop": ","
@@ -28,9 +56,11 @@
             "attachSoundVolume":1,
             "detachSoundVolume":1,
             "soundNode:":["cpr6r"],
+            //**confusing block comment or line comment**
             "attachSoundEvent": "event:>Vehicle>Latches>Mechanics>containertrailer_pin_close",
             "detachSoundEvent": "event:>Vehicle>Latches>Mechanics>containertrailer_pin_open",
             "breakSoundEvent":"",
+            //**confusing block comment or line comment**
             "openForceMagnitude": 0,
             "openForceDuration": 0.2,
             "closeForceMagnitude": 1300,

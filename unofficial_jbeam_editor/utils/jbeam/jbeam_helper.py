@@ -319,6 +319,8 @@ class JbeamFileHelper:
         in_block_comment = False
 
         for line in lines:
+            line, _ = JbeamFileHelper.RE_LINE_COMMENT.subn('', line)  # Remove inline line comments first
+
             if not in_block_comment:
                 if '/*' in line:
                     before_comment = line.split('/*', 1)[0].rstrip()
@@ -326,8 +328,7 @@ class JbeamFileHelper:
                         cleaned_lines.append(before_comment)
                     in_block_comment = True
                     continue
-                stripped = line.strip()
-                if not stripped or stripped.startswith('//'):
+                if not line.strip():
                     continue
                 cleaned_lines.append(line)
             else:
@@ -338,3 +339,4 @@ class JbeamFileHelper:
                         cleaned_lines.append(after_comment)
                 # else: still inside a block comment, skip
         return cleaned_lines
+

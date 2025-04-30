@@ -211,6 +211,8 @@ class RedundancyReducerJbeamGenerator:
 
 class JbeamFileHelper:
 
+    # NOTE: Changes to this helper should be tested with test_data/test.jbeam
+
     # 🔧 Precompiled regex patterns (your patterns, unchanged)
     RE_LINE_COMMENT = re.compile(r'(?<!:)\s*//.*$')
     RE_DOUBLE_COMMAS = re.compile(r'(,\s*){2,}')

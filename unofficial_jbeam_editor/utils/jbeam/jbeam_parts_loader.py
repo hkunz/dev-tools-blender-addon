@@ -135,7 +135,10 @@ class JbeamPartsLoader:
                 nodes.update(part.parser.get_nodes(part.id))
                 refnodes.update(part.parser.get_ref_nodes(part.id))
                 self._assemble_node_mesh_beams_and_tris(part.parser, part.group_id)
+            root_part = max(parts, key=lambda p: -p.level)  # lowest level = root
+            mesh_name = root_part.id
             jmc, init = self._get_jbeam_mesh_creator(group_id)
+            jmc.obj.name = jmc.obj.data.name = mesh_name
             if jmc:
                 Utils.log_and_report(f"✅ Created jbeam node mesh '{jmc.obj.name}'", self.operator, "INFO")
             else:
@@ -148,9 +151,8 @@ class JbeamPartsLoader:
         init: bool = jmc is None
         if not init:
             return jmc, init
-
-        jmc = JbeamNodeMeshCreator()
         mesh_name = str(group)
+        jmc = JbeamNodeMeshCreator()
         obj = jmc.create_object(mesh_name)
         self.mesh_creators[group] = jmc
         return jmc, init

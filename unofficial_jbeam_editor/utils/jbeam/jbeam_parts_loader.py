@@ -39,7 +39,7 @@ class JbeamPartsLoader:
     def _load_and_parse_files(self, load_items):
         if not load_items:
             return
-        logging.debug(f"\n⏳🔄 Preparing to load Jbeam Load Items:\n    - " + "\n    - ".join(str(item) for item in load_items))
+        logging.debug(f"⏳🔄 Preparing to load Jbeam Load Items:\n    - " + "\n    - ".join(str(item) for item in load_items))
         parsers = []
         for load_item in load_items:
             loader = JbeamFileLoader(load_item, operator=self.operator)
@@ -52,12 +52,12 @@ class JbeamPartsLoader:
         return parsers
 
     def _create_node_meshes(self, parsers):
-        logging.debug(f"\n⏳🧩 Prepare parsing Beams and Triangles from loaded JBeam files to generate Node Meshes.")
+        logging.debug(f"⏳🧩 Prepare parsing Beams and Triangles from loaded JBeam files to generate Node Meshes.")
         grouped_parts = self._group_parts(parsers)
         self._process_grouped_parts(grouped_parts)
 
     def _group_parts(self, parsers):
-        # logging.debug(f"\n🧊 Grouping Parts from selected Jbeam files")
+        # logging.debug(f"🧊 Grouping Parts from selected Jbeam files")
         visited_parts: set[JbeamPartID] = set()
         grouped_parts: list[GroupedPart] = []
         group_counter: PartGroupID = 0
@@ -81,7 +81,7 @@ class JbeamPartsLoader:
             if jbeam_part.id in visited_parts:
                 continue
 
-            # logging.debug(f"\n🔹 Starting new group {group_counter} from root part: {jbeam_part.slot_type}:{jbeam_part.id}")
+            # logging.debug(f"🔹 Starting new group {group_counter} from root part: {jbeam_part.slot_type}:{jbeam_part.id}")
             group = self._explore_and_group_parts(parsers_by_id, jbeam_part, visited_parts, group_counter, can_be_grouped_with)
             grouped_parts.extend(group)
             # logging.debug(f"Finalized group {group_counter} with {len(group)} part(s): {[p.id for p in group]}")

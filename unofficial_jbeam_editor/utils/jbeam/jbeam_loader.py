@@ -24,7 +24,7 @@ class JbeamLoaderBase(ABC):
         self.json_str = ""
 
     def load(self, force_reload=False):
-        logging.debug(f"\n🔄 Loading 📄 {self.filepath}")
+        logging.info(f"🔄 Loading 📄 {self.filepath}")
         cls = type(self)
 
         if self.filepath in cls._cache and not force_reload:

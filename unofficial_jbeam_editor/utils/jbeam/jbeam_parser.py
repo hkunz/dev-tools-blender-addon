@@ -16,7 +16,7 @@ class JbeamParser:
 
     def parse(self, jbeam_json: JbeamJson):
         load_item = self.source
-        #logging.debug(f"\n🧩 Prepare parsing Nodes from: 📄 {load_item.file_path}")
+        #logging.debug(f"🧩 Prepare parsing Nodes from: 📄 {load_item.file_path}")
         for part_name, part_data in jbeam_json.items():
             p = JbeamPart()
             p.part_name = part_name

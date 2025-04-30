@@ -20,8 +20,9 @@ def configure_logging(enable=True):
     file_handler = logging.FileHandler('app.log', mode='w')  # overwrite instead of append
     file_handler.addFilter(AnsiFilter())
 
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter('%(levelname)s: %(message)s')
     stream_handler.setFormatter(formatter)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(formatter)
 
     logger.setLevel(logging.DEBUG)

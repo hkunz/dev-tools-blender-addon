@@ -588,7 +588,7 @@ class OBJECT_OT_BeamngSelectByPropertyBase(bpy.types.Operator):
             Utils.log_and_report(f"Property '{self.prop_name}' not found in UI", self, 'WARNING')
             return {'CANCELLED'}
 
-        logging.debug(f"\n[DEBUG] Searching for elements with {self.prop_name} = {selected_prop_value_orig}")
+        logging.debug(f"Searching for elements with {self.prop_name} = {selected_prop_value_orig}")
 
         # Deselect all elements first
         for elem in self.get_elements(bm):

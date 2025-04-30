@@ -221,6 +221,7 @@ class JbeamFileHelper:
     RE_CURLY_DICT = re.compile(r'\}\s*\{')
     RE_MISSING_COMMA_BEFORE_KEY = re.compile(r'(?<=[}\]0-9"e])\s*(?="[^"]+"\s*:)')
     RE_QUOTED_STRING_NUMBER = re.compile(r'(\[\s*"[^"]*")(?=\s*-?\d)')  # FIXME: still a bug with lines like ["name","[group]:", which incorrectly transform into ["name","[, group]:"
+    RE_REMOVE_BAD_COMMA_BEFORE_BRACKET = re.compile(r',\s*(?=\[\w)') # NOTE: This is a crappy workaround for the defective RE_QUOTED_STRING_NUMBER
     RE_SPACE_SEPARATED_NUMBERS_1 = re.compile(r'(-?\d+(?:\.\d+)?)(\s+)(?=-?\d)')
     RE_SPACE_SEPARATED_NUMBERS_2 = re.compile(r'(-?\d+(?:\.\d+)?)(?=\s+-?\d)')
     RE_FLOAT_DICT = re.compile(r'(\d+\.\d+)\s*(\{)')
@@ -286,6 +287,8 @@ class JbeamFileHelper:
                 ]:
                     s, fixes = regex.subn(replacement, s)
                     total_fixes += fixes
+
+            s, fixes = JbeamFileHelper.RE_REMOVE_BAD_COMMA_BEFORE_BRACKET.subn('', s)  # NOTE: remove this line when above FIXME is fixed as it's just a workaround revert fix for defective RE_QUOTED_STRING_NUMBER
 
             fixed_lines.append(s)
 

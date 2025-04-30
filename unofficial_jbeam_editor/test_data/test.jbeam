@@ -66,8 +66,7 @@
             "closeForceMagnitude": 1300,
             "closeForceDuration": 3.0
         },
-        "rotators":
-        [
+        "rotators":[
             ["name","[group]:","node1:","node2:","nodeArm:","wheelDir"],
             {"radius":0.3},
             {"rotatorType":"rotator"},

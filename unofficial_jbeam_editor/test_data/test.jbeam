@@ -66,6 +66,12 @@
             "closeForceMagnitude": 1300,
             "closeForceDuration": 3.0
         },
+        "rotators":
+        [
+            ["name","[group]:","node1:","node2:","nodeArm:","wheelDir"],
+            {"radius":0.3},
+            {"rotatorType":"rotator"},
+        ]
         "nodes": [
             ["id", "posX", "posY", "posZ"],
             {"selfCollision": false, "cool":"jo"},
@@ -118,8 +124,9 @@
             ["he1rr","he2rr","he2r"],
             */,
             {"selfCollision": false}
-        ],
-        "beams": [
+        ]
+        "beams":
+[
             ["id1:","id2:"],
             {"testprop": "test"},
             ["n1", "n3"],

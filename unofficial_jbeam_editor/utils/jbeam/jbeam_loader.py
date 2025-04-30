@@ -100,9 +100,10 @@ class JbeamLoaderBase(ABC):
             os.makedirs(tmp_dir, exist_ok=True)
             with open(fix_path, 'w', encoding='utf-8') as f:
                 f.write(fixed_str)
+                Utils.log_and_report(f"Attempted fix written to: 📄 {fix_path}", self.operator, "INFO")
             with open(os.path.join(tmp_dir, f"{self.filename}.json"), 'w', encoding='utf-8') as f:
                 f.write(self.json_str)
-            Utils.log_and_report(f"Attempted fix written to: 📄 {fix_path}", self.operator, "INFO")
+                Utils.log_and_report(f"Attempted fix written to: 📄 {fix_path}.json", self.operator, "INFO")
         except Exception as write_error:
             Utils.log_and_report(f"❌ Failed to write debug files: {write_error}", self.operator, "ERROR")
 

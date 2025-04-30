@@ -218,7 +218,7 @@ class JbeamFileHelper:
     RE_ARRAY_DICT = re.compile(r'\]\s*\{')
     RE_CURLY_DICT = re.compile(r'\}\s*\{')
     RE_MISSING_COMMA_BEFORE_KEY = re.compile(r'(?<=[}\]0-9"e])\s*(?="[^"]+"\s*:)')
-    RE_QUOTED_STRING_NUMBER = re.compile(r'(\[\s*"[^"]*")(?=\s*-?\d)')
+    RE_QUOTED_STRING_NUMBER = re.compile(r'(\[\s*"[^"]*")(?=\s*-?\d)')  # FIXME: still a bug with lines like ["name","[group]:", which incorrectly transform into ["name","[, group]:"
     RE_SPACE_SEPARATED_NUMBERS_1 = re.compile(r'(-?\d+(?:\.\d+)?)(\s+)(?=-?\d)')
     RE_SPACE_SEPARATED_NUMBERS_2 = re.compile(r'(-?\d+(?:\.\d+)?)(?=\s+-?\d)')
     RE_FLOAT_DICT = re.compile(r'(\d+\.\d+)\s*(\{)')

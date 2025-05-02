@@ -1,7 +1,7 @@
 import bpy
 import logging
-
 from collections import defaultdict
+
 from unofficial_jbeam_editor.utils.jbeam.jbeam_parser import JbeamParser
 from unofficial_jbeam_editor.utils.jbeam.jbeam_loader import JbeamFileLoader
 from unofficial_jbeam_editor.utils.jbeam.jbeam_models import NodeID, Node, JbeamLoadItem, JbeamJson, JbeamPart, JbeamPartID
@@ -34,11 +34,12 @@ class JbeamPartsLoader:
                 JbeamFileLoader.clear_cache(load_item.file_path)
 
         parsers = self._load_and_parse_files(load_items)
-        self._create_node_meshes(parsers)
+        if parsers:
+            self._create_node_meshes(parsers)
 
     def _load_and_parse_files(self, load_items):
         if not load_items:
-            return
+            return []
         logging.debug(f"⏳🔄 Preparing to load Jbeam Load Items:\n    - " + "\n    - ".join(str(item) for item in load_items))
         parsers = []
         for load_item in load_items:
@@ -52,7 +53,7 @@ class JbeamPartsLoader:
         return parsers
 
     def _create_node_meshes(self, parsers):
-        logging.debug(f"⏳🧩 Prepare parsing Beams and Triangles from loaded JBeam files to generate Node Meshes.")
+        logging.debug("⏳🧩 Parsing beams and triangles to generate node meshes.")
         grouped_parts = self._group_parts(parsers)
         self._process_grouped_parts(grouped_parts)
 
@@ -62,7 +63,11 @@ class JbeamPartsLoader:
         grouped_parts: list[GroupedPart] = []
         group_counter: PartGroupID = 0
 
-        parsers_by_id = {parser.get_jbeam_part(part.id).id: parser for parser in parsers for part in parser.jbeam_parts.values()}
+        parsers_by_id = {
+            part.id: parser
+            for parser in parsers
+            for part in parser.jbeam_parts.values()
+        }
 
         def can_be_grouped_with(source, candidate):
             # logging.debug(f"Evaluating if '{candidate.slot_type}:{candidate.id}' can fit into slots of '{source.slot_type}:{source.id}'")
@@ -72,13 +77,13 @@ class JbeamPartsLoader:
                 if candidate.slot_type == slot_type:
                     # logging.debug(f"✅ MATCH: Candidate slotType fits into source slotType")
                     return True
-            # logging.debug(f"❌ NO MATCH found")
+            # logging.debug(f"❌ No match found for slot type '{slot_type}'")
             return False
 
         for parser in parsers:
             load_item = parser.parse_source
             jbeam_part = parser.get_jbeam_part(load_item.part_id)
-            if jbeam_part.id in visited_parts:
+            if not jbeam_part or jbeam_part.id in visited_parts:
                 continue
 
             # logging.debug(f"🔹 Starting new group {group_counter} from root part: {jbeam_part.slot_type}:{jbeam_part.id}")
@@ -103,8 +108,7 @@ class JbeamPartsLoader:
             if not current_parser:
                 continue
 
-            grouped_part = GroupedPart(current_part, group_counter, level, current_parser)
-            group.append(grouped_part)
+            group.append(GroupedPart(current_part, group_counter, level, current_parser))
             visited_parts.add(current_part.id)
 
             for other_parser in parsers_by_id.values():
@@ -113,6 +117,7 @@ class JbeamPartsLoader:
                         continue
                     if can_be_grouped_with(current_part, candidate):
                         queue.append((candidate, level + 1))
+
         return group
 
     def _process_grouped_parts(self, grouped_parts):
@@ -124,78 +129,79 @@ class JbeamPartsLoader:
             grouped_by_id[group_id] = sorted(parts, key=lambda p: p.level, reverse=True)
 
         for group_id, parts in grouped_by_id.items():
+            any_nodes_added = False
             for part in parts:
                 # logging.debug(f"Part ID: {part.id}, Group ID: {part.group_id}, Level: {part.level}, Parser: {part.parser.parse_source}")
-                self._assemble_node_mesh_nodes(part.parser, part.group_id)
-        
-        nodes: dict[NodeID, Node] = {}
-        refnodes: dict[str, str] = {}
-        refnodes_set = False
-        for group_id, parts in grouped_by_id.items():
+                success = self._assemble_node_mesh_nodes(part.parser, part.group_id)
+                any_nodes_added = any_nodes_added or success
+
+            if not any_nodes_added:
+                Utils.log_and_report(f"⚠️  Skipped mesh creation for group {group_id} (no nodes found).", self.operator, "INFO")
+                continue
+
+            nodes: dict[NodeID, Node] = {}
+            refnodes: dict[str, str] = {}
+            refnodes_set = False
+
             for part in parts:
                 nodes.update(part.parser.get_nodes(part.id))
                 refnodes.update(part.parser.get_ref_nodes(part.id))
                 self._assemble_node_mesh_beams_and_tris(part.parser, part.group_id)
-            root_part = max(parts, key=lambda p: -p.level)  # lowest level = root
+
+            root_part = max(parts, key=lambda p: -p.level)
             mesh_name = root_part.id
             jmc, init = self._get_jbeam_mesh_creator(group_id)
             jmc.obj.name = jmc.obj.data.name = mesh_name
-            if jmc:
-                Utils.log_and_report(f"✅ Created jbeam node mesh '{jmc.obj.name}'", self.operator, "INFO")
-            else:
-                Utils.log_and_report(f"❌ Failed to create jbeam node mesh", self.operator, "ERROR")
 
+            Utils.log_and_report(f"✅ Created jbeam node mesh '{jmc.obj.name}'", self.operator, "INFO")
             success = JbeamNodeMeshConfigurator.assign_ref_nodes(jmc.obj, refnodes, nodes)
             refnodes_set = refnodes_set or success
-            if not refnodes_set:
-                Utils.log_and_report(f"No objects have refnodes assigned.", "INFO")
 
-    def _get_jbeam_mesh_creator(self, group:PartGroupID) -> tuple[JbeamNodeMeshCreator, bool]:
-        jmc:JbeamNodeMeshCreator | None = self.mesh_creators.get(group)
-        init: bool = jmc is None
-        if not init:
-            return jmc, init
-        mesh_name = str(group)
+            if not refnodes_set:
+                Utils.log_and_report("No objects have refnodes assigned.", "INFO")
+
+    def _get_jbeam_mesh_creator(self, group: PartGroupID) -> tuple[JbeamNodeMeshCreator, bool]:
+        jmc = self.mesh_creators.get(group)
+        if jmc:
+            return jmc, False
         jmc = JbeamNodeMeshCreator()
-        obj = jmc.create_object(mesh_name)
+        obj = jmc.create_object(str(group))
         self.mesh_creators[group] = jmc
-        return jmc, init
+        return jmc, True
 
     def _assemble_node_mesh_nodes(self, parser, group):
         load_item = parser.parse_source
         part_id = JbeamPart.generate_id(load_item.slot_type, load_item.part_name)
         logging.debug(f"🧰 {group}: '{part_id}' > assembling part structure > Nodes ...")
         nodes_list = parser.get_nodes_list(part_id)
+
         if not nodes_list:
-            Utils.log_and_report(f"No nodes list in part name '{part_id}'", self.operator, "INFO")
-            return
+            Utils.log_and_report(f"⚠️  No nodes in part '{part_id}', skipping mesh creation.", self.operator, "INFO")
+            return False
 
         jmc, init = self._get_jbeam_mesh_creator(group)
         obj = jmc.obj
-
-        if nodes_list:
-            jmc.add_vertices(nodes_list)
-
+        jmc.add_vertices(nodes_list)
         parser.parse_data_for_jbeam_object_conversion(obj, part_id, False)
-
         JbeamNodeMeshConfigurator.process_node_mesh_props_for_nodes(obj, parser, part_id, init)
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj
-    
+        return True
+
     def _assemble_node_mesh_beams_and_tris(self, parser, group):
         load_item = parser.parse_source
         part_id = JbeamPart.generate_id(load_item.slot_type, load_item.part_name)
         logging.debug(f"🧰 {group}: '{part_id}' > assembling part structure > Beams and Triangles ...")
 
-        jmc, init = self._get_jbeam_mesh_creator(group)
+        jmc, _ = self._get_jbeam_mesh_creator(group)
         obj = jmc.obj
 
         beams_list = parser.get_beams_list(part_id)
         tris_list = parser.get_triangles_list(part_id)
+
         if beams_list:
             jmc.add_edges(beams_list)
         if tris_list:
             jmc.add_faces(tris_list)
 
         JbeamNodeMeshConfigurator.process_node_mesh_props_for_beams_and_tris(obj, parser, part_id)
-

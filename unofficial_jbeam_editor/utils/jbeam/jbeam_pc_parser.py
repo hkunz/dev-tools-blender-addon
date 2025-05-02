@@ -24,23 +24,21 @@ class JbeamPcParser:
     def __init__(self, filepath):
         self.pc = PartConfig()
         self.pc.filepath = filepath
-        self.directory = os.path.dirname(filepath)
+        self.pc.directory = os.path.dirname(filepath)
 
     def parse(self, data: PcJson):
         try:
-            self.pc.directory = self.directory
             self.pc.format = data.get("format")
             self.pc.model = data.get("model")
             self.pc.part_names = data.get("parts", {})
         except Exception as e:
             Utils.log_and_report(f"Failed to parse PC file 📄 {self.pc.filepath}: {e}", None, "ERROR")
             return False
-
         logging.debug(f"Loaded part configurator: {self.pc} ")
         return True
 
     def get_jbeam_load_items(self, search_subdirs=True, search_common=True):
-        d = self.directory
+        d = self.pc.directory
         if not self.pc.part_names:
             logging.debug(f"⚠️  No part names defined in 📄 {self.pc.filepath}")
             return None

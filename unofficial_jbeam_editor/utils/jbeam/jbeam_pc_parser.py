@@ -72,7 +72,8 @@ class JbeamPcParser:
             )
 
         load_items: list[JbeamLoadItem] = []
-    
+        found_parts = set()
+
         for file_path in file_iter:
             if not file_path.endswith('.jbeam'):
                 continue
@@ -102,7 +103,18 @@ class JbeamPcParser:
                     if (curr_part_name, found_slot_type) in target_parts:
                         logging.info(f"===> Part Match 🎯 on line {i+1}: '{curr_part_name}' matches slotType '{found_slot_type}' in 📄 {file_path}")
                         load_items.append(JbeamLoadItem(file_path, curr_part_name, found_slot_type))
+                        found_parts.add((curr_part_name, found_slot_type))  # Mark this part as found
                         curr_part_name = None  # Reset after match
 
-        return load_items
+        # Check if any parts were missing
+        missing_parts = target_parts - found_parts
 
+        for part in missing_parts:
+            partname: str = part[0]
+            slottype: str = part[1]
+            if partname:
+                logging.error(f"❌ Part '{partname}' with slotType '{slottype}' not found in any file")
+            else:
+                logging.warning(f"⚠️  No part name specified for slotType '{slottype}'")
+
+        return load_items

@@ -91,7 +91,7 @@ class JbeamUtils:
         JbeamRefnodeUtils.create_attribute_refnode(obj)
 
     @staticmethod
-    def get_attribute_value(obj, index, attr_name, domain="verts") -> Union[str, int, None]:
+    def get_attribute_value(obj, index, attr_name, domain="verts") -> str | int | None:
         mesh = obj.data
 
         if obj.mode == 'EDIT':

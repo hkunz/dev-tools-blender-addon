@@ -52,7 +52,7 @@ class JbeamNodeMeshConfigurator:
             del obj.data[key]
 
     @staticmethod
-    def assign_ref_nodes(obj, ref_nodes, nodes):
+    def assign_ref_nodes(obj, ref_nodes, nodes) -> bool:
         for refnode_name, node_id in ref_nodes.items():
             node = nodes.get(node_id)
             ref_label = jr.get_refnode_from_label(refnode_name)
@@ -63,8 +63,11 @@ class JbeamNodeMeshConfigurator:
             if idx < 0:
                 logging.debug(f"❌ Error: No vertex index assigned to '{node.id}'")
                 continue
-            jr.set_refnode_id(obj, idx, ref_label.value)
+            success = jr.set_refnode_id(obj, idx, ref_label.value)
+            if not success:
+                return False
             logging.debug(f"🎯 Assigned Node '{node.id}' with index {idx} as ref node '{refnode_name}({ref_label.value})'.")
+        return True
 
     @staticmethod
     def create_node_mesh_attributes(obj):

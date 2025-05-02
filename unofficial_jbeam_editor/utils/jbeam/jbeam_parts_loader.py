@@ -130,6 +130,7 @@ class JbeamPartsLoader:
         
         nodes: dict[NodeID, Node] = {}
         refnodes: dict[str, str] = {}
+        refnodes_set = False
         for group_id, parts in grouped_by_id.items():
             for part in parts:
                 nodes.update(part.parser.get_nodes(part.id))
@@ -144,7 +145,10 @@ class JbeamPartsLoader:
             else:
                 Utils.log_and_report(f"❌ Failed to create jbeam node mesh", self.operator, "ERROR")
 
-        JbeamNodeMeshConfigurator.assign_ref_nodes(jmc.obj, refnodes, nodes)
+            success = JbeamNodeMeshConfigurator.assign_ref_nodes(jmc.obj, refnodes, nodes)
+            refnodes_set = refnodes_set or success
+            if not refnodes_set:
+                Utils.log_and_report(f"No objects have refnodes assigned.", "INFO")
 
     def _get_jbeam_mesh_creator(self, group:PartGroupID) -> tuple[JbeamNodeMeshCreator, bool]:
         jmc:JbeamNodeMeshCreator | None = self.mesh_creators.get(group)

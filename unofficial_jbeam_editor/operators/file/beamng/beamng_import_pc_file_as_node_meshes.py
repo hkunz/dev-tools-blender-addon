@@ -41,8 +41,7 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportPcFileToNodeMeshes(Operator, Im
         if not data:
             return {'CANCELLED'}
 
-        self.directory = os.path.dirname(self.filepath)
-        self.parser = JbeamPcParser(self.directory)
+        self.parser = JbeamPcParser(self.filepath)
         success = self.parser.parse(data)
 
         if not success:

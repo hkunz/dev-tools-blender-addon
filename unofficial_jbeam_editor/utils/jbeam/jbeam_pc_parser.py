@@ -21,9 +21,10 @@ class PartConfig:
 
 class JbeamPcParser:
 
-    def __init__(self, directory):
+    def __init__(self, filepath):
         self.pc = PartConfig()
-        self.directory = directory
+        self.pc.filepath = filepath
+        self.directory = os.path.dirname(filepath)
 
     def parse(self, data: PcJson):
         try:
@@ -108,13 +109,17 @@ class JbeamPcParser:
 
         # Check if any parts were missing
         missing_parts = target_parts - found_parts
-
+        missing_required_parts = False
         for part in missing_parts:
             partname: str = part[0]
             slottype: str = part[1]
             if partname:
+                missing_required_parts = True
                 logging.error(f"❌ Part '{partname}' with slotType '{slottype}' not found in any file")
             else:
                 logging.warning(f"⚠️  No part name specified for slotType '{slottype}'")
+
+        if not missing_required_parts:
+            logging.info(f"✅ All slots with defined part names have been matched from source 📄 {self.pc.filepath}")
 
         return load_items

@@ -25,7 +25,8 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportPcFileToNodeMeshes(Operator, Im
         maxlen=255,
     )  # type: ignore
 
-    force_reload: bpy.props.BoolProperty(name="Force Reload", default=False)  # type: ignore
+    force_reload: bpy.props.BoolProperty(name="Force Reload", description="Force reloading of all selected files, bypassing the cache", default=False)  # type: ignore
+    use_single_object: bpy.props.BoolProperty(name="Join Parts into One Object", description="Combine all parts into one object rather than keeping them separate", default=True)  # type: ignore
 
     def execute(self, context):
         bpy.ops.object.select_all(action='DESELECT')
@@ -49,10 +50,11 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportPcFileToNodeMeshes(Operator, Im
 
         Utils.log_and_report(f"✅ Part Configurator Load Success: 📄 {self.filepath}", self, "INFO")
         config = JbeamPartsLoader(self.parser, self)
-        config.load(self.force_reload)
+        config.load(self.use_single_object, self.force_reload)
 
         return {'FINISHED'}
 
     def draw(self, context: bpy.types.Context) -> None:
         self.options_panel = self.layout.box().column()
         self.options_panel.prop(self, "force_reload")
+        self.options_panel.prop(self, "use_single_object")

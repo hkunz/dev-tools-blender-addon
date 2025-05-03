@@ -23,12 +23,13 @@ class GroupedPart:
 
 class JbeamPartsLoader:
     def __init__(self, pc_parser, operator):
-        self.single_object = False  # assemble .pc as single object if True else assemble as separate objects
+        self.single_object = True  # assemble .pc as single object if True else assemble as separate objects
         self.operator = operator
         self.pc_parser = pc_parser
         self.mesh_creators: dict[PartGroupID, JbeamNodeMeshCreator] = {}
 
-    def load(self, force_reload=False):
+    def load(self, single_object=True, force_reload=False):
+        self.single_object = single_object
         load_items = self.pc_parser.get_jbeam_load_items()
         if force_reload:
             for load_item in load_items:

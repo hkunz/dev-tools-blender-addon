@@ -101,6 +101,11 @@ class JbeamStructure(bpy.types.PropertyGroup):
         default="NONE"
     )  # type: ignore
 
+    jbeam_source: bpy.props.StringProperty(
+        name="Jbeam Source Path",
+        default=""
+    )  # type: ignore
+
     prop_items: bpy.props.CollectionProperty(type=JbeamStructurePropertyItem)  # type: ignore # items representing scope modifiers on the strucutre
     update_in_progress: bpy.props.BoolProperty(default=False)   # type: ignore # needed so that when we modify a value in the panel, we will ignore all draw function in sidepanel until update is complete
 

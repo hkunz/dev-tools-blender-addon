@@ -271,6 +271,14 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             op.element_index = struct.index
             op.element_id = struct.id
 
+        def draw_jbeam_path_input(box, struct):
+            r = box.row(align=True)
+            label_col = r.column(align=True)
+            label_col.scale_x = 0.45
+            label_col.label(text="Jbeam:")
+            text_col = r.column(align=True)
+            text_col.prop(struct, "jbeam_source", text="")
+
         def draw_scope_modifier_list(select, save, remove):
             if not s.beamng_jbeam_active_structure.prop_items:
                 box.label(text=f"No Scope Modifers on Selection")
@@ -339,12 +347,14 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             sub_r.operator(OBJECT_OT_BeamngJbeamSetRefnodeOperator.bl_idname, text="Assign").refnode_enum = struct.refnode_enum
             op = sub_r.operator(OBJECT_OT_BeamngJbeamSelectRefNode.bl_idname, text="", icon="RESTRICT_SELECT_OFF")
             op.refnode_enum = struct.refnode_enum
+            draw_jbeam_path_input(box, struct)
             draw_scope_modifier_list(OBJECT_OT_BeamngSelectJbeamNodesByProperty.bl_idname, OBJECT_OT_BeamngSaveJbeamNodeProp.bl_idname, OBJECT_OT_BeamngRemoveJbeamNodeProp.bl_idname)
             draw_bottom_options(OBJECT_OT_BeamngAddJbeamNodeProp.bl_idname, OBJECT_OT_BeamngSaveAllJbeamNodeProps.bl_idname)
 
         elif o.is_edge_selection_mode():
             draw_active_element(box, struct, f"Length={struct.calc_info:.2f}", 0.35)
             draw_element_search(box, struct)
+            draw_jbeam_path_input(box, struct)
             draw_element_instances_buttons(box.row())
             draw_scope_modifier_list(OBJECT_OT_BeamngSelectJbeamBeamsByProperty.bl_idname, OBJECT_OT_BeamngSaveJbeamBeamProp.bl_idname, OBJECT_OT_BeamngRemoveJbeamBeamProp.bl_idname)
             draw_bottom_options(OBJECT_OT_BeamngAddJbeamBeamProp.bl_idname, OBJECT_OT_BeamngSaveAllJbeamBeamProps.bl_idname)
@@ -352,6 +362,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
         elif o.is_face_selection_mode():
             draw_active_element(box, struct, f"Area={struct.calc_info:.2f}")
             draw_element_search(box, struct)
+            draw_jbeam_path_input(box, struct)
             draw_element_instances_buttons(box.row())
             draw_scope_modifier_list(OBJECT_OT_BeamngSelectJbeamTrianglesByProperty.bl_idname, OBJECT_OT_BeamngSaveJbeamTriangleProp.bl_idname, OBJECT_OT_BeamngRemoveJbeamTriangleProp.bl_idname)
             draw_bottom_options(OBJECT_OT_BeamngAddJbeamTriangleProp.bl_idname, OBJECT_OT_BeamngSaveAllJbeamTriangleProps.bl_idname)

@@ -166,6 +166,7 @@ class JbeamSelectionTracker:
         struct.position.x = x
         struct.position.y = y
         struct.position.z = z
+        struct.jbeam_source = str(j.get_jbeam_source(obj, struct.index, "verts"))
         bpy.ops.object.devtools_beamng_load_jbeam_node_props()
         UiUtils.force_update_ui(bpy.context)
         obj.data.update()
@@ -192,6 +193,7 @@ class JbeamSelectionTracker:
             return
         if 0 <= struct.index < len(bm.edges):
             struct.calc_info = bm.edges[struct.index].calc_length()
+        struct.jbeam_source = str(j.get_jbeam_source(obj, struct.index, "edges"))
         self.update_instances(scene, obj, struct, j.get_total_beam_instances)
         bpy.ops.object.devtools_beamng_load_jbeam_beam_props()
         UiUtils.force_update_ui(bpy.context)
@@ -222,6 +224,7 @@ class JbeamSelectionTracker:
             return
         if 0 <= struct.index < len(bm.faces):
             struct.calc_info = bm.faces[struct.index].calc_area()
+        struct.jbeam_source = str(j.get_jbeam_source(obj, struct.index, "faces"))
         self.update_instances(scene, obj, struct, j.get_total_triangle_instances)
         bpy.ops.object.devtools_beamng_load_jbeam_triangle_props()
         UiUtils.force_update_ui(bpy.context)

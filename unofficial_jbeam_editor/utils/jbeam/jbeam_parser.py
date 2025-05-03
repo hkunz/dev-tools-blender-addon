@@ -147,7 +147,7 @@ class JbeamParser:
                 current_props.update(entry)
 
             elif isinstance(entry, list):
-                if all(isinstance(item, str) and item.startswith("id") and item.endswith(":") for item in entry):
+                if isinstance(entry, list) and all(isinstance(item, str) and item.startswith("id") and item.endswith(":") for item in entry[:2]):
                     logging.debug(f"    - Header detected: {entry} (ignored)")
                     continue
 

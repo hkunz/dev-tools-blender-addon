@@ -23,6 +23,7 @@ class GroupedPart:
 
 class JbeamPartsLoader:
     def __init__(self, pc_parser, operator):
+        self.single_object = False  # assemble .pc as single object if True else assemble as separate objects
         self.operator = operator
         self.pc_parser = pc_parser
         self.mesh_creators: dict[PartGroupID, JbeamNodeMeshCreator] = {}
@@ -54,8 +55,20 @@ class JbeamPartsLoader:
 
     def _create_node_meshes(self, parsers):
         logging.debug("⏳🧩 Parsing beams and triangles to generate node meshes.")
-        grouped_parts = self._group_parts(parsers)
+        grouped_parts = self._create_single_group(parsers) if self.single_object else self._group_parts(parsers)
         self._process_grouped_parts(grouped_parts)
+
+    def _create_single_group(self, parsers):
+        """Assign all parts into a single group (group_id=0) and return them as a flat list."""
+        grouped_parts = []
+        for parser in parsers:
+            for part in parser.jbeam_parts.values():
+                part.group_id = 0
+                part.level = 0
+                part.parser = parser
+                grouped_parts.append(part)
+        return grouped_parts
+
 
     def _group_parts(self, parsers):
         # logging.debug(f"🧊 Grouping Parts from selected Jbeam files")
@@ -140,11 +153,20 @@ class JbeamPartsLoader:
                 continue
 
             nodes: dict[NodeID, Node] = {}
+            node_origins: dict[NodeID, str] = {}  # Track which part added the node
             refnodes: dict[str, str] = {}
             refnodes_set = False
 
             for part in parts:
-                nodes.update(part.parser.get_nodes(part.id))
+                for node_id, node in part.parser.get_nodes(part.id).items():
+                    if node_id in nodes:
+                        prev_part_id = node_origins.get(node_id, "unknown")
+                        # logging.warning(f"⚠️  Duplicate node ID detected: '{node_id}' {node.position}" f"(already from part '{prev_part_id}', now also in part '{part.id}')")
+                        if self.single_object:
+                            continue
+                    nodes[node_id] = node
+                    node_origins[node_id] = part.id
+
                 refnodes.update(part.parser.get_ref_nodes(part.id))
                 self._assemble_node_mesh_beams_and_tris(part.parser, part.group_id)
 
@@ -154,6 +176,7 @@ class JbeamPartsLoader:
             jmc.obj.name = jmc.obj.data.name = mesh_name
 
             Utils.log_and_report(f"✅ Created jbeam node mesh '{jmc.obj.name}'", self.operator, "INFO")
+
             success = JbeamNodeMeshConfigurator.assign_ref_nodes(jmc.obj, refnodes, nodes)
             refnodes_set = refnodes_set or success
 
@@ -176,7 +199,7 @@ class JbeamPartsLoader:
         nodes_list = parser.get_nodes_list(part_id)
 
         if not nodes_list:
-            Utils.log_and_report(f"⚠️  No nodes in part '{part_id}', skipping mesh creation.", self.operator, "INFO")
+            Utils.log_and_report(f"No nodes in part '{part_id}', skipping ...", self.operator, "INFO")
             return False
 
         jmc, init = self._get_jbeam_mesh_creator(group)

@@ -121,3 +121,7 @@ class JbeamPcParser:
             logging.info(f"✅ All slots with defined part names have been matched from source 📄 {self.pc.filepath}")
 
         return load_items
+
+    @property
+    def pc_file_stem(self):
+        return os.path.splitext(os.path.basename(self.pc.filepath))[0]

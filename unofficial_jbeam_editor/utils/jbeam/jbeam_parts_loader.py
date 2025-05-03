@@ -2,6 +2,7 @@ import bpy
 import logging
 from collections import defaultdict
 
+from unofficial_jbeam_editor.utils.jbeam.jbeam_pc_parser import JbeamPcParser
 from unofficial_jbeam_editor.utils.jbeam.jbeam_parser import JbeamParser
 from unofficial_jbeam_editor.utils.jbeam.jbeam_loader import JbeamFileLoader
 from unofficial_jbeam_editor.utils.jbeam.jbeam_models import NodeID, Node, JbeamLoadItem, JbeamJson, JbeamPart, JbeamPartID
@@ -22,10 +23,11 @@ class GroupedPart:
         return f"GroupedPart(id={self.id}, group_id={self.group_id}, level={self.level}, parser={self.parser.parse_source})"
 
 class JbeamPartsLoader:
-    def __init__(self, pc_parser, operator):
+    def __init__(self, pc_parser: JbeamPcParser, operator):
+        self.name = pc_parser.pc_file_stem
         self.single_object = True  # assemble .pc as single object if True else assemble as separate objects
         self.operator = operator
-        self.pc_parser = pc_parser
+        self.pc_parser: JbeamPcParser = pc_parser
         self.mesh_creators: dict[PartGroupID, JbeamNodeMeshCreator] = {}
 
     def load(self, single_object=True, force_reload=False):
@@ -172,7 +174,7 @@ class JbeamPartsLoader:
                 self._assemble_node_mesh_beams_and_tris(part.parser, part.group_id)
 
             root_part = max(parts, key=lambda p: -p.level)
-            mesh_name = root_part.id
+            mesh_name = self.name if self.single_object else root_part.id
             jmc, init = self._get_jbeam_mesh_creator(group_id)
             jmc.obj.name = jmc.obj.data.name = mesh_name
 

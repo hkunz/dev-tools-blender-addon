@@ -702,49 +702,6 @@ class JbeamUtils:
 
         return True
 
-    @staticmethod  # deprecated method
-    def check_vertex_groups(obj: bpy.types.Object) -> tuple[bool, str]:
-        """Checks if each required vertex group has exactly one assigned vertex 
-        and that no vertex is assigned to more than one required group.
-        """
-        required_groups = set(JbeamUtils.get_required_vertex_group_names(minimal=True))
-        existing_groups = {vg.name for vg in obj.vertex_groups}
-
-        # Ensure all required groups exist
-        if not required_groups.issubset(existing_groups):
-            missing = required_groups - existing_groups
-            return False, f"Missing vertex groups: {', '.join(missing)}"
-
-        vertex_assignment = {}  # {vertex_index: group_name}
-        
-        # Check vertex assignments
-        for group_name in required_groups:
-            vgroup = obj.vertex_groups.get(group_name)
-            if not vgroup:
-                continue  # Shouldn't happen due to poll, but just in case
-
-            # Get assigned vertices
-            assigned_verts = [
-                v.index for v in obj.data.vertices
-                if any(g.group == vgroup.index for g in v.groups)
-            ]
-            count = len(assigned_verts)
-
-            if count == 0:
-                return False, f"Vertex Group '{group_name}' has no vertex/node assigned."
-            elif count > 1:
-                return False, f"Vertex Group '{group_name}' has {count} vertices assigned (should be 1 only)."
-
-            # Ensure unique vertex assignment
-            vertex_index = assigned_verts[0]
-            if vertex_index in vertex_assignment:
-                return False, f"Vertex {vertex_index} is assigned to both '{vertex_assignment[vertex_index]}' and '{group_name}', which is not allowed."
-            
-            vertex_assignment[vertex_index] = group_name  # Store assigned vertex
-
-        return True, "All vertex groups are correctly assigned."
-
-
 
 class JbeamRefnodeUtils:
 

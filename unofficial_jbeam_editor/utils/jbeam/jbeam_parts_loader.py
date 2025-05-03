@@ -207,7 +207,7 @@ class JbeamPartsLoader:
 
         jmc, init = self._get_jbeam_mesh_creator(group)
         obj = jmc.obj
-        jmc.add_vertices(nodes_list)
+        nodes_list = jmc.add_vertices(nodes_list)
         parser.parse_data_for_jbeam_object_conversion(obj, part_id, False)
         JbeamNodeMeshConfigurator.process_node_mesh_props_for_nodes(obj, parser, part_id, init)
         obj.select_set(True)

@@ -29,22 +29,36 @@ class JbeamNodeMeshCreator:
         if not self.mesh:
             raise RuntimeError("❌ Mesh object has not been created yet. Call 'create_object' first.")
 
-    def add_vertices(self, nodes_list: list[Node]):
+    def add_vertices(self, nodes_list: list[Node]) -> list[Node]:
         self.check_mesh_created()
 
-        num_new = len(nodes_list)
+        new_nodes_list: list[Node] = []
+        num_new = 0
         start_index = len(self.mesh.vertices)
+
+        # Determine which nodes are new
+        for node in nodes_list:
+            if node.id in self.vertex_indices:
+                existing_index = self.vertex_indices[node.id]
+                node.index = existing_index
+                logging.debug(f"⚠️  Duplicate node ID ignored: '{node.id}' at position {node.position} (already exists at index {existing_index})")
+                continue
+            new_nodes_list.append(node)
+            num_new += 1
 
         self.mesh.vertices.add(num_new)
 
-        for i, node in enumerate(nodes_list):
-            global_index = start_index + i
-            node.index = global_index
-            self.vertex_indices[node.id] = global_index
-            self.mesh.vertices[global_index].co = node.position
+        current_index = start_index
+        for node in new_nodes_list:
+            node.index = current_index
+            self.vertex_indices[node.id] = current_index
+            self.mesh.vertices[current_index].co = node.position
             self._vertices.append(node.position)
+            current_index += 1
 
         logging.debug(f"    - Added {num_new} vertices (total: {len(self.mesh.vertices)}).")
+        return new_nodes_list
+
 
     def _process_elements(self, element_list: list[JBeamElement], node_count: int, get_node_ids: callable, assign_index: callable) -> list[tuple[int, ...]]:
         result: list[tuple[int, ...]] = []

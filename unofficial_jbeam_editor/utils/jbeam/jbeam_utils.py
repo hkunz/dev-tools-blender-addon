@@ -6,6 +6,7 @@ import logging
 
 from enum import Enum
 from typing import Union
+from pathlib import Path
 
 from unofficial_jbeam_editor.ui.addon_preferences import MyAddonPreferences as a
 from unofficial_jbeam_editor.utils.file_utils import FileUtils
@@ -14,15 +15,29 @@ from unofficial_jbeam_editor.utils.jbeam.jbeam_props_storage import JbeamPropsSt
 
 class JbeamUtils:
 
+    ATTR_NODE_SOURCE_JBEAM = "jbeam_node_source"
+    ATTR_BEAM_SOURCE_JBEAM = "jbeam_beam_source"
+    ATTR_TRIANGLE_SOURCE_JBEAM = "jbeam_triangle_source"
     ATTR_NODE_ID = "jbeam_node_id"
     ATTR_NODE_PROPS = "jbeam_node_props"
     ATTR_BEAM_PROPS = "jbeam_beam_props"
     ATTR_TRIANGLE_PROPS = "jbeam_triangle_props"
     ATTR_SELECTED_EDGES = "selected_edges"
 
+    @staticmethod
+    def create_domain_dict(verts_val, edges_val, faces_val):
+        return {
+            "verts": verts_val,
+            "edges": edges_val,
+            "faces": faces_val,
+        }
+
+    DOMAIN_TO_JBEAM_SOURCE_ATTR = create_domain_dict(ATTR_NODE_SOURCE_JBEAM, ATTR_BEAM_SOURCE_JBEAM, ATTR_TRIANGLE_SOURCE_JBEAM)
+
     RESERVED_KEYWORDS = []
 
     GN_JBEAM_VISUALIZER_GROUP_NODE_NAME = "__gn_jbeam_visualizer"
+
 
     @staticmethod
     def has_jbeam_node_id(obj):
@@ -67,27 +82,14 @@ class JbeamUtils:
         return mesh.attributes.new(name=attr_name, type=type, domain=domain)
 
     @staticmethod
-    def create_attribute_node_id(obj):
-        return JbeamUtils.create_attribute(obj, JbeamUtils.ATTR_NODE_ID)
-
-    @staticmethod
-    def create_attribute_node_props(obj):
-        return JbeamUtils.create_attribute(obj, JbeamUtils.ATTR_NODE_PROPS, domain="POINT")
-
-    @staticmethod
-    def create_attribute_beam_props(obj):
-        return JbeamUtils.create_attribute(obj, JbeamUtils.ATTR_BEAM_PROPS, domain="EDGE")
-
-    @staticmethod
-    def create_attribute_triangle_props(obj):
-        return JbeamUtils.create_attribute(obj, JbeamUtils.ATTR_TRIANGLE_PROPS, domain="FACE")
-
-    @staticmethod
     def create_node_mesh_attributes(obj):
-        JbeamUtils.create_attribute_node_id(obj) 
-        JbeamUtils.create_attribute_node_props(obj)
-        JbeamUtils.create_attribute_beam_props(obj)
-        JbeamUtils.create_attribute_triangle_props(obj)
+        JbeamUtils.create_attribute(obj, JbeamUtils.ATTR_NODE_SOURCE_JBEAM, domain="POINT")
+        JbeamUtils.create_attribute(obj, JbeamUtils.ATTR_BEAM_SOURCE_JBEAM, domain="EDGE")
+        JbeamUtils.create_attribute(obj, JbeamUtils.ATTR_TRIANGLE_SOURCE_JBEAM, domain="FACE")
+        JbeamUtils.create_attribute(obj, JbeamUtils.ATTR_NODE_ID)
+        JbeamUtils.create_attribute(obj, JbeamUtils.ATTR_NODE_PROPS, domain="POINT")
+        JbeamUtils.create_attribute(obj, JbeamUtils.ATTR_BEAM_PROPS, domain="EDGE")
+        JbeamUtils.create_attribute(obj, JbeamUtils.ATTR_TRIANGLE_PROPS, domain="FACE")
         JbeamRefnodeUtils.create_attribute_refnode(obj)
 
     @staticmethod
@@ -280,7 +282,6 @@ class JbeamUtils:
         key = JbeamUtils.get_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, domain)
         storage_inst: JbeamPropsStorage = JbeamPropsStorageManager.get_instance().get_props_storage(obj)
         key = storage_inst.store_props(domain, key, beam_props, instance=instance)
-        # Update the Blender attribute with the (possibly new) key
         return JbeamUtils.set_attribute_value(obj, edge_index, JbeamUtils.ATTR_BEAM_PROPS, key, domain=domain)
 
     @staticmethod
@@ -290,6 +291,15 @@ class JbeamUtils:
         storage_inst: JbeamPropsStorage = JbeamPropsStorageManager.get_instance().get_props_storage(obj)
         key = storage_inst.store_props(domain, key, triangle_props, instance=instance)
         return JbeamUtils.set_attribute_value(obj, face_index, JbeamUtils.ATTR_TRIANGLE_PROPS, key, domain=domain)
+
+    @staticmethod
+    def set_jbeam_source(obj, index, domain, jbeam_path: Path) -> bool:
+        attr_name = JbeamUtils.DOMAIN_TO_JBEAM_SOURCE_ATTR.get(domain)
+        JbeamUtils.set_attribute_value(obj, index, attr_name, str(jbeam_path), domain=domain)
+
+    def get_jbeam_source(obj, index, domain) -> Path:
+        attr_name = JbeamUtils.DOMAIN_TO_JBEAM_SOURCE_ATTR.get(domain)
+        return Path(JbeamUtils.get_attribute_value(obj, index, attr_name, domain=domain))
 
     @staticmethod
     def delete_props(obj, domain, index, attr_name, instance: int=None) -> bool:

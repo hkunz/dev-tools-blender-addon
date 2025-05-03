@@ -1,4 +1,5 @@
 from typing import Any, Union, TypedDict
+from pathlib import Path
 
 JbeamPartName = str
 JbeamPartSectionName = str  # section names include: information, slotType, sounds, flexbodies, nodes, beams, triangles, quads, etc
@@ -28,9 +29,10 @@ class JBeamElement:
         self.id: ElementID  = element_id
         self.index: int = index  # vertex, edge, or face index
         self.props: JbeamElementProps = props if props is not None else {}
+        self.source_jbeam: Path = Path()
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(instance={self.instance}, id={self.id}, index={self.index}, props={self.props})"
+        return f"{self.__class__.__name__}(instance={self.instance}, id={self.id}, index={self.index}, props={self.props}, source={self.source_jbeam})"
 
 class Node(JBeamElement):
     def __init__(self, instance, node_id, index, position, props=None):
@@ -41,7 +43,7 @@ class Node(JBeamElement):
         return self.props.get("fixed", False)
 
     def __repr__(self):
-        return f"Node(instance={self.instance}, id={self.id}, index={self.index}, pos={self.position}, props={self.props})"
+        return f"Node(instance={self.instance}, id={self.id}, index={self.index}, pos={self.position}, props={self.props}, source={self.source_jbeam})"
 
 class Beam(JBeamElement):
     def __init__(self, instance, beam_id, node_id1, node_id2, index, props=None):
@@ -50,7 +52,7 @@ class Beam(JBeamElement):
         self.node_id2: NodeID = node_id2
 
     def __repr__(self):
-        return f"Beam(instance={self.instance}, id={self.id}, node_id1={self.node_id1}, node_id2={self.node_id2}, index={self.index}, props={self.props})"
+        return f"Beam(instance={self.instance}, id={self.id}, node_id1={self.node_id1}, node_id2={self.node_id2}, index={self.index}, props={self.props}, source={self.source_jbeam})"
 
 class Triangle(JBeamElement):
     def __init__(self, instance, triangle_id, node_id1, node_id2, node_id3, index, props=None):
@@ -60,7 +62,7 @@ class Triangle(JBeamElement):
         self.node_id3: NodeID = node_id3
 
     def __repr__(self):
-        return f"Triangle(id={self.id}, node_id1={self.node_id1}, node_id2={self.node_id2}, node_id3={self.node_id3}, index={self.index}, props={self.props})"
+        return f"Triangle(id={self.id}, node_id1={self.node_id1}, node_id2={self.node_id2}, node_id3={self.node_id3}, index={self.index}, props={self.props}, source={self.source_jbeam})"
 
 JsonJbeamElement = list[Any]  # node i.e. ["n",  0, 0, 0], beam i.e. ["n1", "n2"], triangle i.e. ["n1", "n2", "n3"], or quad i.e. ["n1", "n2", "n3", "n4"]
 

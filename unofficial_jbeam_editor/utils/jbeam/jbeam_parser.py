@@ -2,6 +2,7 @@ import mathutils
 import logging
 
 from typing import Union
+from pathlib import Path
 
 from unofficial_jbeam_editor.utils.utils import Utils
 from unofficial_jbeam_editor.utils.jbeam.jbeam_loader import JbeamLoadItem
@@ -116,7 +117,9 @@ class JbeamParser:
                 props = current_props.copy()
                 props.update(inline_props)
                 instance = 1 # only 1 instance can exist of one node ID unlike beams and triangles that can have multiple instances
-                nodes.append(Node(instance, node_id, -1, position, props))
+                node = Node(instance, node_id, -1, position, props)
+                node.source_jbeam = Path(self.source.file_path)
+                nodes.append(node)
 
         return nodes
 
@@ -176,15 +179,14 @@ class JbeamParser:
 
                 props = current_props.copy()
                 props.update(inline_props)
-
-                structures.append(
-                    (Beam if structure_type == "beams" else Triangle)(
-                        instance, struct_id,
-                        nodes[0].id, nodes[1].id,
-                        *([nodes[2].id] if len(nodes) > 2 else []),
-                        index, props
-                    )
+                struct = (Beam if structure_type == "beams" else Triangle)(
+                    instance, struct_id,
+                    nodes[0].id, nodes[1].id,
+                    *([nodes[2].id] if len(nodes) > 2 else []),
+                    index, props
                 )
+                struct.source_jbeam = Path(self.source.file_path)
+                structures.append(struct)  # Beam() or Triangle()
 
         if missing_node_warnings:
             logging.debug(f"⚠️  Missing node references detected while accessing {structure_type.capitalize().rstrip('s')} elements:")

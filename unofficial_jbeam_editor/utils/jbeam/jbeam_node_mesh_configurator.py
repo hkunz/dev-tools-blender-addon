@@ -89,21 +89,24 @@ class JbeamNodeMeshConfigurator:
 
             j.set_node_id(obj, idx, str(node.id))
             j.set_node_props(obj, idx, flat_data)
+            j.set_jbeam_source(obj, idx, "verts", node.source_jbeam)
 
     @staticmethod
     def store_beam_props_in_edge_attributes(obj, beams):
         if beams:
-            JbeamNodeMeshConfigurator.store_props_in_attributes(obj, beams, "beams", "edge", j.set_beam_props)
+            JbeamNodeMeshConfigurator.store_props_in_attributes(obj, beams, j.set_beam_props, "edges", "beams")
 
     @staticmethod
     def store_triangle_props_in_face_attributes(obj, triangles):
         if triangles:
-            JbeamNodeMeshConfigurator.store_props_in_attributes(obj, triangles, "triangles", "face", j.set_triangle_props)
+            JbeamNodeMeshConfigurator.store_props_in_attributes(obj, triangles, j.set_triangle_props, "faces", "triangles")
 
     @staticmethod
-    def store_props_in_attributes(obj, parsed_data, data_type, element_type, set_props_function):
+    def store_props_in_attributes(obj, parsed_data, set_props_function, domain, data_type):
         for item in parsed_data:
-            if item.index < 0 or item.index is None:
-                #logging.debug(f"❌ Error: Structure missing: No {element_type} found for {data_type[:-1]} {item.id}")
+            idx = item.index
+            if idx < 0 or idx is None:
+                #logging.debug(f"❌ Error: Structure missing: No {domain} found for {data_type[:-1]} {item.id}")
                 continue
-            set_props_function(obj, item.index, item.props, item.instance)
+            set_props_function(obj, idx, item.props, item.instance)
+            j.set_jbeam_source(obj, idx, domain, item.source_jbeam)

@@ -72,6 +72,7 @@ from unofficial_jbeam_editor.operators.object.beamng.beamng_jbeam_create_node_me
 from unofficial_jbeam_editor.operators.object.beamng.beamng_jbeam_set_refnode_operator import OBJECT_OT_BeamngJbeamSetRefnodeOperator
 from unofficial_jbeam_editor.operators.object.beamng.utils.beamng_jbeam_print_attributes_operators import OBJECT_OT_BeamngPrintJbeamNodeProps, OBJECT_OT_BeamngPrintJbeamBeamProps, OBJECT_OT_BeamngPrintJbeamTriangleProps
 from unofficial_jbeam_editor.operators.object.beamng.utils.beamng_jbeam_select_element_operator import OBJECT_OT_BeamngJbeamSelectSpecificElement
+from unofficial_jbeam_editor.operators.object.beamng.utils.beamng_jbeam_select_element_by_jbeam_path import OBJECT_OT_BeamngJbeamSelectElementByJbeamPath
 from unofficial_jbeam_editor.operators.object.beamng.utils.beamng_jbeam_select_ref_element_operator import OBJECT_OT_BeamngJbeamSelectRefNode
 
 DEVTOOLS_CLASSES = [
@@ -82,6 +83,7 @@ DEVTOOLS_CLASSES = [
     OBJECT_OT_BakePrepareObject,
     OBJECT_OT_BakeGenerateObject,
     OBJECT_OT_BeamngJbeamSelectSpecificElement,
+    OBJECT_OT_BeamngJbeamSelectElementByJbeamPath,
     OBJECT_OT_BeamngJbeamSelectRefNode,
     DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh,
     DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam,

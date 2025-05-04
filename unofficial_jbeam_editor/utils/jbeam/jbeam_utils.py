@@ -289,9 +289,15 @@ class JbeamUtils:
         attr_name = JbeamUtils.DOMAIN_TO_JBEAM_SOURCE_ATTR.get(domain)
         JbeamUtils.set_attribute_value(obj, index, attr_name, str(jbeam_path), domain=domain)
 
+    @staticmethod
     def get_jbeam_source(obj, index, domain) -> Path:
         attr_name = JbeamUtils.DOMAIN_TO_JBEAM_SOURCE_ATTR.get(domain)
         return Path(JbeamUtils.get_attribute_value(obj, index, attr_name, domain=domain))
+
+    @staticmethod
+    def find_indices_by_jbeam_path(obj, path, domain):
+        attr_name = JbeamUtils.DOMAIN_TO_JBEAM_SOURCE_ATTR.get(domain)
+        return JbeamUtils.find_elements_with_attribute_value(obj, attr_name, path, domain=domain)
 
     @staticmethod
     def delete_props(obj, domain, index, attr_name, instance: int=None) -> bool:

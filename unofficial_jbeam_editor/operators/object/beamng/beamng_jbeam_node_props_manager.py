@@ -103,7 +103,10 @@ class JbeamStructure(bpy.types.PropertyGroup):
 
     jbeam_source: bpy.props.StringProperty(
         name="Jbeam Source Path",
+        description="Path to the file",
+        subtype='FILE_PATH',
         default=""
+        # update=update_file_path,
     )  # type: ignore
 
     prop_items: bpy.props.CollectionProperty(type=JbeamStructurePropertyItem)  # type: ignore # items representing scope modifiers on the strucutre

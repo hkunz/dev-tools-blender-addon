@@ -23,6 +23,7 @@ from unofficial_jbeam_editor.operators.object.beamng.beamng_jbeam_rename_selecte
 from unofficial_jbeam_editor.operators.object.beamng.beamng_jbeam_create_node_mesh import OBJECT_OT_BeamngJbeamCreateNodeMesh
 from unofficial_jbeam_editor.operators.object.beamng.beamng_jbeam_set_refnode_operator import OBJECT_OT_BeamngJbeamSetRefnodeOperator
 from unofficial_jbeam_editor.operators.object.beamng.utils.beamng_jbeam_select_element_operator import OBJECT_OT_BeamngJbeamSelectSpecificElement
+from unofficial_jbeam_editor.operators.object.beamng.utils.beamng_jbeam_select_element_by_jbeam_path import OBJECT_OT_BeamngJbeamSelectElementByJbeamPath
 from unofficial_jbeam_editor.operators.object.beamng.utils.beamng_jbeam_select_ref_element_operator import OBJECT_OT_BeamngJbeamSelectRefNode
 from unofficial_jbeam_editor.utils.jbeam.jbeam_utils import JbeamRefnodeUtils as jr
 from unofficial_jbeam_editor.operators.common.ui.toggle_dynamic_button_operator import ButtonItem, ButtonItemSelector, ToggleDynamicButtonOperator, ManageDynamicButtonsOperator
@@ -273,13 +274,17 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
 
         def draw_jbeam_path_input(box, struct):
             r = box.row(align=True)
-            split = r.split(factor=0.2, align=True)
-            split.label(text="Jbeam:")
-            split.prop(struct, "jbeam_source", text="")
-            button_row = r.row(align=True)
-            button_row.operator(OBJECT_OT_BeamngJbeamSelectSpecificElement.bl_idname, text="", icon="RESTRICT_SELECT_OFF")
+            label_col = r.column(align=True)
+            label_col.scale_x = 0.45
+            label_col.label(text="Jbeam:")
+            text_col = r.column(align=True)
+            text_col.scale_x = 1.6  # Slightly increased to keep it maximized
+            text_col.prop(struct, "jbeam_source", text="")
+            action_col = r.column(align=True)
+            action_col.scale_x = 1
+            button_row = action_col.row(align=True)
+            button_row.operator(OBJECT_OT_BeamngJbeamSelectElementByJbeamPath.bl_idname, text="", icon="RESTRICT_SELECT_OFF").jbeam_source_path = struct.jbeam_source
             button_row.operator(OBJECT_OT_BeamngJbeamSelectSpecificElement.bl_idname, text="", icon="FILE_TICK")
-            button_row.operator(OBJECT_OT_BeamngJbeamSelectSpecificElement.bl_idname, text="", icon="FILE_FOLDER")
 
         def draw_scope_modifier_list(select, save, remove):
             if not s.beamng_jbeam_active_structure.prop_items:

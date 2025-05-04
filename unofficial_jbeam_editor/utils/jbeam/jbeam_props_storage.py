@@ -6,18 +6,28 @@ import logging
 
 class JbeamPropsStorage:
 
+    SAVED_JBEAM_PROPS = "saved_jbeam_props"
+
     DOMAIN_ALIASES = {
         "vertices": "verts",
         "polygons": "faces"
     }
 
     def __init__(self, obj):
-        self.owner: object = obj
+        self.obj_id = obj[JbeamPropsStorageManager.JBEAM_OBJECT_ID]
         self.storage = {
             "verts": {},
             "edges": {},
             "faces": {}
         }
+
+    @property
+    def owner(self):
+        for obj in bpy.data.objects:
+            if obj.get(JbeamPropsStorageManager.JBEAM_OBJECT_ID) == self.obj_id:
+                return obj
+        logging.error("Invalid owner object:", self.obj_id)
+        return None
 
     def resolve_domain(self, domain: str) -> str:
         return self.DOMAIN_ALIASES.get(domain, domain)
@@ -52,26 +62,12 @@ class JbeamPropsStorage:
         return copy.deepcopy(self.storage[domain][key].get(f"{instance}", {}))
 
     def delete_props(self, domain: str, key: str, instance: int = None):
-        """
-        Removes properties from the specified domain for a specific key.
-        If an instance is specified, only that instance is removed.
-        If no instance is provided, the entire key is deleted.
-        
-        Args:
-            domain (str): The domain to delete properties from ('verts', 'edges', or 'faces').
-            key (str): The unique key identifying the stored properties.
-            instance (int, optional): The specific instance to delete. If None, deletes all instances for the key.
-        
-        Raises:
-            KeyError: If the domain is invalid or the key doesn't exist in the domain.
-        """
+
         domain = self.resolve_domain(domain)
 
-        # Validate domain
         if domain not in self.storage:
             raise KeyError(f"Invalid domain: {domain}")
 
-        # Check if the key exists
         if key not in self.storage[domain]:
             # raise KeyError(f"Key '{key}' not found in domain '{domain}'")
             logging.debug(f"Key '{key}' not found in domain '{domain}'. Ignore")
@@ -82,15 +78,13 @@ class JbeamPropsStorage:
             del self.storage[domain][key]
         else:
             instance_key = str(instance)
-            
-            # Check if the instance exists
+
             if instance_key not in self.storage[domain][key]:
                 # raise KeyError(f"Instance {instance} not found for key '{key}' in domain '{domain}'")
                 logging.debug(f"Instance {instance} not found for key '{key}' in domain '{domain}'. Ignore")
                 return
-            
-            # Delete the specific instance
-            del self.storage[domain][key][instance_key]
+
+            del self.storage[domain][key][instance_key]  # Delete the specific instance
 
             # Renumber remaining instances
             remaining_instances = sorted(
@@ -129,23 +123,28 @@ class JbeamPropsStorage:
                 del self.storage[domain][key]
 
     def save_jbeam_props_to_mesh(self):
-        """Save JbeamPropsStorage data to mesh custom properties for all objects."""
+        """Save this object's properties to its mesh's custom properties."""
         logging.debug("Saving file... Storing JbeamPropsStorage data.")
         obj = self.owner
-        obj.data["saved_jbeam_props"] = json.dumps(self.storage)
-        logging.debug(f"Saved JbeamPropsStorage to {obj.name}'s mesh.")
+        try:
+            obj[self.SAVED_JBEAM_PROPS] = json.dumps(self.storage)
+            logging.debug(f"💾 Saved/Updated JbeamPropsStorage data for {obj.name}.")
+        except Exception as e:
+            logging.error(f"❌ Failed to save JbeamPropsStorage for {obj.name}: {e}")
 
     def load_jbeam_props_from_mesh(self):
-        """Load JbeamPropsStorage data from mesh custom properties for all objects."""
-        logging.debug("Loading file... Restoring JbeamPropsStorage data.")
+        """Load the properties from the mesh's custom properties into the JbeamPropsStorage."""
         obj = self.owner
+        if self.SAVED_JBEAM_PROPS not in obj:
+            logging.debug(f"No saved Jbeam props found in {obj.name}'s mesh. Skipping.")
+            return
         try:
-            # Restore storage from the JSON data in the mesh
-            restored_data = json.loads(obj.data["saved_jbeam_props"])
+            restored_data = json.loads(obj[self.SAVED_JBEAM_PROPS])
             self.storage.update(restored_data)
-            logging.debug(f"Restored JbeamPropsStorage from {obj.name}'s mesh.")
-        except (json.JSONDecodeError, TypeError) as e:
-            logging.debug(f"Failed to restore JbeamPropsStorage from {obj.name}: {e}")
+            logging.debug(f"🔄 Restored JbeamPropsStorage data from {obj.name}'s mesh.")
+        except (json.JSONDecodeError, TypeError, Exception) as e:
+            logging.debug(f"❌ Failed to restore JbeamPropsStorage from {obj.name}: {e}")
+
 
 ''' 
 # Storage will look something like this:
@@ -175,37 +174,46 @@ class JbeamPropsStorageManager:
 
     def register_object(self, obj):
         """Register an object with a unique JbeamPropsStorage ID."""
-        id_key = JbeamPropsStorageManager.JBEAM_OBJECT_ID
+        id_key = self.JBEAM_OBJECT_ID
         if id_key not in obj:
             obj_id = uuid.uuid4().hex
             obj[id_key] = obj_id
-            self.objects[obj_id] = JbeamPropsStorage(obj)  # Create a new storage instance
+            self.objects[obj_id] = JbeamPropsStorage(obj)
             logging.debug(f"Registered jbeam object '{obj.name}' with '{id_key}' = {obj_id}")
         else:
             obj_id = obj[id_key]
+            if obj_id not in self.objects:
+                self.objects[obj_id] = JbeamPropsStorage(obj)
             logging.debug(f"Object {obj.name} already registered with '{id_key}' = {obj_id}")
-    
-    def get_props_storage(self, obj) -> JbeamPropsStorage:
+
+    def get_props_storage(self, obj):
         """Get the JbeamPropsStorage instance for a registered object."""
-        id_key = JbeamPropsStorageManager.JBEAM_OBJECT_ID
+        id_key = self.JBEAM_OBJECT_ID
         if id_key not in obj:
             raise ValueError(f"Object {obj.name} is not registered.")
-        
         obj_id = obj[id_key]
         return self.objects.get(obj_id)
 
     def save_all_jbeam_props_to_mesh(self):
         """Save all registered object's properties to their meshes."""
         for obj_id, storage in self.objects.items():
-            obj = bpy.data.objects.get(obj_id)
-            if obj:
-                storage.save_jbeam_props_to_mesh(obj)
+            obj = storage.owner
+            if obj and obj.type == 'MESH':
+                storage.save_jbeam_props_to_mesh()
 
     def load_all_jbeam_props_from_mesh(self):
-        """Load all registered object's properties from their meshes."""
-        for obj in bpy.data.objects:
-            if obj.type != 'MESH' or JbeamPropsStorageManager.JBEAM_OBJECT_ID not in obj:
-                continue
-            storage: JbeamPropsStorage = self.get_props_storage(obj)
-            if storage:
+        """Rebuild registry and load JBeam props from mesh safely after file load."""
+        for obj in list(bpy.data.objects):
+            try:
+                if obj.type != 'MESH' or self.JBEAM_OBJECT_ID not in obj:
+                    continue
+                obj_id = obj[self.JBEAM_OBJECT_ID]
+                if obj_id not in self.objects:
+                    self.objects[obj_id] = JbeamPropsStorage(obj)
+                    logging.debug(f"Rebuilt jbeam storage for '{obj.name}' with ID {obj_id}")
+                storage = self.objects[obj_id]
                 storage.load_jbeam_props_from_mesh()
+            except ReferenceError:
+                logging.warning(f"Skipped invalid object during load: {getattr(obj, 'name', '[unknown]')}")
+            except Exception as e:
+                logging.error(f"Error restoring jbeam props for {getattr(obj, 'name', '[unknown]')}: {e}")

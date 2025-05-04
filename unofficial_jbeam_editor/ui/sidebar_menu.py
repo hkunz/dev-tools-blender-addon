@@ -273,11 +273,13 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
 
         def draw_jbeam_path_input(box, struct):
             r = box.row(align=True)
-            label_col = r.column(align=True)
-            label_col.scale_x = 0.45
-            label_col.label(text="Jbeam:")
-            text_col = r.column(align=True)
-            text_col.prop(struct, "jbeam_source", text="")
+            split = r.split(factor=0.2, align=True)
+            split.label(text="Jbeam:")
+            split.prop(struct, "jbeam_source", text="")
+            button_row = r.row(align=True)
+            button_row.operator(OBJECT_OT_BeamngJbeamSelectSpecificElement.bl_idname, text="", icon="RESTRICT_SELECT_OFF")
+            button_row.operator(OBJECT_OT_BeamngJbeamSelectSpecificElement.bl_idname, text="", icon="FILE_TICK")
+            button_row.operator(OBJECT_OT_BeamngJbeamSelectSpecificElement.bl_idname, text="", icon="FILE_FOLDER")
 
         def draw_scope_modifier_list(select, save, remove):
             if not s.beamng_jbeam_active_structure.prop_items:
@@ -334,6 +336,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             draw_active_element(box, struct, f"{struct.position.x:.2f}, {struct.position.y:.2f}, {struct.position.z:.2f}", 0.35)
             draw_element_search(box, struct)
             box.operator(OBJECT_OT_BeamngJbeamRenameSelectedNodes.bl_idname, text="Assign Node ID", icon="GREASEPENCIL")
+            draw_jbeam_path_input(box, struct)
             r = box.row(align=True)
             label_col = r.column(align=True)
             label_col.scale_x = 0.4
@@ -347,7 +350,6 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             sub_r.operator(OBJECT_OT_BeamngJbeamSetRefnodeOperator.bl_idname, text="Assign").refnode_enum = struct.refnode_enum
             op = sub_r.operator(OBJECT_OT_BeamngJbeamSelectRefNode.bl_idname, text="", icon="RESTRICT_SELECT_OFF")
             op.refnode_enum = struct.refnode_enum
-            draw_jbeam_path_input(box, struct)
             draw_scope_modifier_list(OBJECT_OT_BeamngSelectJbeamNodesByProperty.bl_idname, OBJECT_OT_BeamngSaveJbeamNodeProp.bl_idname, OBJECT_OT_BeamngRemoveJbeamNodeProp.bl_idname)
             draw_bottom_options(OBJECT_OT_BeamngAddJbeamNodeProp.bl_idname, OBJECT_OT_BeamngSaveAllJbeamNodeProps.bl_idname)
 

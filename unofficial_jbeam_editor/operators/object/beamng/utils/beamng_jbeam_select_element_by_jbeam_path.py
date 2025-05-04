@@ -9,6 +9,7 @@ from unofficial_jbeam_editor.utils.jbeam.jbeam_utils import JbeamUtils as j
 class OBJECT_OT_BeamngJbeamSelectElementByJbeamPath(bpy.types.Operator):
     bl_idname = "object.devtools_beamng_jbeam_select_elements_by_jbeam_path"
     bl_label = "DevTools: Select Elements by Jbeam Path"
+    bl_description="Search and select all elements with the same specified Jbeam path"
     bl_options = {'INTERNAL', 'UNDO'}
 
     jbeam_source_path: bpy.props.StringProperty(

@@ -103,7 +103,7 @@ class JbeamStructure(bpy.types.PropertyGroup):
 
     jbeam_source: bpy.props.StringProperty(
         name="Jbeam Source Path",
-        description="Path to the file",
+        description="Source .jbeam file of current element",
         subtype='FILE_PATH',
         default=""
         # update=update_file_path,

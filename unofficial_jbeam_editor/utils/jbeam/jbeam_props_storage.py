@@ -208,4 +208,4 @@ class JbeamPropsStorageManager:
                 continue
             storage: JbeamPropsStorage = self.get_props_storage(obj)
             if storage:
-                storage.load_jbeam_props_from_mesh(obj)
+                storage.load_jbeam_props_from_mesh()

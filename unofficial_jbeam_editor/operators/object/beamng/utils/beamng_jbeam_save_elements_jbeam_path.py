@@ -9,7 +9,8 @@ from unofficial_jbeam_editor.utils.jbeam.jbeam_utils import JbeamUtils as j
 
 class OBJECT_OT_BeamngJbeamSaveElementsJbeamPath(bpy.types.Operator):
     bl_idname = "object.devtools_beamng_jbeam_save_elements_jbeam_path"
-    bl_label = "DevTools: Save Elements Jbeam Path"
+    bl_label = "DevTools: Configure Element Jbeam Path"
+    bl_description = "DevTools: Configure Element to be saved into the specified Jbeam Path on Save or Export"
     bl_options = {'INTERNAL', 'UNDO'}
 
     jbeam_source_path: bpy.props.StringProperty(

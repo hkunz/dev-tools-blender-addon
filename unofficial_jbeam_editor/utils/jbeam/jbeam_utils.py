@@ -300,6 +300,11 @@ class JbeamUtils:
         return JbeamUtils.find_elements_with_attribute_value(obj, attr_name, path, domain=domain)
 
     @staticmethod
+    def set_jbeam_path_for_selected_elements(obj, jbeam_path, domain) -> int:
+        attr_name = JbeamUtils.DOMAIN_TO_JBEAM_SOURCE_ATTR.get(domain)
+        return JbeamUtils.set_attribute_value_for_selected_elements(obj, attr_name, jbeam_path, domain)
+
+    @staticmethod
     def delete_props(obj, domain, index, attr_name, instance: int=None) -> bool:
         key = JbeamUtils.get_attribute_value(obj, index, attr_name, domain)
         if key:
@@ -429,6 +434,39 @@ class JbeamUtils:
 
         logging.error(f"{repr(obj)}: Unknown object mode {obj.mode}")
         return False
+
+    @staticmethod
+    def set_attribute_value_for_selected_elements(obj, attr_name, attr_value, domain="verts") -> int:
+        if obj.mode != 'EDIT':
+            raise ValueError("Object must be in EDIT mode")
+
+        bm = bmesh.from_edit_mesh(obj.data)
+        bm_data = getattr(bm, domain)
+        updated_count: int = 0
+
+        if isinstance(attr_value, str):
+            # Get or create the string layer for the attribute
+            layer = bm_data.layers.string.get(attr_name) or bm_data.layers.string.new(attr_name)
+            encoded_value = attr_value.encode('utf-8')
+            for element in bm_data:
+                if element.select:  # Check if the element is selected
+                    element[layer] = encoded_value
+                    updated_count += 1
+
+        elif isinstance(attr_value, int):
+            # Get or create the integer layer for the attribute
+            layer = bm_data.layers.int.get(attr_name) or bm_data.layers.int.new(attr_name)
+            for element in bm_data:
+                if element.select:  # Check if the element is selected
+                    element[layer] = attr_value
+                    updated_count += 1
+
+        else:
+            raise TypeError("Unsupported attribute value type")
+
+        bmesh.update_edit_mesh(obj.data)
+
+        return updated_count  # Return the number of updated selected elements
 
 
     @staticmethod

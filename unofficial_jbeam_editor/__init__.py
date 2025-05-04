@@ -74,6 +74,7 @@ from unofficial_jbeam_editor.operators.object.beamng.utils.beamng_jbeam_print_at
 from unofficial_jbeam_editor.operators.object.beamng.utils.beamng_jbeam_select_element_operator import OBJECT_OT_BeamngJbeamSelectSpecificElement
 from unofficial_jbeam_editor.operators.object.beamng.utils.beamng_jbeam_select_element_by_jbeam_path import OBJECT_OT_BeamngJbeamSelectElementByJbeamPath
 from unofficial_jbeam_editor.operators.object.beamng.utils.beamng_jbeam_select_ref_element_operator import OBJECT_OT_BeamngJbeamSelectRefNode
+from unofficial_jbeam_editor.operators.object.beamng.utils.beamng_jbeam_save_elements_jbeam_path import OBJECT_OT_BeamngJbeamSaveElementsJbeamPath
 
 DEVTOOLS_CLASSES = [
     DEVTOOLS_OT_logging_level,
@@ -85,6 +86,7 @@ DEVTOOLS_CLASSES = [
     OBJECT_OT_BeamngJbeamSelectSpecificElement,
     OBJECT_OT_BeamngJbeamSelectElementByJbeamPath,
     OBJECT_OT_BeamngJbeamSelectRefNode,
+    OBJECT_OT_BeamngJbeamSaveElementsJbeamPath,
     DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh,
     DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam,
     DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportPcFileToNodeMeshes,

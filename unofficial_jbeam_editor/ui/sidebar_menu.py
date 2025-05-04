@@ -25,6 +25,7 @@ from unofficial_jbeam_editor.operators.object.beamng.beamng_jbeam_set_refnode_op
 from unofficial_jbeam_editor.operators.object.beamng.utils.beamng_jbeam_select_element_operator import OBJECT_OT_BeamngJbeamSelectSpecificElement
 from unofficial_jbeam_editor.operators.object.beamng.utils.beamng_jbeam_select_element_by_jbeam_path import OBJECT_OT_BeamngJbeamSelectElementByJbeamPath
 from unofficial_jbeam_editor.operators.object.beamng.utils.beamng_jbeam_select_ref_element_operator import OBJECT_OT_BeamngJbeamSelectRefNode
+from unofficial_jbeam_editor.operators.object.beamng.utils.beamng_jbeam_save_elements_jbeam_path import OBJECT_OT_BeamngJbeamSaveElementsJbeamPath
 from unofficial_jbeam_editor.utils.jbeam.jbeam_utils import JbeamRefnodeUtils as jr
 from unofficial_jbeam_editor.operators.common.ui.toggle_dynamic_button_operator import ButtonItem, ButtonItemSelector, ToggleDynamicButtonOperator, ManageDynamicButtonsOperator
 
@@ -284,7 +285,7 @@ class OBJECT_PT_devtools_addon_panel(bpy.types.Panel):
             action_col.scale_x = 1
             button_row = action_col.row(align=True)
             button_row.operator(OBJECT_OT_BeamngJbeamSelectElementByJbeamPath.bl_idname, text="", icon="RESTRICT_SELECT_OFF").jbeam_source_path = struct.jbeam_source
-            button_row.operator(OBJECT_OT_BeamngJbeamSelectSpecificElement.bl_idname, text="", icon="FILE_TICK")
+            button_row.operator(OBJECT_OT_BeamngJbeamSaveElementsJbeamPath.bl_idname, text="", icon="FILE_TICK").jbeam_source_path = struct.jbeam_source
 
         def draw_scope_modifier_list(select, save, remove):
             if not s.beamng_jbeam_active_structure.prop_items:

@@ -45,6 +45,16 @@ class FileUtils:
         return size
 
     @staticmethod
+    def is_jbeam_file(path):
+        return path.lower().endswith('.jbeam')
+
+    @staticmethod
+    def leaf_dir_exists(filepath):
+        norm_path = os.path.normpath(filepath)  # Normalize the path (removes trailing slashes etc.)
+        parent_dir = os.path.dirname(norm_path)  # Get the parent directory of the leaf file
+        return os.path.isdir(parent_dir)  # Check if the parent directory exists
+
+    @staticmethod
     def get_file_extension(file_path: str) -> str:
         return os.path.splitext(file_path)[1][1:].lower()
 

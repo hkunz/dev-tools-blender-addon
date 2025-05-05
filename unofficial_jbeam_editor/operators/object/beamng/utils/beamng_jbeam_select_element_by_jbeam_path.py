@@ -44,7 +44,8 @@ class OBJECT_OT_BeamngJbeamSelectElementByJbeamPath(bpy.types.Operator):
             logging.error("Invalid selection domain")
             return {'CANCELLED'}
 
-        indices = j.find_indices_by_jbeam_path(obj, self.jbeam_source_path, domain)
+        path = "" if self.jbeam_source_path == "." else self.jbeam_source_path
+        indices = j.find_indices_by_jbeam_path(obj, path, domain)
 
         if not indices:
             Utils.log_and_report(f"No nodes found with jbeam path '{self.jbeam_source_path}'", self, 'INFO')

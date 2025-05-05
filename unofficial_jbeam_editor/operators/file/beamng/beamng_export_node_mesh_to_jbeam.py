@@ -15,9 +15,9 @@ from unofficial_jbeam_editor.utils.jbeam.jbeam_export_processor import JbeamExpo
 
 
 class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Operator):
-    """Export Node Mesh to JBeam format"""
     bl_idname = "export.dev_tools_beamng_export_node_mesh_to_jbeam"
     bl_label = "DevTools: Export Mesh to JBeam Format"
+    bl_description = "Export a Node Mesh to the JBeam format. In Edit Mode, the operator checks the JBeam path of the active element and exports all related elements with the same JBeam path. In Object Mode, all elements are exported to a single JBeam file."
     bl_options = {'REGISTER'}
 
     filepath: bpy.props.StringProperty(subtype="FILE_PATH") # type: ignore

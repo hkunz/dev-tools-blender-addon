@@ -279,6 +279,15 @@ class ObjectUtils:
         return bpy.context.tool_settings.mesh_select_mode[2]
 
     @staticmethod
+    def is_any_element_selected(obj) -> bool:
+        no_vertex_selected = all(not v.select for v in obj.data.vertices)
+        no_edge_selected = all(not e.select for e in obj.data.edges)
+        no_face_selected = all(not p.select for p in obj.data.polygons)
+        if no_vertex_selected and no_edge_selected and no_face_selected:
+            return False
+        return True
+
+    @staticmethod
     def get_selected_edges(obj):
         bpy.ops.mesh.select_mode(type='EDGE')
         selected_edges = [edge for edge in obj.data.edges if edge.select]

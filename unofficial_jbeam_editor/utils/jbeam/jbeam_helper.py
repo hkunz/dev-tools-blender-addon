@@ -30,9 +30,10 @@ DEFAULT_SCOPE_MODIFIER_VALUES = {
 }
 
 class PreJbeamStructureHelper:
-    def __init__(self, obj, domain="vertex"):
+    def __init__(self, obj, domain="vertex", jbeam_path=""):
         self.obj = obj
         self.domain = domain
+        self.jbeam_path = jbeam_path
 
     def get_props(self):
         if not j.has_jbeam_node_id(self.obj):
@@ -54,7 +55,7 @@ class PreJbeamStructureHelper:
                 instance + 1: json.dumps(j.get_node_props(self.obj, i, instance+1))
                 for instance in range(j.get_total_node_instances(self.obj, i))  # Instances per vertex
             }
-            for i in range(len(self.obj.data.vertices))  # Iterate through each vertex
+            for i in range(len(self.obj.data.vertices)) if self.jbeam_path == "" or j.get_jbeam_source(self.obj, i, "verts")
         }
 
     def _get_beam_properties(self):
@@ -64,7 +65,7 @@ class PreJbeamStructureHelper:
                 instance: json.dumps(j.get_beam_props(self.obj, i, instance+1))
                 for instance in range(j.get_total_beam_instances(self.obj, i))  # Instances per edge
             } or {1:{}}  # if no data, then use default 1st instance empty props
-            for i in range(len(self.obj.data.edges))  # Iterate through each edge
+            for i in range(len(self.obj.data.edges)) if self.jbeam_path == "" or j.get_jbeam_source(self.obj, i, "edges")
         }
 
     def _get_triangle_properties(self):
@@ -74,7 +75,7 @@ class PreJbeamStructureHelper:
                 instance: json.dumps(j.get_triangle_props(self.obj, i, instance+1))
                 for instance in range(j.get_total_triangle_instances(self.obj, i))  # Instances per edge
             } or {1:{}}  # if no data, then use default 1st instance empty props
-            for i in range(len(self.obj.data.polygons))  # Iterate through each face
+            for i in range(len(self.obj.data.polygons)) if self.jbeam_path == "" or j.get_jbeam_source(self.obj, i, "faces")
         }
 
     def _parse_properties(self, properties_str):

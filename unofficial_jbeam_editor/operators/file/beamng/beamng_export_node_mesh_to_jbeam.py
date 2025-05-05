@@ -44,15 +44,23 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
         return {'FINISHED'} if success else {'CANCELLED'} 
 
     def invoke(self, context, event):
-        mode = context.object.mode
+        self.struct = context.scene.beamng_jbeam_active_structure
+        self.jbeam_path = ""
+        obj = context.object
+        mode = obj.mode
+
         if mode != 'OBJECT':
             bpy.ops.object.mode_set(mode='OBJECT')
+            bpy.ops.object.mode_set(mode=mode)
+            if not o.is_any_element_selected(obj):
+                Utils.log_and_report("No active element selected", self, 'WARNING')
+                return {'CANCELLED'}
+            self.jbeam_path = "" if self.struct.jbeam_source == "." else self.struct.jbeam_source
 
         def restore_mode():
             if mode != context.object.mode:
                 bpy.ops.object.mode_set(mode=mode)
 
-        obj = context.object
         if not context.active_object or not context.selected_objects:
             Utils.log_and_report("No objects selected!", self, 'WARNING')
             restore_mode()
@@ -101,7 +109,7 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
 
     def generate_jbeam_node_list(self, obj):
 
-        jbeam = PreJbeamStructureHelper(obj, domain="vertex")
+        jbeam = PreJbeamStructureHelper(obj, domain="vertex", jbeam_path=self.jbeam_path)
         data = jbeam.structure_data()
         reducer = RedundancyReducerJbeamGenerator(obj, data, domain="vertex")
         data_actual = reducer.reduce_redundancy()
@@ -113,7 +121,7 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
 
     def generate_jbeam_beam_list(self, obj):
 
-        jbeam = PreJbeamStructureHelper(obj, domain="edge")
+        jbeam = PreJbeamStructureHelper(obj, domain="edge", jbeam_path=self.jbeam_path)
         data = jbeam.structure_data()
         reducer = RedundancyReducerJbeamGenerator(obj, data, domain="edge")
         data_actual = reducer.reduce_redundancy()
@@ -125,7 +133,7 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
 
     def generate_jbeam_triangle_list(self, obj):
 
-        jbeam = PreJbeamStructureHelper(obj, domain="face")
+        jbeam = PreJbeamStructureHelper(obj, domain="face", jbeam_path=self.jbeam_path)
         data = jbeam.structure_data()
         reducer = RedundancyReducerJbeamGenerator(obj, data, domain="face")
         data_actual = reducer.reduce_redundancy()

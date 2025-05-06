@@ -465,4 +465,4 @@ class ObjectUtils:
                 if item.in_out == 'INPUT':  # Only input sockets
                     #logging.debug(f"Input: {item.name}, Socket Type: {item.socket_type}")
                     if item.name == input_name:
-                        item.hide_in_modifier = hide
+                        item.hide_in_modifier = hide  # causes EXCEPTION_ACCESS_VIOLATION in version >= 4.4 if the GN is linked as read-only instead appended

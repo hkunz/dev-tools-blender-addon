@@ -574,6 +574,11 @@ class OBJECT_OT_BeamngSelectByPropertyBase(bpy.types.Operator):
         """Retrieve property data for the given element."""
         pass
 
+    def invoke(self, context, event):
+        """Detect Shift and pass it to execute"""
+        self.ignore_prop_value = bool(event.shift)
+        return self.execute(context)
+
     def execute(self, context):
         obj = context.object
         if not obj or obj.type != 'MESH':
@@ -613,7 +618,7 @@ class OBJECT_OT_BeamngSelectByPropertyBase(bpy.types.Operator):
                 stored_data = self.get_property_data(obj, elem, instance)
                 stored_value = stored_data.get(self.prop_name, None)
 
-                if stored_value is not None and str(stored_value).strip().lower().strip("\"'") == selected_prop_value:
+                if stored_value is not None and (str(stored_value).strip().lower().strip("\"'") == selected_prop_value or self.ignore_prop_value):
                     elem.select = True
                     matched_count += 1
 
@@ -624,7 +629,7 @@ class OBJECT_OT_BeamngSelectByPropertyBase(bpy.types.Operator):
         return {'FINISHED'}
 
 class OBJECT_OT_BeamngSelectJbeamNodesByProperty(OBJECT_OT_BeamngSelectByPropertyBase):
-    """Select all vertices (nodes) that share the same JBeam property and value"""
+    """Select all vertices (nodes) with the same JBeam property and value (Shift+Click to ignore value and select by property only)."""
     bl_idname = "object.devtools_beamng_select_jbeam_nodes_by_property"
     bl_label = "DevTools: BeamNG Select JBeam Nodes by Property"
 
@@ -635,7 +640,7 @@ class OBJECT_OT_BeamngSelectJbeamNodesByProperty(OBJECT_OT_BeamngSelectByPropert
         return j.get_node_props(obj, element.index, instance)
 
 class OBJECT_OT_BeamngSelectJbeamBeamsByProperty(OBJECT_OT_BeamngSelectByPropertyBase):
-    """Select all edges (beams) that share the same JBeam property and value"""
+    """Select all edges (beams with the same JBeam property and value (Shift+Click to ignore value and select by property only)."""
     bl_idname = "object.devtools_beamng_select_jbeam_beams_by_property"
     bl_label = "DevTools: BeamNG Select JBeam Beams by Property"
 
@@ -646,7 +651,7 @@ class OBJECT_OT_BeamngSelectJbeamBeamsByProperty(OBJECT_OT_BeamngSelectByPropert
         return j.get_beam_props(obj, element.index, instance)
 
 class OBJECT_OT_BeamngSelectJbeamTrianglesByProperty(OBJECT_OT_BeamngSelectByPropertyBase):
-    """Select all faces (triangles) that share the same JBeam property and value"""
+    """Select all faces (triangles) the same JBeam property and value (Shift+Click to ignore value and select by property only)."""
     bl_idname = "object.devtools_beamng_select_jbeam_triangles_by_property"
     bl_label = "DevTools: BeamNG Select JBeam Triangles by Property"
 

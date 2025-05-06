@@ -1,5 +1,8 @@
 import logging
+import os
 import re
+
+from unofficial_jbeam_editor.utils.file_utils import FileUtils
 
 class AnsiFilter(logging.Filter):
     ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
@@ -17,7 +20,8 @@ def configure_logging(enable=True):
 
     stream_handler = logging.StreamHandler()  # Console handler
 
-    file_handler = logging.FileHandler('app.log', mode='w')  # overwrite instead of append
+    applog_path = os.path.normpath(os.path.join(FileUtils.get_addon_root_dir(), "app.log"))
+    file_handler = logging.FileHandler(applog_path, mode='w')  # overwrite instead of append
     file_handler.addFilter(AnsiFilter())
 
     formatter = logging.Formatter('%(levelname)s: %(message)s')

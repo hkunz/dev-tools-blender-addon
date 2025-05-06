@@ -45,6 +45,7 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
 
     def invoke(self, context, event):
         self.struct = context.scene.beamng_jbeam_active_structure
+        self.export_all_elements = True
         self.jbeam_path = ""
         obj = context.object
         mode = obj.mode
@@ -55,6 +56,7 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
             if not o.is_any_element_selected(obj):
                 Utils.log_and_report("No active element selected", self, 'WARNING')
                 return {'CANCELLED'}
+            self.export_all_elements = False
             self.jbeam_path = "" if self.struct.jbeam_source == "." else self.struct.jbeam_source
 
         def restore_mode():
@@ -109,7 +111,7 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
 
     def generate_jbeam_node_list(self, obj):
 
-        jbeam = PreJbeamStructureHelper(obj, domain="vertex", jbeam_path=self.jbeam_path)
+        jbeam = PreJbeamStructureHelper(obj, domain="vertex", export_all_elements=self.export_all_elements, jbeam_path=self.jbeam_path)
         data = jbeam.structure_data()
         reducer = RedundancyReducerJbeamGenerator(obj, data, domain="vertex")
         data_actual = reducer.reduce_redundancy()
@@ -121,7 +123,7 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
 
     def generate_jbeam_beam_list(self, obj):
 
-        jbeam = PreJbeamStructureHelper(obj, domain="edge", jbeam_path=self.jbeam_path)
+        jbeam = PreJbeamStructureHelper(obj, domain="edge", export_all_elements=self.export_all_elements, jbeam_path=self.jbeam_path)
         data = jbeam.structure_data()
         reducer = RedundancyReducerJbeamGenerator(obj, data, domain="edge")
         data_actual = reducer.reduce_redundancy()
@@ -133,7 +135,7 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
 
     def generate_jbeam_triangle_list(self, obj):
 
-        jbeam = PreJbeamStructureHelper(obj, domain="face", jbeam_path=self.jbeam_path)
+        jbeam = PreJbeamStructureHelper(obj, domain="face", export_all_elements=self.export_all_elements, jbeam_path=self.jbeam_path)
         data = jbeam.structure_data()
         reducer = RedundancyReducerJbeamGenerator(obj, data, domain="face")
         data_actual = reducer.reduce_redundancy()

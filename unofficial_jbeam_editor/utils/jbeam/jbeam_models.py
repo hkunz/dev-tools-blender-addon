@@ -29,7 +29,7 @@ class JBeamElement:
         self.id: ElementID  = element_id
         self.index: int = index  # vertex, edge, or face index
         self.props: JbeamElementProps = props if props is not None else {}
-        self.source_jbeam: Path = Path()
+        self.source_jbeam = ""
 
     def __repr__(self):
         return f"{self.__class__.__name__}(instance={self.instance}, id={self.id}, index={self.index}, props={self.props}, source={self.source_jbeam})"

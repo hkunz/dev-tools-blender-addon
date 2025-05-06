@@ -285,14 +285,14 @@ class JbeamUtils:
         return JbeamUtils.set_attribute_value(obj, index, attribute, key, domain=domain)
 
     @staticmethod
-    def set_jbeam_source(obj, index, domain, jbeam_path: Path) -> bool:
+    def set_jbeam_source(obj, index, domain, jbeam_path: str) -> bool:
         attr_name = JbeamUtils.DOMAIN_TO_JBEAM_SOURCE_ATTR.get(domain)
-        JbeamUtils.set_attribute_value(obj, index, attr_name, str(jbeam_path), domain=domain)
+        JbeamUtils.set_attribute_value(obj, index, attr_name, str(jbeam_path).strip(), domain=domain)
 
     @staticmethod
-    def get_jbeam_source(obj, index, domain) -> Path:
+    def get_jbeam_source(obj, index, domain) -> str:
         attr_name = JbeamUtils.DOMAIN_TO_JBEAM_SOURCE_ATTR.get(domain)
-        return Path(JbeamUtils.get_attribute_value(obj, index, attr_name, domain=domain))
+        return JbeamUtils.get_attribute_value(obj, index, attr_name, domain=domain)
 
     @staticmethod
     def find_indices_by_jbeam_path(obj, path, domain):

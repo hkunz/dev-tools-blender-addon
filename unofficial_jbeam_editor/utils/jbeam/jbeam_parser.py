@@ -118,7 +118,7 @@ class JbeamParser:
                 props.update(inline_props)
                 instance = 1 # only 1 instance can exist of one node ID unlike beams and triangles that can have multiple instances
                 node = Node(instance, node_id, -1, position, props)
-                node.source_jbeam = Path(self.source.file_path)
+                node.source_jbeam = self.source.file_path
                 nodes.append(node)
 
         return nodes
@@ -185,7 +185,7 @@ class JbeamParser:
                     *([nodes[2].id] if len(nodes) > 2 else []),
                     index, props
                 )
-                struct.source_jbeam = Path(self.source.file_path)
+                struct.source_jbeam = self.source.file_path
                 structures.append(struct)  # Beam() or Triangle()
 
         if missing_node_warnings:

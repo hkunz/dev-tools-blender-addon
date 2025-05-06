@@ -82,10 +82,7 @@ class JbeamNodeMeshConfigurator:
                 continue
 
             idx = node.index
-            flat_data = {}
-
-            if hasattr(node, "props") and isinstance(node.props, dict):
-                flat_data.update({k: json.dumps(v) for k, v in node.props.items()})
+            flat_data = {k: json.dumps(v) for k, v in node.props.items()}
 
             j.set_node_id(obj, idx, str(node.id))
             j.set_node_props(obj, idx, flat_data)
@@ -108,5 +105,6 @@ class JbeamNodeMeshConfigurator:
             if idx < 0 or idx is None:
                 #logging.debug(f"❌ Error: Structure missing: No {domain} found for {data_type[:-1]} {item.id}")
                 continue
-            set_props_function(obj, idx, item.props, item.instance)
+            flat_data = {k: json.dumps(v) for k, v in item.props.items()}
+            set_props_function(obj, idx, flat_data, item.instance)
             j.set_jbeam_source(obj, idx, domain, item.source_jbeam)

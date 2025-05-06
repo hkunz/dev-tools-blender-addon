@@ -115,8 +115,15 @@ class PreJbeamStructureHelper:
                     cleaned_node_info[prop] = int(value)
                 elif NumberUtils.is_float(value):
                     cleaned_node_info[prop] = float(value)
-                elif not value.lstrip().startswith("["):
-                    cleaned_node_info[prop] = value.replace('"', '').replace("'", '') # Properties with quotes in the UI are acceptable; they will automatically be sanitized here and converted to use double quotes in the JBeam file for consistency.
+                else:
+                    try:
+                        decoded_value = json.loads(value)
+                        if isinstance(decoded_value, list):  # If it's a list, we update
+                            cleaned_node_info[prop] = decoded_value
+                        else:
+                            cleaned_node_info[prop] = value.replace('"', '').replace("'", '')  # Properties with quotes in the UI are acceptable; they will automatically be sanitized here and converted to use double quotes in the JBeam file for consistency.
+                    except json.JSONDecodeError:
+                        pass
 
             sorted_props = OrderedDict()
             for key in ["group", "deformGroup", "breakGroup"]:

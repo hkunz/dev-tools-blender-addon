@@ -4,6 +4,7 @@ __pycache__
 .gitignore
 scripts
 documentation
+vehicles
 temp
 useful
 *.template.*

@@ -599,22 +599,16 @@ class JbeamUtils:
         modifier_name = JbeamUtils.GN_JBEAM_VISUALIZER_GROUP_NODE_NAME + "_modifier"
         mod = obj.modifiers.new(name=modifier_name, type='NODES')
         mod.node_group = node_tree
+
         v = bpy.data.version
-        try:
-            if v < (4, 4, 0):
+        if v < (4, 4, 0):
+            try:
                 ObjectUtils.gn_hide_modifier_input_by_name(node_tree, "Selection Mode")  # EXCEPTION_ACCESS_VIOLATION in 4.4
-        except:
-            pass
-        try:
-            if v < (4, 4, 0):
                 ObjectUtils.gn_hide_modifier_input_by_name(node_tree, "Active Node Vertex Index")  # EXCEPTION_ACCESS_VIOLATION in 4.4
-        except:
-            pass
-        try:
-            if v < (4, 4, 0):
                 ObjectUtils.gn_hide_modifier_input_by_name(node_tree, "Active Beam Edge Index")  # No EXCEPTION_ACCESS_VIOLATION for some reason even though it's same function as previous attempts
-        except:
-            pass
+            except:
+                pass
+
         JbeamUtils.set_gn_jbeam_socket_value(obj, "Node Radius", 0.03)
         JbeamUtils.set_gn_jbeam_socket_value(obj, "Beam Radius", 0.008)
         JbeamUtils.set_gn_jbeam_visualizer_selection_mode(obj)

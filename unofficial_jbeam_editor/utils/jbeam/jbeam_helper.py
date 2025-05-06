@@ -50,7 +50,6 @@ class PreJbeamStructureHelper:
         return props
 
     def _get_node_properties(self):
-        #return {i: json.dumps(j.get_node_props(self.obj, i)) for i in range(len(self.obj.data.vertices))}
         return {
             i: {
                 instance + 1: json.dumps(j.get_node_props(self.obj, i, instance+1))
@@ -60,7 +59,6 @@ class PreJbeamStructureHelper:
         }
 
     def _get_beam_properties(self):
-        #return {i: json.dumps(j.get_beam_props(self.obj, i)) for i in range(len(self.obj.data.edges))}
         return {
             i: {
                 instance: json.dumps(j.get_beam_props(self.obj, i, instance+1))
@@ -70,7 +68,6 @@ class PreJbeamStructureHelper:
         }
 
     def _get_triangle_properties(self):
-        #return {i: json.dumps(j.get_triangle_props(self.obj, i)) for i in range(len(self.obj.data.polygons))}
         return {
             i: {
                 instance: json.dumps(j.get_triangle_props(self.obj, i, instance+1))

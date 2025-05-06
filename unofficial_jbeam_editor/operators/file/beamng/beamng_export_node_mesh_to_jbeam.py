@@ -78,15 +78,6 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
             restore_mode()
             return {'CANCELLED'}
 
-        # Check vertex groups
-        '''
-        is_valid, message = j.check_vertex_groups(obj)
-        if not is_valid:
-            Utils.log_and_report(message, self, 'WARNING')
-            restore_mode()
-            return {'CANCELLED'}
-        '''
-
         refnodes = jr.get_refnode_values()
         for refnode in refnodes:
             items = jr.find_nodes_with_refnode_id(obj, refnode)
@@ -103,6 +94,8 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
             return {'CANCELLED'}
 
         Utils.log_and_report(message, self, 'INFO')
+
+        self.filepath = self.jbeam_path if self.jbeam_path else bpy.data.filepath
         context.window_manager.fileselect_add(self)
         #context.window_manager.operators[-1].bl_label = "Save JBeam File"
         restore_mode()

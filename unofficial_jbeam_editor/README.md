@@ -4,7 +4,14 @@
 
 This is an unofficial Blender addon designed to simplify the process of editing JBeam files for BeamNG.drive. The addon provides an intuitive interface within Blender, enabling users to easily manipulate and visualize JBeam structures, such as nodes, beams, and triangles. In addition to basic editing, it also allows for the adjustment of scope modifiers related to each node, beam, and triangle. Whether you're working with vehicle mods or other custom JBeam configurations, this tool helps streamline the workflow by integrating JBeam editing directly within Blender's 3D environment.
 
-![image](https://github.com/user-attachments/assets/2f429210-28d3-4437-bde5-6b4ce8094ba8)
+![image](https://github.com/user-attachments/assets/9d2e4940-cb38-43ec-85f3-81f87cda37a5)
+
+
+![jbeam-editor2](https://github.com/user-attachments/assets/feb4828a-297a-4024-8a28-47017f0af657)
+
+
+
+
 
 **Features**:
 
@@ -20,19 +27,15 @@ This is an unofficial Blender addon designed to simplify the process of editing 
 
 **Example Console Output When Importing single Jbeam Files**
 
-![image](https://github.com/user-attachments/assets/811d2479-6b9c-45c5-843a-ee6c8bd1e647)
+![image](https://github.com/user-attachments/assets/cee1732a-b0b2-4f57-af86-96936dbe19b7)
+
 
 **Example Console Output When Importing PC Files**
 
-![image](https://github.com/user-attachments/assets/bb2048a4-46bd-4013-ad71-3556ac8c20b4)
+![image](https://github.com/user-attachments/assets/50853460-9f0e-4729-b0e0-9174335fb702)
 
 
-**Limitations**:
-
-This is still a Work-In-Progress. I'm currently working on .pc imports. Currently, only a single JBeam file can be loaded at a time, and it must be fully self-contained—including all nodes, beams, and triangles. If your setup relies on base JBeam files for shared elements, those will not be included in the import.
-If you're interested in contributing or helping extend the functionality of this addon, feel free to get in touch!
-
-**Note**: This addon is not affiliated with BeamNG, and is meant as a community-driven tool to enhance Blender's utility for JBeam file manipulation.
+**Note**: This addon is not affiliated with BeamNG, and is meant as a community-driven tool to enhance Blender's utility for JBeam file manipulation. If you're interested in contributing or helping extend the functionality of this addon, feel free to get in touch!
 
 =================================================================
 # Create ZIP addon file (Unix & Linux)

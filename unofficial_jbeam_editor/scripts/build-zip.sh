@@ -27,6 +27,7 @@ zip_cmd=("zip" "-r" "${output_zip}" "${parent_folder}"/* \
   "--exclude" "${parent_folder}/temp/*" \
   "--exclude" "${parent_folder}/**/documentation/*" \
   "--exclude" "${parent_folder}/**/useful/*" \
+  "--exclude" "${parent_folder}/resources/vehicles/*" \
   "--exclude" "${parent_folder}/scripts/*" \
   "--exclude" "${parent_folder}/*.template.*" \
   "--exclude" "${parent_folder}/*TODO.*" \
@@ -40,7 +41,7 @@ zip_cmd=("zip" "-r" "${output_zip}" "${parent_folder}"/* \
 #fi
 
 mapfile -t exclude_pycache < <(find "${parent_folder}" -type d -name "__pycache__")
-mapfile -t exclude_executables < <(find "${parent_folder}/executables" -mindepth 1 -maxdepth 1 -type d -not -name "${addon_version}")
+exclude_executables=() # mapfile -t exclude_executables < <(find "${parent_folder}/executables" -mindepth 1 -maxdepth 1 -type d -not -name "${addon_version}")
 exclude_paths=("${exclude_executables[@]}" "${exclude_pycache[@]}")
 
 for path in "${exclude_paths[@]}"; do

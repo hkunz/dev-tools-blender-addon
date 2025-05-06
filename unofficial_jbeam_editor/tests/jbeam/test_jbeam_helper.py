@@ -6,6 +6,7 @@ import pprint
 import logging
 
 from unofficial_jbeam_editor.utils.jbeam.jbeam_helper import PreJbeamStructureHelper, RedundancyReducerJbeamGenerator
+from unofficial_jbeam_editor.utils.jbeam.jbeam_props_storage import JbeamPropsStorageManager
 from unofficial_jbeam_editor.utils.jbeam.jbeam_utils import JbeamUtils as j
 
 class JbeamTestObject:
@@ -24,6 +25,7 @@ class JbeamTestObject:
         bpy.context.collection.objects.link(obj)
         bpy.context.view_layer.objects.active = obj
         obj.select_set(True)
+        JbeamPropsStorageManager.get_instance().register_object(obj)
 
         vertices = [(x, 0.25 * x, 0.5 * x) for x in range(20)]
         edges = [(i, i+1) for i in range(19)]
@@ -92,9 +94,9 @@ class JbeamTestObject:
 class TestJBeamHelper(unittest.TestCase):
     
     def setUp(self):
-        logging.debug()
+        logging.debug("")
         logging.debug(f"===> Start Test {self} ==================================")
-        logging.debug()
+        logging.debug("")
         test_obj = JbeamTestObject() # bpy.context.object
 
         self.obj = test_obj.get_obj()
@@ -103,7 +105,7 @@ class TestJBeamHelper(unittest.TestCase):
 
         jbeam = PreJbeamStructureHelper(self.obj, domain="vertex")
         data_actual = jbeam.structure_data()
-        logging.debug()
+        logging.debug("")
         logging.debug("🔸 Actual Output:\n")
         for key, value in data_actual.items():
             logging.debug(f"{key}: {value}")
@@ -131,11 +133,11 @@ class TestJBeamHelper(unittest.TestCase):
             18: {"group": [], "collision": "false", "fixed": "true", "frictionCoef": 1.2, "nodeMaterial": "|NM_PLASTIC", "nodeWeight": 10, "selfCollision": "true"},
         }
 
-        logging.debug()
+        logging.debug("")
         logging.debug("🔹 Expected Output:\n")
         for key, value in data_expected.items():
             logging.debug(f"{key}: {value}")
-        logging.debug()
+        logging.debug("")
 
         actual_str = json.dumps(data_actual, indent=4, sort_keys=False).splitlines()
         expected_str = json.dumps(data_expected, indent=4, sort_keys=False).splitlines()
@@ -147,7 +149,7 @@ class TestJBeamHelper(unittest.TestCase):
             logging.debug("❌ TEST FAILED: test_pre_jbeam_structure\n")
             logging.debug("🔍 Differences:")
             logging.debug("\n".join(diff_list))
-            logging.debug()
+            logging.debug("")
 
         self.assertEqual(data_expected, data_actual, "Data does not match expected structure")
         self.assertFalse(diff_list, "Data does not match expected structure or order")
@@ -231,13 +233,13 @@ class TestJBeamHelper(unittest.TestCase):
         ]
 
         pp = pprint.PrettyPrinter(indent=4)
-        logging.debug()
+        logging.debug("")
         logging.debug("🔸 Actual Output:\n")
-        pp.plogging.debug(data_actual)
-        logging.debug()
+        pp.pprint(data_actual)
+        logging.debug("")
         logging.debug("🔹 Expected Output:\n")
-        pp.plogging.debug(data_expected)
-        logging.debug()
+        pp.pprint(data_expected)
+        logging.debug("")
 
         expected_lines = [str(item) for item in data_expected]
         actual_lines = [str(item) for item in data_actual]
@@ -248,7 +250,7 @@ class TestJBeamHelper(unittest.TestCase):
             logging.debug("❌ TEST FAILED: test_jbeam_structure\n")
             logging.debug("🔍 Differences:")
             logging.debug("\n".join(diff_list))
-            logging.debug()
+            logging.debug("")
 
         self.assertEqual(data_expected, data_actual, "Data does not match expected jbeam nodes list")
         self.assertFalse(list(diff), "Data does not match expected JBeam nodes list")

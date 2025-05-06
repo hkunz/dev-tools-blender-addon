@@ -8,4 +8,5 @@ vehicles
 temp
 useful
 *.template.*
+*.blend[1-9]*
 *TODO*

@@ -25,7 +25,7 @@ bl_info = {
     "name": "JBeam Editor",
     "description": "The Unofficial JBeam Editor",
     "author" : "Harry McKenzie",
-    "version": (0, 0, 0),
+    "version": (0, 0, 1),
     "blender": (4, 2, 0),
     "location": "N-Panel > JBeam Editor",
     "warning": "",

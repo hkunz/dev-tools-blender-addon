@@ -29,6 +29,6 @@ def configure_logging(enable=True):
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(formatter)
 
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.CRITICAL)
     logger.addHandler(stream_handler)
     logger.addHandler(file_handler)

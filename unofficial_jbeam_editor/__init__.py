@@ -22,7 +22,7 @@
 # ##### END LICENSE BLOCK #####
 
 bl_info = {
-    "name": "JBeam Editor",
+    "name": "JBeam Editor (Unofficial)",
     "description": "The Unofficial JBeam Editor",
     "author" : "Harry McKenzie",
     "version": (0, 0, 1),

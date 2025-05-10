@@ -25,7 +25,7 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportPcFileToNodeMeshes(Operator, Im
         maxlen=255,
     )  # type: ignore
 
-    force_reload: bpy.props.BoolProperty(name="Force Reload", description="Force reloading of all selected files, bypassing the cache", default=False)  # type: ignore
+    force_reload: bpy.props.BoolProperty(name="Force Reload", description="Force reloading of all selected files, bypassing the cache", default=True)  # type: ignore
     use_single_object: bpy.props.BoolProperty(name="Join Parts into One Object", description="Combine all parts into one object rather than keeping them separate", default=True)  # type: ignore
 
     def execute(self, context):

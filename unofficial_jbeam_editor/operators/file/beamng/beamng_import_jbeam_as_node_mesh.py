@@ -26,7 +26,7 @@ class DEVTOOLS_JBEAMEDITOR_IMPORT_OT_BeamngImportJbeamToNodeMesh(Operator, Impor
         maxlen=255,
     )  # type: ignore
 
-    force_reload: bpy.props.BoolProperty(name="Force Reload", default=False)  # type: ignore
+    force_reload: bpy.props.BoolProperty(name="Force Reload", default=True)  # type: ignore
 
     def execute(self, context):
         bpy.ops.object.select_all(action='DESELECT')

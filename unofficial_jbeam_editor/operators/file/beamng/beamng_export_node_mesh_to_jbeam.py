@@ -173,9 +173,10 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
             )
             return prepend + formatted_data + '\n' + ' ' * (spaces - 4)
 
-        is_manual_data = True
+        overwrite_file = os.path.exists(filepath)
+        is_manual_data = not overwrite_file
 
-        if os.path.exists(filepath):
+        if overwrite_file:
             with open(filepath, "r", encoding="utf-8") as f:
                 try:
                     # raw_text = f.read()

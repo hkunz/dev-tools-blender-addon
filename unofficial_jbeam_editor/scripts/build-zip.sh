@@ -21,6 +21,18 @@ echo "Parent: $parent_folder"
 echo "Branch: $current_branch"
 echo "Output: $output_zip"
 
+logging_file="${parent_folder}/config/logging_config.py"
+
+sed -i 's/\blogger.setLevel(logging.DEBUG if\b/logger.setLevel(logging.CRITICAL if/g' "$logging_file"
+
+cleanup() {
+    echo "Restoring logging level to DEBUG..."
+    sed -i 's/\blogger.setLevel(logging.CRITICAL if\b/logger.setLevel(logging.DEBUG if/g' "$logging_file"
+}
+
+# Register the cleanup function for EXIT and interruptions
+trap cleanup EXIT INT TERM
+
 zip_cmd=("zip" "-r" "${output_zip}" "${parent_folder}"/* \
   "--exclude" "${parent_folder}/.vscode/*" \
   "--exclude" "${parent_folder}/.git/*" \

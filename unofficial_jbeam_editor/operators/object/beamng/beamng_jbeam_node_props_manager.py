@@ -565,6 +565,14 @@ class OBJECT_OT_BeamngSelectByPropertyBase(bpy.types.Operator):
     bl_options = {'INTERNAL', 'UNDO'}
 
     prop_name: bpy.props.StringProperty(name="Property Name")  # type: ignore
+    element_type: str = ""  # override in subclass
+
+    @classmethod
+    def description(cls, context, properties):
+        return f"""Select all {cls.element_type} with the same JBeam property and value.
+- Shift+Click: Select by property only (ignore value).
+- Ctrl+Shift+Click: Select if value *contains* the search string.
+            """
 
     def get_elements(self, bm):
         """Return the elements to iterate over (verts for nodes, edges for beams)."""
@@ -577,6 +585,7 @@ class OBJECT_OT_BeamngSelectByPropertyBase(bpy.types.Operator):
     def invoke(self, context, event):
         """Detect Shift and pass it to execute"""
         self.ignore_prop_value = bool(event.shift)
+        self.contains_search = bool(event.ctrl and event.shift)
         return self.execute(context)
 
     def execute(self, context):
@@ -618,7 +627,18 @@ class OBJECT_OT_BeamngSelectByPropertyBase(bpy.types.Operator):
                 stored_data = self.get_property_data(obj, elem, instance)
                 stored_value = stored_data.get(self.prop_name, None)
 
-                if stored_value is not None and (str(stored_value).strip().lower().strip("\"'") == selected_prop_value or self.ignore_prop_value):
+                if stored_value is None:
+                    continue
+
+                match = False
+
+                if self.contains_search:
+                    match = selected_prop_value in str(stored_value)
+                else:
+                    normalized_value = str(stored_value).strip().lower().strip("\"'")
+                    match = normalized_value == selected_prop_value or self.ignore_prop_value
+
+                if match:
                     elem.select = True
                     matched_count += 1
 
@@ -629,9 +649,9 @@ class OBJECT_OT_BeamngSelectByPropertyBase(bpy.types.Operator):
         return {'FINISHED'}
 
 class OBJECT_OT_BeamngSelectJbeamNodesByProperty(OBJECT_OT_BeamngSelectByPropertyBase):
-    """Select all vertices (nodes) with the same JBeam property and value (Shift+Click to ignore value and select by property only)."""
     bl_idname = "object.devtools_beamng_select_jbeam_nodes_by_property"
     bl_label = "DevTools: BeamNG Select JBeam Nodes by Property"
+    element_type: str = "Nodes"
 
     def get_elements(self, bm):
         return bm.verts
@@ -640,9 +660,9 @@ class OBJECT_OT_BeamngSelectJbeamNodesByProperty(OBJECT_OT_BeamngSelectByPropert
         return j.get_node_props(obj, element.index, instance)
 
 class OBJECT_OT_BeamngSelectJbeamBeamsByProperty(OBJECT_OT_BeamngSelectByPropertyBase):
-    """Select all edges (beams with the same JBeam property and value (Shift+Click to ignore value and select by property only)."""
     bl_idname = "object.devtools_beamng_select_jbeam_beams_by_property"
     bl_label = "DevTools: BeamNG Select JBeam Beams by Property"
+    element_type: str = "Beams"
 
     def get_elements(self, bm):
         return bm.edges
@@ -651,9 +671,9 @@ class OBJECT_OT_BeamngSelectJbeamBeamsByProperty(OBJECT_OT_BeamngSelectByPropert
         return j.get_beam_props(obj, element.index, instance)
 
 class OBJECT_OT_BeamngSelectJbeamTrianglesByProperty(OBJECT_OT_BeamngSelectByPropertyBase):
-    """Select all faces (triangles) the same JBeam property and value (Shift+Click to ignore value and select by property only)."""
     bl_idname = "object.devtools_beamng_select_jbeam_triangles_by_property"
     bl_label = "DevTools: BeamNG Select JBeam Triangles by Property"
+    element_type: str = "Triangles"
 
     def get_elements(self, bm):
         return bm.faces

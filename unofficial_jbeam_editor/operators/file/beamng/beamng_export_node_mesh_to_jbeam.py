@@ -178,10 +178,15 @@ class DEVTOOLS_JBEAMEDITOR_EXPORT_OT_BeamngExportNodeMeshToJbeam(bpy.types.Opera
         if os.path.exists(filepath):
             with open(filepath, "r", encoding="utf-8") as f:
                 try:
-                    raw_text = f.read()
-                    clean_text = json_cleanup(raw_text)
-                    existing_data = json.load(io.StringIO(clean_text))  # Convert cleaned text to file-like object, changes true to True & false to False but jbeam needs small case bools
-                    is_manual_data = "manual_data_file" in existing_data
+                    # raw_text = f.read()
+                    for i in range(2):  # check first two lines (0 and 1)
+                        line = f.readline()
+                        if "manual_data_file" in line:
+                            is_manual_data = True
+                            break
+                    # clean_text = json_cleanup(raw_text)
+                    # existing_data = json.load(io.StringIO(clean_text))  # Convert cleaned text to file-like object, changes true to True & false to False but jbeam needs small case bools
+                    # is_manual_data = "manual_data_file" in existing_data
                     f.seek(0)
                     existing_data_str = f.read()
                 except json.JSONDecodeError:
